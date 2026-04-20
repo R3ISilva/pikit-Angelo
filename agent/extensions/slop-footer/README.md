@@ -124,11 +124,6 @@ Create `~/.pi/agent/slop-footer.json` to customize the footer:
 | `separator` | Visual separator between segments | — |
 | `text:...` | Literal text, e.g. `text:⚡` | — |
 
-## Commands
-
-- `/footer reload` - Reload configuration from disk
-- `/footer debug` - Show current configuration
-
 ## Git Status Indicators
 
 The `git` segment shows:
