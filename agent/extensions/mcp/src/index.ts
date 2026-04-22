@@ -34,6 +34,7 @@ import { loadConfig } from "./config.js";
 import { loadServerCache, saveServerCache } from "./cache.js";
 import {
   openBrowser,
+  isOAuthUrl,
   sanitize,
   contentToText,
   buildProxyDescription,
@@ -86,9 +87,12 @@ export default function mcpExtension(pi: ExtensionAPI) {
       const openedUrls = new Set<string>();
       const removeStderr = client.onStderr((line) => {
         stderrLines.push(line);
-        // Auto-open auth URLs (e.g. mcp-remote OAuth flow) as they appear
+        // Auto-open auth URLs (e.g. mcp-remote OAuth flow) as they appear.
+        // Only open URLs that look like real OAuth prompts: URLs with query params
+        // (authorization URLs always have ?client_id=... etc.) or localhost URLs
+        // (OAuth callbacks). Plain server URLs logged as status info are skipped.
         const urlMatch = line.match(/https?:\/\/\S+/);
-        if (urlMatch && !openedUrls.has(urlMatch[0])) {
+        if (urlMatch && !openedUrls.has(urlMatch[0]) && isOAuthUrl(urlMatch[0])) {
           openedUrls.add(urlMatch[0]);
           const url = urlMatch[0];
           ctx?.ui?.notify(`MCP [${serverName}]: opening browser for authentication\n${url}`, "info");
@@ -108,9 +112,10 @@ export default function mcpExtension(pi: ExtensionAPI) {
       }
 
       removeStderr();
-      if (stderrLines.length) {
-        ctx?.ui?.notify(`MCP [${serverName}] stderr:\n${stderrLines.join("\n")}`, "info");
-      }
+      // initialize() succeeded — the connection is good.
+      // All stderr collected during startup was just chatter (mcp-remote logs,
+      // protocol traffic, etc.). Suppress it entirely; no regex filtering needed.
+      // If initialize() had thrown, the full stderr would be included in the error above.
 
       const excluded = new Set(serverConfig.excludeTools ?? []);
       const tools = (await client.listTools()).filter((t) => !excluded.has(t.name));

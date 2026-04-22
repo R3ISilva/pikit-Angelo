@@ -4,6 +4,24 @@ import type { McpStdioClient } from "./client.js";
 
 // ─── General helpers ──────────────────────────────────────────────────────────
 
+/**
+ * Returns true only for URLs that are genuine OAuth prompts:
+ *  - localhost URLs  (OAuth callback redirect target)
+ *  - URLs with a query string (authorization URLs always carry client_id, etc.)
+ * Plain server endpoint URLs logged as status info (no query string, not localhost)
+ * are excluded so we don't open a browser window on every reconnect.
+ */
+export function isOAuthUrl(raw: string): boolean {
+  try {
+    const u = new URL(raw);
+    if (u.hostname === "localhost" || u.hostname === "127.0.0.1") return true;
+    if (u.search.length > 1) return true; // has ?params
+    return false;
+  } catch {
+    return false;
+  }
+}
+
 export function openBrowser(url: string): void {
   const cmd = process.platform === "darwin" ? "open"
     : process.platform === "win32" ? "start"
