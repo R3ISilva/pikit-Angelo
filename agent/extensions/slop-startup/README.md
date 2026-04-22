@@ -8,11 +8,11 @@ A startup header for the pi coding agent. Displays a two-column welcome box at s
 
 - **Model info**: Shows the active model name and provider
 - **Project context**: Displays the current working directory name
-- **Loaded counts**: Reports how many context files, extensions, skills, and prompt templates are active
+- **Loaded counts**: Reports how many context files, extensions, skills, prompt templates, and MCP servers are active
 - **Recent sessions**: Lists the 3 most recently touched sessions with relative timestamps
 - **Quick tips**: Inline keyboard shortcut reminders (`/`, `!`, `Shift+Tab`)
 - **Responsive layout**: Box adapts to terminal width; hidden below 44 columns
-- **Nerd Font icons**: Uses Nerd Font glyphs where available
+- **Nerd Font icons**: Uses Nerd Font glyphs where available, falls back to plain Unicode symbols automatically
 
 ## Installation
 
@@ -67,21 +67,25 @@ The extension scans standard pi paths to count what is active:
 
 Sessions are found by scanning `~/.pi/agent/sessions/` and `~/.pi/sessions/` for `.jsonl` files. The parent directory name is used as the project name. Entries are deduplicated and sorted by modification time.
 
-### Installing a Nerd Font (macOS)
+## Icons
 
-On macOS with Homebrew:
+Nerd Font icons are auto-detected from your terminal. Ghostty, WezTerm, Kitty, iTerm2, and Alacritty are recognised automatically — everything else falls back to plain Unicode symbols. If detection gets it wrong (e.g. when running inside tmux), override it:
 
 ```bash
-brew install fontconfig
+export SLOP_FOOTER_NERD_FONTS=1  # force Nerd Fonts on
+export SLOP_FOOTER_NERD_FONTS=0  # force plain icons
+```
+
+### Installing a Nerd Font (macOS)
+
+```bash
 brew install --cask font-jetbrains-mono-nerd-font
 ```
 
-Other Nerd Fonts are available via `brew search nerd-font`.
+Other fonts available via `brew search nerd-font`.
 
 ### Configuring iTerm2
 
-After installing a Nerd Font, set it in iTerm2:
-
 1. Open **Settings → Profiles → Text**
 2. Set **Font** to `JetBrainsMonoNL Nerd Font Propo`, size `12`
-3. Enable **Use a different font for non-ASCII text** and set the same font there — this is required for the icons to render correctly
+3. Enable **Use a different font for non-ASCII text** and set the same font there — required for icons to render correctly

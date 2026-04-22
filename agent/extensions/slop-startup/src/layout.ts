@@ -2,7 +2,7 @@ import type { Theme } from "@mariozechner/pi-coding-agent";
 import { VERSION } from "@mariozechner/pi-coding-agent";
 import { basename } from "node:path";
 import { visibleWidth } from "@mariozechner/pi-tui";
-import { bold, centerText, fitToWidth } from "./helpers.js";
+import { bold, centerText, fitToWidth, hasNerdFonts } from "./helpers.js";
 import type { RecentSession, LoadedCounts } from "./discovery.js";
 
 function buildLeftColumn(
@@ -12,17 +12,21 @@ function buildLeftColumn(
   cwd: string,
   colWidth: number,
 ): string[] {
+  const nerd = hasNerdFonts();
+  const iconModel   = nerd ? "\uEC19"             : "🧠";
+  const iconFolder  = nerd ? "\uF115"             : "📂";
+  const iconPiBox   = nerd ? "\udb81\udcf9"       : "🏷";
   return [
     "",
     "",
-    centerText(bold(`\x1b[38;2;215;135;175m\uEC19\x1b[0m`), colWidth),
+    centerText(bold(`\x1b[38;2;215;135;175m${iconModel}\x1b[0m`), colWidth),
     centerText(theme.fg("text", modelName), colWidth),
     centerText(theme.fg("dim", providerName), colWidth),
     "",
-    centerText(bold(theme.fg("dim", "\uF115")), colWidth),
+    centerText(bold(theme.fg("dim", iconFolder)), colWidth),
     centerText(theme.fg("text", basename(cwd)), colWidth),
     "",
-    centerText(bold(theme.fg("dim", "\udb81\udcf9")), colWidth),
+    centerText(bold(theme.fg("dim", iconPiBox)), colWidth),
     centerText(theme.fg("text", "pi agent"), colWidth),
     centerText(theme.fg("dim", `v${VERSION}`), colWidth),
   ];
@@ -54,7 +58,7 @@ function buildRightColumn(
     ` ${itemPrefix}${theme.fg(extensions > 0 ? "success" : "dim", `${extensions}`)} extension${extensions !== 1 ? "s" : ""}`,
     ` ${itemPrefix}${theme.fg(skills > 0 ? "success" : "dim", `${skills}`)} skill${skills !== 1 ? "s" : ""}`,
     ` ${itemPrefix}${theme.fg(promptTemplates > 0 ? "success" : "dim", `${promptTemplates}`)} prompt template${promptTemplates !== 1 ? "s" : ""}`,
-    ` ${itemPrefix}${theme.fg(mcpServers > 0 ? "success" : "dim", `${mcpServers}`)} MCP server${mcpServers !== 1 ? "s" : ""} configured`,
+    ` ${itemPrefix}${theme.fg(mcpServers > 0 ? "success" : "dim", `${mcpServers}`)} MCP server${mcpServers !== 1 ? "s" : ""} configs`,
   ];
 
   return [
@@ -103,7 +107,7 @@ export function renderBox(
   const lines: string[] = [];
 
   // Top border with title: ───<icon> pi agent vX.X.X ───...
-  const icon = "\uE22C";
+  const icon = hasNerdFonts() ? "\uE22C" : "π";
   const titleText = ` pi agent v${VERSION}`;
   const titleStyled = dim(hChar.repeat(2)) + theme.fg("accent", icon) + dim(" ") + dim(titleText);
   const titleVisLen = 2 + visibleWidth(icon) + 1 + visibleWidth(titleText);

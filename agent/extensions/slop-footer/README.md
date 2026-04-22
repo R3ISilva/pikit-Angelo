@@ -60,17 +60,17 @@ Create `~/.pi/agent/configs/slop-footer.json` to customize the footer:
   ],
   "icons": {
     "pi": "π",
-    "model": "◈",
-    "thinking": "🧠",
-    "folder": "📁",
+    "model": "🧠",
+    "thinking": "💡",
+    "folder": "📂",
     "git": "⎇",
-    "tokens": "⊛",
-    "input": "↑",
-    "output": "↓",
+    "tokens": "🧮",
+    "input": "⬆",
+    "output": "⬇",
     "cacheRead": "↙",
     "cacheWrite": "↗",
-    "contextPct": "◫",
-    "separator": "|"
+    "contextPct": "📚",
+    "separator": "›"
   },
   "colors": {
     "pi": "accent",
@@ -136,9 +136,7 @@ Colors indicate clean (green) vs dirty (yellow) working tree.
 
 ## Icons
 
-Nerd Fonts are supported on **macOS and Linux**. The extension auto-detects support based on your terminal (`TERM_PROGRAM`) and falls back to plain ASCII/Unicode symbols if none is found. Supported terminals are detected automatically: Ghostty, WezTerm, Kitty, iTerm2, and Alacritty.
-
-You can also force the detection:
+Nerd Font icons are auto-detected from your terminal. Ghostty, WezTerm, Kitty, iTerm2, and Alacritty are recognised automatically — everything else falls back to plain Unicode symbols. If detection gets it wrong (e.g. when running inside tmux), override it:
 
 ```bash
 export SLOP_FOOTER_NERD_FONTS=1  # force Nerd Fonts on
@@ -147,22 +145,17 @@ export SLOP_FOOTER_NERD_FONTS=0  # force plain icons
 
 ### Installing a Nerd Font (macOS)
 
-On macOS with Homebrew:
-
 ```bash
-brew install fontconfig
 brew install --cask font-jetbrains-mono-nerd-font
 ```
 
-Other Nerd Fonts are available via `brew search nerd-font`.
+Other fonts available via `brew search nerd-font`.
 
 ### Configuring iTerm2
 
-After installing a Nerd Font, set it in iTerm2:
-
 1. Open **Settings → Profiles → Text**
 2. Set **Font** to `JetBrainsMonoNL Nerd Font Propo`, size `12`
-3. Enable **Use a different font for non-ASCII text** and set the same font there — this is required for the icons to render correctly
+3. Enable **Use a different font for non-ASCII text** and set the same font there — required for icons to render correctly
 
 ### Custom Icons
 
