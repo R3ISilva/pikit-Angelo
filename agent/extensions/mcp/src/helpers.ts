@@ -64,7 +64,7 @@ export function buildProxyDescription(config: McpConfig, toolsCache: Map<string,
   lines.push(
     "",
     "Modes (pass one parameter at a time):",
-    '  search: "keyword"                        — find tools by name or description',
+    '  search: "keyword"                        — find tools by name or description (use single keywords for best results)',
     '  describe: "tool_name"                    — show full parameter schema for a tool',
     "  tool: \"tool_name\", args: \'{}\'          — call a tool (auto-connects its server)",
     '  connect: "server_name"                   — explicitly connect a server',
@@ -80,14 +80,18 @@ export function searchTools(
   serverFilter: string | undefined,
   toolsCache: Map<string, McpTool[]>,
 ): Array<{ toolName: string; serverName: string; description: string; score: number }> {
-  const q = query.toLowerCase();
+  // Split into words, drop stop-words and short tokens so "show me errors"
+  // doesn't match half the catalogue via "me" as a substring.
+  const words = query.toLowerCase().split(/\s+/).filter((w) => w.length >= 3);
   const results: Array<{ toolName: string; serverName: string; description: string; score: number }> = [];
 
   for (const [serverName, tools] of toolsCache) {
     if (serverFilter && serverName !== serverFilter) continue;
     for (const tool of tools) {
-      const nameMatch = tool.name.toLowerCase().includes(q);
-      const descMatch = (tool.description ?? "").toLowerCase().includes(q);
+      const name = tool.name.toLowerCase();
+      const desc = (tool.description ?? "").toLowerCase();
+      const nameMatch = words.some((w) => name.includes(w));
+      const descMatch = words.some((w) => desc.includes(w));
       if (nameMatch || descMatch) {
         results.push({
           toolName: tool.name,
