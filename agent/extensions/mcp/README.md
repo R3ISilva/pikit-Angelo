@@ -19,6 +19,22 @@ Tool metadata is cached to `~/.pi/agent/cache/mcp-{serverName}.json` (one file p
 - **`${VAR}` env interpolation**: Reference environment variables in config values without hardcoding secrets
 - **Rich `/mcp` command**: status, tools, reconnect, and search subcommands
 
+## Structure
+
+```
+mcp/
+├── package.json
+├── README.md
+├── mcp.json.example
+└── src/
+    ├── types.ts    — all interfaces and shared types
+    ├── client.ts   — McpStdioClient (stdio JSON-RPC transport)
+    ├── config.ts   — loadConfig() from ~/.pi/agent/configs/mcp.json
+    ├── cache.ts    — disk cache read/write per server
+    ├── helpers.ts  — utilities and proxy tool formatters
+    └── index.ts    — extension entry point and wiring
+```
+
 ## Installation
 
 Auto-discovered from `~/.pi/agent/extensions/`. No additional registration required.
