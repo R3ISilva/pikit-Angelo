@@ -1,5 +1,5 @@
 /**
- * slop-mcp — MCP bridge extension for pi.
+ * mcp — MCP bridge extension for pi.
  *
  * Connects to configured MCP servers on-demand (lazy), registers all tools via
  * a single proxy tool to keep context small, with per-server opt-in for direct
@@ -7,7 +7,7 @@
  * live connections. Session lifecycle is properly managed across restarts.
  *
  * Config location:
- *   ~/.pi/agent/configs/slop-mcp.json
+ *   ~/.pi/agent/configs/mcp.json
  *
  * Config format (Claude Desktop-compatible):
  * {
@@ -192,7 +192,7 @@ class McpStdioClient {
     await this.send("initialize", {
       protocolVersion: "2024-11-05",
       capabilities: { tools: {} },
-      clientInfo: { name: "slop-mcp", version: "2.0.0" },
+      clientInfo: { name: "mcp", version: "2.0.0" },
     });
     this.proc.stdin!.write(
       JSON.stringify({ jsonrpc: "2.0", method: "notifications/initialized" }) + "\n",
@@ -226,9 +226,9 @@ class McpStdioClient {
 
 // ─── Config ───────────────────────────────────────────────────────────────────
 
-/** Load config from ~/.pi/agent/configs/slop-mcp.json */
+/** Load config from ~/.pi/agent/configs/mcp.json */
 function loadConfig(): McpConfig {
-  const p = join(homedir(), ".pi", "agent", "configs", "slop-mcp.json");
+  const p = join(homedir(), ".pi", "agent", "configs", "mcp.json");
   if (!existsSync(p)) return { mcpServers: {} };
   try {
     const raw = JSON.parse(readFileSync(p, "utf-8")) as Partial<McpConfig>;
@@ -246,7 +246,7 @@ function cacheDir(): string {
 }
 
 function serverCachePath(serverName: string): string {
-  return join(cacheDir(), `slop-mcp-${serverName}.json`);
+  return join(cacheDir(), `mcp-${serverName}.json`);
 }
 
 function loadServerCache(serverName: string): McpTool[] {
@@ -426,7 +426,7 @@ function buildStatusText(
 
 // ─── Extension ────────────────────────────────────────────────────────────────
 
-export default function slopMcp(pi: ExtensionAPI) {
+export default function mcpExtension(pi: ExtensionAPI) {
   const config = loadConfig();
   const serverNames = Object.keys(config.mcpServers);
 

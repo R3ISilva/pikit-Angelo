@@ -1,16 +1,16 @@
 {
-  "name": "slop-spinners",
+  "name": "spinners",
   "version": "1.0.0",
   "description": "Replaces the default 'Thinking' verb with a random one on each response",
   "type": "module",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/adrianapan/pi-slop-spinners.git"
+    "url": "git+https://github.com/adrianapan/pi-dev.git"
   },
   "bugs": {
-    "url": "https://github.com/adrianapan/pi-slop-spinners/issues"
+    "url": "https://github.com/adrianapan/pi-dev/issues"
   },
-  "homepage": "https://github.com/adrianapan/pi-slop-spinners#readme",
+  "homepage": "https://github.com/adrianapan/pi-dev#readme",
   "keywords": [
     "pi",
     "extension",

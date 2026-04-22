@@ -19,4 +19,4 @@ coverage
 agent/settings.json
 agent/models.json
 agent/cache/
-agent/configs/slop-mcp.json
+agent/configs/mcp.json

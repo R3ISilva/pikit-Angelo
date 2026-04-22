@@ -59,8 +59,8 @@ export const ASCII_ICONS: IconSet = {
 
 // Detect Nerd Font support
 export function hasNerdFonts(): boolean {
-  if (process.env.SLOP_FOOTER_NERD_FONTS === "1") return true;
-  if (process.env.SLOP_FOOTER_NERD_FONTS === "0") return false;
+  if (process.env.FOOTER_NERD_FONTS === "1") return true;
+  if (process.env.FOOTER_NERD_FONTS === "0") return false;
 
   if (process.env.GHOSTTY_RESOURCES_DIR) return true;
 

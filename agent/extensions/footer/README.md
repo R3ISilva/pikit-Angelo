@@ -1,8 +1,8 @@
-# slop-footer
+# footer
 
 A customizable footer for the pi coding agent. Provides a rich status bar at the bottom of the terminal showing model info, git status, token usage, and more.
 
-<img src="demo.png" alt="slop-footer">
+<img src="demo.png" alt="footer">
 
 ## Features
 
@@ -19,14 +19,14 @@ A customizable footer for the pi coding agent. Provides a rich status bar at the
 Install from npm using pi:
 
 ```bash
-pi install npm:slop-footer
+pi install npm:footer
 ```
 
 Or copy the extension files to your pi extensions directory manually:
 
 ```bash
 # Copy to global extensions directory
-cp -r . ~/.pi/agent/extensions/slop-footer
+cp -r . ~/.pi/agent/extensions/footer
 
 # Or use directly for testing
 pi -e ./src/index.ts
@@ -34,7 +34,7 @@ pi -e ./src/index.ts
 
 ## Configuration
 
-Create `~/.pi/agent/configs/slop-footer.json` to customize the footer:
+Create `~/.pi/agent/configs/footer.json` to customize the footer:
 
 ```json
 {
@@ -139,8 +139,8 @@ Colors indicate clean (green) vs dirty (yellow) working tree.
 Nerd Font icons are auto-detected from your terminal. Ghostty, WezTerm, Kitty, iTerm2, and Alacritty are recognised automatically — everything else falls back to plain Unicode symbols. If detection gets it wrong (e.g. when running inside tmux), override it:
 
 ```bash
-export SLOP_FOOTER_NERD_FONTS=1  # force Nerd Fonts on
-export SLOP_FOOTER_NERD_FONTS=0  # force plain icons
+export FOOTER_NERD_FONTS=1  # force Nerd Fonts on
+export FOOTER_NERD_FONTS=0  # force plain icons
 ```
 
 ### Installing a Nerd Font (macOS)
@@ -159,7 +159,7 @@ Other fonts available via `brew search nerd-font`.
 
 ### Custom Icons
 
-To swap out any icon, add an `icons` key to your `~/.pi/agent/configs/slop-footer.json`. You can browse all available Nerd Font glyphs at [nerdfonts.com/cheat-sheet](https://www.nerdfonts.com/cheat-sheet) — copy the **UTF-8 codepoint** (e.g. `\uF126`) or the glyph character directly and paste it into your config:
+To swap out any icon, add an `icons` key to your `~/.pi/agent/configs/footer.json`. You can browse all available Nerd Font glyphs at [nerdfonts.com/cheat-sheet](https://www.nerdfonts.com/cheat-sheet) — copy the **UTF-8 codepoint** (e.g. `\uF126`) or the glyph character directly and paste it into your config:
 
 ```json
 {

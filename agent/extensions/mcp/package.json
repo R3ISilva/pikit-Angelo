@@ -1,0 +1,26 @@
+{
+  "name": "mcp",
+  "version": "2.0.0",
+  "description": "MCP bridge extension for pi",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/adrianapan/pi-dev.git"
+  },
+  "bugs": {
+    "url": "https://github.com/adrianapan/pi-dev/issues"
+  },
+  "homepage": "https://github.com/adrianapan/pi-dev#readme",
+  "keywords": [
+    "pi",
+    "extension",
+    "mcp",
+    "pi-package",
+    "pi-coding-agent"
+  ],
+  "pi": {
+    "extensions": ["./index.ts"]
+  },
+  "author": "Adrian Apan",
+  "license": "MIT"
+}

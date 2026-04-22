@@ -1,20 +1,20 @@
 {
-  "name": "slop-startup",
+  "name": "footer",
   "version": "1.0.0",
-  "description": "Custom startup header for pi",
+  "description": "A customizable footer status bar for pi",
   "type": "module",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/adrianapan/pi-slop-startup.git"
+    "url": "git+https://github.com/adrianapan/pi-dev.git"
   },
   "bugs": {
-    "url": "https://github.com/adrianapan/pi-slop-startup/issues"
+    "url": "https://github.com/adrianapan/pi-dev/issues"
   },
-  "homepage": "https://github.com/adrianapan/pi-slop-startup#readme",
+  "homepage": "https://github.com/adrianapan/pi-dev#readme",
   "keywords": [
     "pi",
     "extension",
-    "startup-screen",
+    "footer",
     "pi-package",
     "pi-coding-agent"
   ],

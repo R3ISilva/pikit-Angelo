@@ -1,4 +1,4 @@
-# slop-spinners
+# spinners
 
 Replaces the standard **Thinking** verb shown during LLM inference with a random one picked from a curated list of 170+ alternatives — one per response.
 
@@ -15,7 +15,7 @@ Example outputs:
 ## Structure
 
 ```
-slop-spinners/
+spinners/
 ├── package.json
 ├── README.md
 └── src/

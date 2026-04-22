@@ -105,7 +105,7 @@ export interface RenderedSegment {
   visible: boolean;
 }
 
-// User configuration from slop-footer.json
+// User configuration from footer.json
 export interface SlopFooterUserConfig {
   leftSegments?: StatusLineSegmentId[];
   rightSegments?: StatusLineSegmentId[];

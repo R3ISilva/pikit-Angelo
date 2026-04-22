@@ -211,7 +211,7 @@ export function discoverLoadedCounts(): LoadedCounts {
 
   // MCP servers — count unique server names from the pi config
   let mcpServers = 0;
-  const mcpConfigPath = join(homeDir, ".pi", "agent", "configs", "slop-mcp.json");
+  const mcpConfigPath = join(homeDir, ".pi", "agent", "configs", "mcp.json");
   if (existsSync(mcpConfigPath)) {
     try {
       const cfg = JSON.parse(readFileSync(mcpConfigPath, "utf-8"));

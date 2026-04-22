@@ -1,8 +1,8 @@
-# slop-startup
+# startup
 
 A startup header for the pi coding agent. Displays a two-column welcome box at session start showing model info, current project, loaded configuration counts, quick tips, and recent sessions.
 
-<img src="demo.png" alt="slop-startup">
+<img src="demo.png" alt="startup">
 
 ## Features
 
@@ -19,13 +19,13 @@ A startup header for the pi coding agent. Displays a two-column welcome box at s
 Install from npm using pi:
 
 ```bash
-pi install npm:slop-startup
+pi install npm:startup
 ```
 
 Or copy the extension files to your pi extensions directory manually:
 
 ```bash
-cp -r . ~/.pi/agent/extensions/slop-startup
+cp -r . ~/.pi/agent/extensions/startup
 ```
 
 Or load it directly for testing:
@@ -61,7 +61,7 @@ The extension scans standard pi paths to count what is active:
 | Extensions | `~/.pi/agent/settings.json`, `<cwd>/.pi/settings.json` (npm packages), plus `~/.pi/agent/extensions/`, `<cwd>/.pi/extensions/`, `<cwd>/extensions/` (local dirs) |
 | Skills | `~/.pi/agent/skills/`, `<cwd>/.pi/skills/`, `<cwd>/skills/` (dirs with `SKILL.md`) |
 | Prompt templates | `~/.pi/agent/prompts/`, `~/.pi/agent/commands/`, `~/.claude/commands/`, `<cwd>/.pi/commands/`, `<cwd>/.claude/commands/` |
-| MCP servers | `~/.pi/agent/configs/slop-mcp.json` |
+| MCP servers | `~/.pi/agent/configs/mcp.json` |
 
 ## Recent sessions discovery
 
@@ -72,8 +72,8 @@ Sessions are found by scanning `~/.pi/agent/sessions/` and `~/.pi/sessions/` for
 Nerd Font icons are auto-detected from your terminal. Ghostty, WezTerm, Kitty, iTerm2, and Alacritty are recognised automatically — everything else falls back to plain Unicode symbols. If detection gets it wrong (e.g. when running inside tmux), override it:
 
 ```bash
-export SLOP_FOOTER_NERD_FONTS=1  # force Nerd Fonts on
-export SLOP_FOOTER_NERD_FONTS=0  # force plain icons
+export FOOTER_NERD_FONTS=1  # force Nerd Fonts on
+export FOOTER_NERD_FONTS=0  # force plain icons
 ```
 
 ### Installing a Nerd Font (macOS)

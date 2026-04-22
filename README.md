@@ -1,51 +1,51 @@
 # Custom pi.dev setup
 
-My opinionated configuration for [pi.dev](https://pi.dev/), a minimal terminal coding agent. This repo tweaks the TUI experience with a custom startup screen, footer status bar, dynamic spinner verbs, and a warm color theme — all namespaced under the `slop-*` prefix.
+My opinionated configuration for [pi.dev](https://pi.dev/), a minimal terminal coding agent. This repo tweaks the TUI experience with a custom startup screen, footer status bar, dynamic spinner verbs, and a warm color theme.
 
 ## What's in here
 
 ```
 agent/
 ├── configs/
-│   ├── slop-footer.json   # Footer segment configuration (tracked)
-│   └── slop-mcp.json      # MCP server config — gitignored, see slop-mcp/slop-mcp.json.example
+│   ├── footer.json   # Footer segment configuration (tracked)
+│   └── mcp.json      # MCP server config — gitignored, see mcp/mcp.json.example
 ├── themes/
-│   └── slop.json          # Custom warm color theme
+│   └── slop.json     # Custom warm color theme
 └── extensions/
-    ├── slop-footer/       # Status bar with git, tokens, cost, context
-    ├── slop-mcp/          # MCP server bridge with lazy connections and proxy tool
-    ├── slop-spinners/     # Rotating spinner verbs while the agent thinks
-    └── slop-startup/      # Welcome header shown at session start
+    ├── footer/       # Status bar with git, tokens, cost, context
+    ├── mcp/          # MCP server bridge with lazy connections and proxy tool
+    ├── spinners/     # Rotating spinner verbs while the agent thinks
+    └── startup/      # Welcome header shown at session start
 ```
 
-### slop-footer
+### footer
 
 A customizable footer that replaces pi's default status bar. Renders live data in left- and right-aligned segments:
 
 - **Left**: agent icon, separator, active model, thinking level, current path, git branch + dirty state
 - **Right**: context window %, total/input/output token counts, estimated API cost
 
-Segments are configured via `slop-footer.json`. Supports Nerd Font icons with plain-ASCII fallbacks. Git status is cached and invalidated automatically on file writes or git operations.
+Segments are configured via `footer.json`. Supports Nerd Font icons with plain-ASCII fallbacks. Git status is cached and invalidated automatically on file writes or git operations.
 
-<img src="agent/extensions/slop-footer/demo.png" alt="slop-footer">
+<img src="agent/extensions/footer/demo.png" alt="footer">
 
-### slop-spinners
+### spinners
 
 Replaces the default "Thinking..." working message with ~180 rotating verbs. A new verb is picked every 2.5 seconds with a typewriter reveal effect (42ms per character). Hooks into `turn_start` / `message_update` / `turn_end` to start, stop, and clean up timers.
 
 Sample verbs: Architecting, Boondoggling, Flibbertigibbeting, Hyperspacing, Lollygagging, Perambulating...
 
-### slop-mcp
+### mcp
 
 Bridges [Model Context Protocol (MCP)](https://modelcontextprotocol.io) servers into pi with minimal context overhead. Instead of registering every MCP tool individually at startup (which can burn thousands of tokens), it registers a single `mcp` proxy tool. The LLM searches for tools with `mcp({ search: "keyword" })`, inspects schemas with `mcp({ describe: "tool_name" })`, and calls them with `mcp({ tool: "tool_name", args: '{...}' })`. Servers start lazily — only when a tool is actually invoked. Tool metadata is cached to disk so discovery works without live connections.
 
 Key features: lazy server startup, proxy tool pattern, disk metadata cache, proper session restart lifecycle, per-server `directTools` opt-in, config merging across all standard MCP locations, `${VAR}` env interpolation, and connected-server count in the footer status bar. Use `/mcp` for status, `/mcp tools [server]` to list tools, `/mcp reconnect [server]`, `/mcp search <query>`.
 
-### slop-startup
+### startup
 
 Renders a two-column welcome box at session start showing: active model + provider, current working directory, keyboard shortcut hints, counts of loaded context files / extensions / skills / prompt templates / MCP servers, and up to three recent sessions with relative timestamps. Hidden below 44 terminal columns.
 
-<img src="agent/extensions/slop-startup/demo.png" alt="slop-startup">
+<img src="agent/extensions/startup/demo.png" alt="startup">
 
 ### slop theme
 
@@ -120,7 +120,7 @@ Navigate to **Theme** and select `slop`.
 
 ### 5. Set up Nerd Fonts (recommended)
 
-Slop-footer and slop-startup use Nerd Font icons for git status, model info, and other indicators. Most modern terminals (Ghostty, WezTerm, Kitty, Alacritty) auto-detect support — iTerm2 needs a small one-time config.
+The footer and startup extensions use Nerd Font icons for git status, model info, and other indicators. Most modern terminals (Ghostty, WezTerm, Kitty, Alacritty) auto-detect support — iTerm2 needs a small one-time config.
 
 **Install a Nerd Font on macOS:**
 
@@ -139,7 +139,7 @@ Other fonts available via `brew search nerd-font`.
 No config needed for Ghostty, WezTerm, Kitty, or Alacritty — icons work out of the box. If icons still look wrong, force Nerd Font mode:
 
 ```bash
-export SLOP_FOOTER_NERD_FONTS=1
+export FOOTER_NERD_FONTS=1
 ```
 
 ### 6. Configure MCP servers (optional)
@@ -147,10 +147,10 @@ export SLOP_FOOTER_NERD_FONTS=1
 Copy the example config and edit it with your servers:
 
 ```bash
-cp ~/.pi/agent/extensions/slop-mcp/slop-mcp.json.example ~/.pi/agent/configs/slop-mcp.json
+cp ~/.pi/agent/extensions/mcp/mcp.json.example ~/.pi/agent/configs/mcp.json
 ```
 
-See [`agent/extensions/slop-mcp/README.md`](agent/extensions/slop-mcp/README.md) for the full configuration reference.
+See [`agent/extensions/mcp/README.md`](agent/extensions/mcp/README.md) for the full configuration reference.
 
 ### 7. Add custom or local models (optional)
 
@@ -241,7 +241,7 @@ Skill locations: `~/.pi/agent/skills/`, `.pi/skills/`, `.agents/skills/`, or lis
 
 ### MCP (Model Context Protocol)
 
-Pi has **no built-in MCP support** — this is a deliberate design choice. The `slop-mcp` extension in this repo provides a full MCP bridge. See `agent/extensions/slop-mcp/README.md` for configuration details.
+Pi has **no built-in MCP support** — this is a deliberate design choice. The `mcp` extension in this repo provides a full MCP bridge. See `agent/extensions/mcp/README.md` for configuration details.
 
 The two general approaches for adding external tools to pi:
 

@@ -1,18 +1,18 @@
-# slop-mcp
+# mcp
 
 MCP bridge extension for pi. Connects to configured MCP servers on-demand and exposes their tools via a single proxy tool — keeping context window usage minimal — with optional per-server direct tool registration.
 
 ## How it works
 
-Instead of registering every MCP tool individually at startup (which burns the entire tool schema list into the context window whether or not they're used), slop-mcp registers a single `mcp` proxy tool (~200 tokens). The LLM calls `mcp({ search: "keyword" })` to discover what's available, `mcp({ describe: "tool_name" })` to inspect schemas, and `mcp({ tool: "tool_name", args: '{"k":"v"}' })` to call tools. Servers connect lazily — only when a tool is actually needed.
+Instead of registering every MCP tool individually at startup (which burns the entire tool schema list into the context window whether or not they're used), mcp registers a single `mcp` proxy tool (~200 tokens). The LLM calls `mcp({ search: "keyword" })` to discover what's available, `mcp({ describe: "tool_name" })` to inspect schemas, and `mcp({ tool: "tool_name", args: '{"k":"v"}' })` to call tools. Servers connect lazily — only when a tool is actually needed.
 
-Tool metadata is cached to `~/.pi/agent/cache/slop-mcp-{serverName}.json` (one file per server) after each connection, so search and describe work instantly without starting any server processes. Splitting by server keeps cache files small and independently manageable regardless of how many servers you configure.
+Tool metadata is cached to `~/.pi/agent/cache/mcp-{serverName}.json` (one file per server) after each connection, so search and describe work instantly without starting any server processes. Splitting by server keeps cache files small and independently manageable regardless of how many servers you configure.
 
 ## Features
 
 - **Lazy server startup**: Servers only start when a tool is actually called
 - **Proxy tool pattern**: One `mcp` tool instead of N tool definitions — dramatically reduces context usage
-- **Metadata cache**: Tool names and descriptions cached to `~/.pi/agent/cache/slop-mcp-{serverName}.json` (one file per server); search/describe work without live connections
+- **Metadata cache**: Tool names and descriptions cached to `~/.pi/agent/cache/mcp-{serverName}.json` (one file per server); search/describe work without live connections
 - **Direct tools (opt-in)**: Per-server `directTools` config registers specific tools individually alongside the proxy
 - **Session restart resilience**: Connections are closed and reset on each new session; servers reconnect lazily
 - **Config merging**: Reads from all standard MCP config locations and merges them
@@ -25,7 +25,7 @@ Auto-discovered from `~/.pi/agent/extensions/`. No additional registration requi
 
 ## Configuration
 
-Create `~/.pi/agent/configs/slop-mcp.json`:
+Create `~/.pi/agent/configs/mcp.json`:
 
 ### Basic config
 
