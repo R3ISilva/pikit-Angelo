@@ -1,7 +1,7 @@
 {
   "defaultModel": "qwen3.5:4b",
   "defaultProvider": "ollama",
-  "lastChangelogVersion": "0.67.68",
+  "lastChangelogVersion": "0.68.1",
   "packages": [
     {
       "source": "npm:@ollama/pi-web-search",

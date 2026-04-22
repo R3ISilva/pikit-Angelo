@@ -161,7 +161,7 @@ Other Nerd Fonts are available via `brew search nerd-font`.
 After installing a Nerd Font, set it in iTerm2:
 
 1. Open **Settings → Profiles → Text**
-2. Set **Font** to `JetBrainsMonoNL Nerd Font Mono`, size `12`
+2. Set **Font** to `JetBrainsMonoNL Nerd Font Propo`, size `12`
 3. Enable **Use a different font for non-ASCII text** and set the same font there — this is required for the icons to render correctly
 
 ### Custom Icons
