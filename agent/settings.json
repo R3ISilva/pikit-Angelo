@@ -1,13 +1,11 @@
 {
-  "defaultModel": "qwen3.5:4b",
-  "defaultProvider": "ollama",
+  "defaultModel": "claude-sonnet-4.6",
+  "defaultProvider": "github-copilot",
   "lastChangelogVersion": "0.68.1",
   "packages": [
     {
       "source": "npm:@ollama/pi-web-search",
-      "extensions": [
-        "+index.ts"
-      ]
+      "extensions": ["+index.ts"]
     }
   ],
   "theme": "slop",
@@ -22,8 +20,9 @@
   "followUpMode": "one-at-a-time",
   "workingVibe": "zen",
   "enabledModels": [
-    "ollama/qwen3.5:4b",
-    "ollama/gemma4:e4b"
+    "github-copilot/claude-opus-4.6",
+    "github-copilot/gpt-4.1",
+    "github-copilot/claude-sonnet-4.6"
   ],
   "doubleEscapeAction": "tree",
   "treeFilterMode": "default",
