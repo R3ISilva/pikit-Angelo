@@ -1,0 +1,157 @@
+import { spawn } from "node:child_process";
+import type { McpConfig, McpTool, McpCallResult } from "./types.js";
+import type { McpStdioClient } from "./client.js";
+
+// ─── General helpers ──────────────────────────────────────────────────────────
+
+export function openBrowser(url: string): void {
+  const cmd = process.platform === "darwin" ? "open"
+    : process.platform === "win32" ? "start"
+    : "xdg-open";
+  spawn(cmd, [url], { detached: true, stdio: "ignore" }).unref();
+}
+
+export function sanitize(s: string): string {
+  return s.replace(/[^a-zA-Z0-9_]/g, "_");
+}
+
+export function contentToText(content: McpCallResult["content"]): string {
+  return content
+    .map((c) => {
+      if (c.type === "text") return c.text ?? "";
+      if (c.type === "image") return `[image: ${c.mimeType ?? "unknown"}]`;
+      if (c.type === "resource") return c.text ?? "[resource]";
+      return `[${c.type}]`;
+    })
+    .join("\n");
+}
+
+// ─── Proxy tool helpers ───────────────────────────────────────────────────────
+
+export function buildProxyDescription(config: McpConfig, toolsCache: Map<string, McpTool[]>): string {
+  const serverNames = Object.keys(config.mcpServers);
+  const lines: string[] = [
+    "MCP gateway — search, describe, and call tools from configured MCP servers.",
+    "Servers connect lazily on first use. Use search to discover tools before calling.",
+    "",
+    "Configured servers:",
+  ];
+
+  for (const name of serverNames) {
+    const count = toolsCache.get(name)?.length;
+    const info = count !== undefined ? `${count} tools` : "not yet connected";
+    lines.push(`  • ${name}: ${info}`);
+  }
+
+  lines.push(
+    "",
+    "Modes (pass one parameter at a time):",
+    '  search: "keyword"                        — find tools by name or description',
+    '  describe: "tool_name"                    — show full parameter schema for a tool',
+    "  tool: \"tool_name\", args: \'{}\'          — call a tool (auto-connects its server)",
+    '  connect: "server_name"                   — explicitly connect a server',
+    '  server: "server_name"                    — filter search/describe to one server',
+    "  (no params)                              — show server connection status",
+  );
+
+  return lines.join("\n");
+}
+
+export function searchTools(
+  query: string,
+  serverFilter: string | undefined,
+  toolsCache: Map<string, McpTool[]>,
+): Array<{ toolName: string; serverName: string; description: string; score: number }> {
+  const q = query.toLowerCase();
+  const results: Array<{ toolName: string; serverName: string; description: string; score: number }> = [];
+
+  for (const [serverName, tools] of toolsCache) {
+    if (serverFilter && serverName !== serverFilter) continue;
+    for (const tool of tools) {
+      const nameMatch = tool.name.toLowerCase().includes(q);
+      const descMatch = (tool.description ?? "").toLowerCase().includes(q);
+      if (nameMatch || descMatch) {
+        results.push({
+          toolName: tool.name,
+          serverName,
+          description: tool.description ?? "(no description)",
+          score: nameMatch ? 2 : 1,
+        });
+      }
+    }
+  }
+
+  return results.sort((a, b) => b.score - a.score);
+}
+
+export function formatSearchResults(
+  results: Array<{ toolName: string; serverName: string; description: string }>,
+): string {
+  if (results.length === 0) return "No tools found matching that query.";
+  return results
+    .map((r) => `${r.toolName}  [${r.serverName}]\n  ${r.description}`)
+    .join("\n\n");
+}
+
+export function findTool(
+  toolName: string,
+  serverFilter: string | undefined,
+  toolsCache: Map<string, McpTool[]>,
+): { tool: McpTool; serverName: string } | null {
+  for (const [serverName, tools] of toolsCache) {
+    if (serverFilter && serverName !== serverFilter) continue;
+    const tool = tools.find((t) => t.name === toolName);
+    if (tool) return { tool, serverName };
+  }
+  return null;
+}
+
+export function formatSchema(tool: McpTool): string {
+  const schema = tool.inputSchema;
+  const lines: string[] = [tool.name, `  ${tool.description ?? "(no description)"}`];
+
+  if (!schema?.properties || Object.keys(schema.properties).length === 0) {
+    lines.push("  No parameters.");
+    return lines.join("\n");
+  }
+
+  lines.push("", "  Parameters:");
+  const required = new Set<string>(Array.isArray(schema.required) ? schema.required : []);
+  for (const [propName, propSchema] of Object.entries(
+    schema.properties as Record<string, Record<string, unknown>>,
+  )) {
+    const req = required.has(propName) ? " (required)" : "";
+    const type = (propSchema?.type as string) ?? "any";
+    const desc = propSchema?.description ? ` — ${propSchema.description}` : "";
+    lines.push(`    ${propName}: ${type}${req}${desc}`);
+  }
+
+  return lines.join("\n");
+}
+
+export function buildStatusText(
+  config: McpConfig,
+  clients: Map<string, McpStdioClient>,
+  toolsCache: Map<string, McpTool[]>,
+): string {
+  const serverNames = Object.keys(config.mcpServers);
+  if (serverNames.length === 0) return "No MCP servers configured.";
+
+  const lines: string[] = [];
+  let connectedCount = 0;
+
+  for (const name of serverNames) {
+    const client = clients.get(name);
+    const connected = !!client && !client.isDead;
+    if (connected) connectedCount++;
+    const status = connected ? "connected" : "idle";
+    const tools = toolsCache.get(name);
+    const toolInfo = tools ? `${tools.length} tools` : "no cache";
+    lines.push(`  • ${name}: ${status} (${toolInfo})`);
+  }
+
+  return [
+    `MCP: ${connectedCount}/${serverNames.length} server(s) connected`,
+    ...lines,
+  ].join("\n");
+}

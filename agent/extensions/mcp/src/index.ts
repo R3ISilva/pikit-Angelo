@@ -29,402 +29,21 @@
 
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 import { Type } from "@sinclair/typebox";
-import { spawn, type ChildProcess } from "node:child_process";
-import { createInterface } from "node:readline";
-import { readFileSync, writeFileSync, existsSync, mkdirSync } from "node:fs";
-import { homedir } from "node:os";
-import { join } from "node:path";
-
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-interface McpServerConfig {
-  command?: string;
-  args?: string[];
-  env?: Record<string, string>;
-  directTools?: boolean | string[];
-  excludeTools?: string[];
-}
-
-interface McpConfig {
-  mcpServers: Record<string, McpServerConfig>;
-}
-
-interface McpTool {
-  name: string;
-  description?: string;
-  inputSchema?: {
-    type?: string;
-    properties?: Record<string, unknown>;
-    required?: string[];
-    [key: string]: unknown;
-  };
-}
-
-interface McpCallResult {
-  content: Array<{ type: string; text?: string; data?: string; mimeType?: string }>;
-  isError?: boolean;
-}
-
-interface JsonRpcRequest {
-  jsonrpc: "2.0";
-  id: number;
-  method: string;
-  params?: unknown;
-}
-
-interface JsonRpcResponse {
-  jsonrpc: "2.0";
-  id: number;
-  result?: unknown;
-  error?: { code: number; message: string; data?: unknown };
-}
-
-interface ServerCache {
-  version: 1;
-  tools: McpTool[];
-}
-
-// ─── McpStdioClient ───────────────────────────────────────────────────────────
-
-class McpStdioClient {
-  private proc: ChildProcess;
-  private pending = new Map<
-    number,
-    { resolve: (r: JsonRpcResponse) => void; reject: (e: Error) => void; timer: ReturnType<typeof setTimeout> }
-  >();
-  private nextId = 1;
-  private _dead = false;
-  private stderrLines: string[] = [];
-  private stderrHandlers: Array<(line: string) => void> = [];
-
-  constructor(
-    readonly serverName: string,
-    private config: McpServerConfig,
-    private timeoutMs = 120_000,
-  ) {
-    // Build env: process.env + server env, with ${VAR} interpolation in values
-    const env: Record<string, string> = {};
-    for (const [k, v] of Object.entries(process.env)) {
-      if (v !== undefined) env[k] = v;
-    }
-    for (const [k, v] of Object.entries(config.env ?? {})) {
-      env[k] = v.replace(/\$\{([^}]+)\}/g, (_, name) => process.env[name] ?? "");
-    }
-
-    this.proc = spawn(config.command!, config.args ?? [], {
-      stdio: ["pipe", "pipe", "pipe"],
-      env,
-      shell: false,
-    });
-
-    this.proc.stderr?.on("data", (chunk: Buffer) => {
-      const lines = chunk.toString().split("\n").filter(Boolean);
-      this.stderrLines.push(...lines);
-      if (this.stderrLines.length > 20) this.stderrLines.splice(0, this.stderrLines.length - 20);
-      for (const line of lines) {
-        for (const h of this.stderrHandlers) h(line);
-      }
-    });
-
-    const rl = createInterface({ input: this.proc.stdout! });
-    rl.on("line", (line) => {
-      const trimmed = line.trim();
-      if (!trimmed) return;
-      try {
-        const msg = JSON.parse(trimmed) as JsonRpcResponse;
-        if (typeof msg.id !== "number") return; // ignore server-sent notifications
-        const pending = this.pending.get(msg.id);
-        if (!pending) return;
-        clearTimeout(pending.timer);
-        this.pending.delete(msg.id);
-        if (msg.error) {
-          pending.reject(new Error(`MCP error ${msg.error.code}: ${msg.error.message}`));
-        } else {
-          pending.resolve(msg);
-        }
-      } catch {
-        // ignore non-JSON lines (startup noise, etc.)
-      }
-    });
-
-    this.proc.on("exit", (code) => {
-      this._dead = true;
-      const err = new Error(
-        `MCP server "${this.serverName}" exited (code ${code ?? "unknown"})` +
-          (this.stderrLines.length ? `\nstderr:\n${this.stderrLines.join("\n")}` : ""),
-      );
-      for (const { reject, timer } of this.pending.values()) {
-        clearTimeout(timer);
-        reject(err);
-      }
-      this.pending.clear();
-    });
-  }
-
-  private send(method: string, params?: unknown): Promise<JsonRpcResponse> {
-    if (this._dead) {
-      return Promise.reject(new Error(`MCP server "${this.serverName}" is not running`));
-    }
-    return new Promise((resolve, reject) => {
-      const id = this.nextId++;
-      const timer = setTimeout(() => {
-        this.pending.delete(id);
-        reject(new Error(`MCP request "${method}" timed out after ${this.timeoutMs}ms`));
-      }, this.timeoutMs);
-      this.pending.set(id, { resolve, reject, timer });
-      const msg: JsonRpcRequest = { jsonrpc: "2.0", id, method, params: params ?? {} };
-      this.proc.stdin!.write(JSON.stringify(msg) + "\n");
-    });
-  }
-
-  onStderr(handler: (line: string) => void): () => void {
-    this.stderrHandlers.push(handler);
-    return () => {
-      this.stderrHandlers = this.stderrHandlers.filter((h) => h !== handler);
-    };
-  }
-
-  get isDead(): boolean {
-    return this._dead;
-  }
-
-  async initialize(): Promise<void> {
-    await this.send("initialize", {
-      protocolVersion: "2024-11-05",
-      capabilities: { tools: {} },
-      clientInfo: { name: "mcp", version: "2.0.0" },
-    });
-    this.proc.stdin!.write(
-      JSON.stringify({ jsonrpc: "2.0", method: "notifications/initialized" }) + "\n",
-    );
-  }
-
-  async listTools(): Promise<McpTool[]> {
-    const tools: McpTool[] = [];
-    let cursor: string | undefined;
-    do {
-      const res = await this.send("tools/list", cursor ? { cursor } : undefined);
-      const result = res.result as { tools?: McpTool[]; nextCursor?: string };
-      tools.push(...(result.tools ?? []));
-      cursor = result.nextCursor;
-    } while (cursor);
-    return tools;
-  }
-
-  async callTool(name: string, args: Record<string, unknown>): Promise<McpCallResult> {
-    const res = await this.send("tools/call", { name, arguments: args });
-    return res.result as McpCallResult;
-  }
-
-  close(): void {
-    if (!this._dead) {
-      this.proc.stdin?.end();
-      this.proc.kill("SIGTERM");
-    }
-  }
-}
-
-// ─── Config ───────────────────────────────────────────────────────────────────
-
-/** Load config from ~/.pi/agent/configs/mcp.json */
-function loadConfig(): McpConfig {
-  const p = join(homedir(), ".pi", "agent", "configs", "mcp.json");
-  if (!existsSync(p)) return { mcpServers: {} };
-  try {
-    const raw = JSON.parse(readFileSync(p, "utf-8")) as Partial<McpConfig>;
-    if (raw?.mcpServers && typeof raw.mcpServers === "object") {
-      return { mcpServers: raw.mcpServers };
-    }
-  } catch {}
-  return { mcpServers: {} };
-}
-
-// ─── Metadata cache ───────────────────────────────────────────────────────────
-
-function cacheDir(): string {
-  return join(homedir(), ".pi", "agent", "cache");
-}
-
-function serverCachePath(serverName: string): string {
-  return join(cacheDir(), `mcp-${serverName}.json`);
-}
-
-function loadServerCache(serverName: string): McpTool[] {
-  try {
-    const p = serverCachePath(serverName);
-    if (existsSync(p)) {
-      const raw = JSON.parse(readFileSync(p, "utf-8")) as ServerCache;
-      if (raw?.version === 1 && Array.isArray(raw.tools)) return raw.tools;
-    }
-  } catch {}
-  return [];
-}
-
-function saveServerCache(serverName: string, tools: McpTool[]): void {
-  try {
-    const dir = cacheDir();
-    mkdirSync(dir, { recursive: true });
-    const cache: ServerCache = { version: 1, tools };
-    writeFileSync(serverCachePath(serverName), JSON.stringify(cache, null, 2), "utf-8");
-  } catch {}
-}
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function openBrowser(url: string): void {
-  const cmd = process.platform === "darwin" ? "open"
-    : process.platform === "win32" ? "start"
-    : "xdg-open";
-  spawn(cmd, [url], { detached: true, stdio: "ignore" }).unref();
-}
-
-function sanitize(s: string): string {
-  return s.replace(/[^a-zA-Z0-9_]/g, "_");
-}
-
-function contentToText(content: McpCallResult["content"]): string {
-  return content
-    .map((c) => {
-      if (c.type === "text") return c.text ?? "";
-      if (c.type === "image") return `[image: ${c.mimeType ?? "unknown"}]`;
-      if (c.type === "resource") return c.text ?? "[resource]";
-      return `[${c.type}]`;
-    })
-    .join("\n");
-}
-
-// ─── Proxy tool helpers ───────────────────────────────────────────────────────
-
-function buildProxyDescription(config: McpConfig, toolsCache: Map<string, McpTool[]>): string {
-  const serverNames = Object.keys(config.mcpServers);
-  const lines: string[] = [
-    "MCP gateway — search, describe, and call tools from configured MCP servers.",
-    "Servers connect lazily on first use. Use search to discover tools before calling.",
-    "",
-    "Configured servers:",
-  ];
-
-  for (const name of serverNames) {
-    const count = toolsCache.get(name)?.length;
-    const info = count !== undefined ? `${count} tools` : "not yet connected";
-    lines.push(`  • ${name}: ${info}`);
-  }
-
-  lines.push(
-    "",
-    "Modes (pass one parameter at a time):",
-    '  search: "keyword"                        — find tools by name or description',
-    '  describe: "tool_name"                    — show full parameter schema for a tool',
-    "  tool: \"tool_name\", args: \'{}\'          — call a tool (auto-connects its server)",
-    '  connect: "server_name"                   — explicitly connect a server',
-    '  server: "server_name"                    — filter search/describe to one server',
-    "  (no params)                              — show server connection status",
-  );
-
-  return lines.join("\n");
-}
-
-function searchTools(
-  query: string,
-  serverFilter: string | undefined,
-  toolsCache: Map<string, McpTool[]>,
-): Array<{ toolName: string; serverName: string; description: string; score: number }> {
-  const q = query.toLowerCase();
-  const results: Array<{ toolName: string; serverName: string; description: string; score: number }> =
-    [];
-
-  for (const [serverName, tools] of toolsCache) {
-    if (serverFilter && serverName !== serverFilter) continue;
-    for (const tool of tools) {
-      const nameMatch = tool.name.toLowerCase().includes(q);
-      const descMatch = (tool.description ?? "").toLowerCase().includes(q);
-      if (nameMatch || descMatch) {
-        results.push({
-          toolName: tool.name,
-          serverName,
-          description: tool.description ?? "(no description)",
-          score: nameMatch ? 2 : 1,
-        });
-      }
-    }
-  }
-
-  return results.sort((a, b) => b.score - a.score);
-}
-
-function formatSearchResults(
-  results: Array<{ toolName: string; serverName: string; description: string }>,
-): string {
-  if (results.length === 0) return "No tools found matching that query.";
-  return results
-    .map((r) => `${r.toolName}  [${r.serverName}]\n  ${r.description}`)
-    .join("\n\n");
-}
-
-function findTool(
-  toolName: string,
-  serverFilter: string | undefined,
-  toolsCache: Map<string, McpTool[]>,
-): { tool: McpTool; serverName: string } | null {
-  for (const [serverName, tools] of toolsCache) {
-    if (serverFilter && serverName !== serverFilter) continue;
-    const tool = tools.find((t) => t.name === toolName);
-    if (tool) return { tool, serverName };
-  }
-  return null;
-}
-
-function formatSchema(tool: McpTool): string {
-  const schema = tool.inputSchema;
-  const lines: string[] = [tool.name, `  ${tool.description ?? "(no description)"}`];
-
-  if (!schema?.properties || Object.keys(schema.properties).length === 0) {
-    lines.push("  No parameters.");
-    return lines.join("\n");
-  }
-
-  lines.push("", "  Parameters:");
-  const required = new Set<string>(Array.isArray(schema.required) ? schema.required : []);
-  for (const [propName, propSchema] of Object.entries(
-    schema.properties as Record<string, Record<string, unknown>>,
-  )) {
-    const req = required.has(propName) ? " (required)" : "";
-    const type = (propSchema?.type as string) ?? "any";
-    const desc = propSchema?.description ? ` — ${propSchema.description}` : "";
-    lines.push(`    ${propName}: ${type}${req}${desc}`);
-  }
-
-  return lines.join("\n");
-}
-
-function buildStatusText(
-  config: McpConfig,
-  clients: Map<string, McpStdioClient>,
-  toolsCache: Map<string, McpTool[]>,
-): string {
-  const serverNames = Object.keys(config.mcpServers);
-  if (serverNames.length === 0) return "No MCP servers configured.";
-
-  const lines: string[] = [];
-  let connectedCount = 0;
-
-  for (const name of serverNames) {
-    const client = clients.get(name);
-    const connected = !!client && !client.isDead;
-    if (connected) connectedCount++;
-    const status = connected ? "connected" : "idle";
-    const tools = toolsCache.get(name);
-    const toolInfo = tools ? `${tools.length} tools` : "no cache";
-    lines.push(`  • ${name}: ${status} (${toolInfo})`);
-  }
-
-  return [
-    `MCP: ${connectedCount}/${serverNames.length} server(s) connected`,
-    ...lines,
-  ].join("\n");
-}
-
-// ─── Extension ────────────────────────────────────────────────────────────────
+import { McpStdioClient } from "./client.js";
+import { loadConfig } from "./config.js";
+import { loadServerCache, saveServerCache } from "./cache.js";
+import {
+  openBrowser,
+  sanitize,
+  contentToText,
+  buildProxyDescription,
+  searchTools,
+  formatSearchResults,
+  findTool,
+  formatSchema,
+  buildStatusText,
+} from "./helpers.js";
+import type { McpTool } from "./types.js";
 
 export default function mcpExtension(pi: ExtensionAPI) {
   const config = loadConfig();
@@ -453,7 +72,6 @@ export default function mcpExtension(pi: ExtensionAPI) {
     const existing = clients.get(serverName);
     if (existing && !existing.isDead) return existing;
 
-    // Reuse an in-flight connection attempt
     const pending = connecting.get(serverName);
     if (pending) return pending;
 
@@ -655,7 +273,6 @@ export default function mcpExtension(pi: ExtensionAPI) {
           }
         }
 
-        // Find the server that owns this tool (via cache)
         const found = findTool(params.tool, params.server, toolsCache);
         let targetServer = found?.serverName;
 
@@ -703,8 +320,7 @@ export default function mcpExtension(pi: ExtensionAPI) {
 
   // ─── Session lifecycle ────────────────────────────────────────────────────────
 
-  pi.on("session_start", async (_event, ctx) => {
-    // Close existing connections — they will reconnect lazily on first use
+  pi.on("session_start", async () => {
     for (const client of clients.values()) client.close();
     clients = new Map();
     connecting = new Map();
@@ -761,7 +377,6 @@ export default function mcpExtension(pi: ExtensionAPI) {
               ctx.ui.notify(`Unknown server: "${name}"`, "error");
               continue;
             }
-            // Force-close then reconnect
             clients.get(name)?.close();
             clients.delete(name);
             connecting.delete(name);
