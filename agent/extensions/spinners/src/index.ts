@@ -31,7 +31,7 @@ export default function slopSpinners(pi: ExtensionAPI) {
 
   function startCycling(ctx: any) {
     current = pickVerb();
-    ctx.ui.setWorkingMessage(current + "...");
+    typeVerb(ctx, current);
 
     cycleTimer = setInterval(() => {
       let next = pickVerb();
@@ -43,7 +43,8 @@ export default function slopSpinners(pi: ExtensionAPI) {
 
   pi.on("turn_start", async (_event: any, ctx: any) => {
     if (!ctx.hasUI) return;
-    stopAll();
+    // If already cycling (e.g. rapid tool calls), leave it running smoothly.
+    if (cycleTimer !== null || typeTimer !== null) return;
     startCycling(ctx);
   });
 
