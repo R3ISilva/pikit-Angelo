@@ -2,8 +2,8 @@
   "_comment": "Place this file at ~/.pi/agent/configs/protected-paths.json",
 
   "paths": [
-    { "path": ".env",          "ops": ["read", "write", "edit"] },
-    { "path": ".git/",         "ops": ["read", "write", "edit"] },
-    { "path": "node_modules/", "ops": ["write", "edit"] }
+    { "path": ".env",          "deny": ["read", "write", "edit"] },
+    { "path": ".git/",         "deny": ["read", "write", "edit"] },
+    { "path": "node_modules/", "deny": ["write", "edit"] }
   ]
 }

@@ -7,13 +7,13 @@
  * Config shape:
  * {
  *   "paths": [
- *     { "path": ".env",          "ops": ["read", "write", "edit"] },
- *     { "path": ".git/",         "ops": ["read", "write", "edit"] },
- *     { "path": "node_modules/", "ops": ["write", "edit"] }
+ *     { "path": ".env",          "deny": ["read", "write", "edit"] },
+ *     { "path": ".git/",         "deny": ["read", "write", "edit"] },
+ *     { "path": "node_modules/", "deny": ["write", "edit"] }
  *   ]
  * }
  *
- * ops is a denylist — the listed operations are blocked for that path.
+ * deny is a denylist — the listed operations are blocked for that path.
  */
 
 import { readFileSync } from "fs";
@@ -24,7 +24,7 @@ export type Op = "read" | "write" | "edit";
 
 export interface PathEntry {
   path: string;
-  ops: Op[];
+  deny: Op[];
 }
 
 export interface ProtectedPathsConfig {
@@ -32,9 +32,9 @@ export interface ProtectedPathsConfig {
 }
 
 export const DEFAULT_PATHS: PathEntry[] = [
-  { path: ".env",          ops: ["read", "write", "edit"] },
-  { path: ".git/",         ops: ["read", "write", "edit"] },
-  { path: "node_modules/", ops: ["write", "edit"] },
+  { path: ".env",          deny: ["read", "write", "edit"] },
+  { path: ".git/",         deny: ["read", "write", "edit"] },
+  { path: "node_modules/", deny: ["write", "edit"] },
 ];
 
 const CONFIG_PATH = join(homedir(), ".pi", "agent", "configs", "protected-paths.json");

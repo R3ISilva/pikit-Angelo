@@ -2,7 +2,7 @@
  * Protected Paths Extension
  *
  * Blocks read, write, and/or edit operations to protected paths.
- * Each entry defines a path and an explicit ops denylist.
+ * Each entry defines a path and an explicit deny list.
  *
  * Two matching strategies depending on the entry format:
  *
@@ -48,7 +48,7 @@ function matchesEntry(toolPath: string, entry: PathEntry): boolean {
 function getBlockedOps(toolPath: string, paths: PathEntry[]): Set<Op> | null {
   for (const entry of paths) {
     if (matchesEntry(toolPath, entry)) {
-      return new Set(entry.ops);
+      return new Set(entry.deny);
     }
   }
   return null;

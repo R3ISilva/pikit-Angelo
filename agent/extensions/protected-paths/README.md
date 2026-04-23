@@ -1,10 +1,10 @@
 # protected-paths
 
-Blocks `read`, `write`, and/or `edit` tool calls to protected paths. Each entry defines a path and an explicit ops denylist — so you can block writes to `node_modules/` while still allowing the agent to read it for docs and type references. The agent is told why it was blocked and recovers gracefully.
+Blocks `read`, `write`, and/or `edit` tool calls to protected paths. Each entry defines a path and an explicit `deny` list — so you can block writes to `node_modules/` while still allowing the agent to read it for docs and type references. The agent is told why it was blocked and recovers gracefully.
 
 ## How it works
 
-On every `read`, `write`, or `edit` tool call, the extension checks the target path against the protected entries. Each entry has a `path` and an `ops` array (the denylist). If the path matches and the current operation is in that entry's `ops`, the call is blocked. Operations not listed in `ops` are allowed through.
+On every `read`, `write`, or `edit` tool call, the extension checks the target path against the protected entries. Each entry has a `path` and a `deny` array. If the path matches and the current operation is in that entry's `deny` list, the call is blocked. Operations not listed are allowed through.
 
 Two matching strategies are used depending on the entry's `path` format:
 
@@ -50,15 +50,15 @@ cp ~/.pi/agent/extensions/protected-paths/protected-paths.example.json \
 ```json
 {
   "paths": [
-    { "path": ".env",          "ops": ["read", "write", "edit"] },
-    { "path": ".git/",         "ops": ["read", "write", "edit"] },
-    { "path": "node_modules/", "ops": ["write", "edit"] }
+    { "path": ".env",          "deny": ["read", "write", "edit"] },
+    { "path": ".git/",         "deny": ["read", "write", "edit"] },
+    { "path": "node_modules/", "deny": ["write", "edit"] }
   ]
 }
 ```
 
 - **`path`** — the file or directory to protect (see matching strategies below)
-- **`ops`** — denylist of operations to block; any op not listed is allowed through. Valid values: `"read"`, `"write"`, `"edit"`
+- **`deny`** — list of operations to block; any op not listed is allowed through. Valid values: `"read"`, `"write"`, `"edit"`
 
 When the config file is present it **replaces** the defaults entirely — add the defaults back if you still want them.
 
@@ -76,11 +76,11 @@ When the config file is present it **replaces** the defaults entirely — add th
 ```json
 {
   "paths": [
-    { "path": ".env",                    "ops": ["read", "write", "edit"] },
-    { "path": ".git/",                   "ops": ["read", "write", "edit"] },
-    { "path": "node_modules/",           "ops": ["write", "edit"] },
-    { "path": "~/.pi/agent/configs/",   "ops": ["read", "write", "edit"] },
-    { "path": "/etc/",                   "ops": ["write", "edit"] }
+    { "path": ".env",                    "deny": ["read", "write", "edit"] },
+    { "path": ".git/",                   "deny": ["read", "write", "edit"] },
+    { "path": "node_modules/",           "deny": ["write", "edit"] },
+    { "path": "~/.pi/agent/configs/",   "deny": ["read", "write", "edit"] },
+    { "path": "/etc/",                   "deny": ["write", "edit"] }
   ]
 }
 ```
