@@ -12,6 +12,7 @@ agent/
 │   ├── permission-gate.json     # Permission gate patterns — gitignored, see permission-gate.example.json
 │   ├── protected-paths.json     # Protected path entries — gitignored, see protected-paths.example.json
 │   └── .env                     # Secret env vars — gitignored, see env-loader/.env.example
+├── APPEND_SYSTEM.md             # Coding guidelines appended to the system prompt every session
 ├── themes/
 │   └── slop.json     # Custom warm color theme
 └── extensions/
@@ -329,6 +330,19 @@ Review `git diff --cached`. Focus on: $@
 ```
 
 Saved to `~/.pi/agent/prompts/` (global) or `.pi/prompts/` (project). Invoked with `/review` or `/review security`.
+
+### System Prompt Customization
+
+Pi supports two special Markdown files for injecting content into the system prompt — no extension or code required.
+
+| File | Behavior |
+|------|----------|
+| `SYSTEM.md` | **Replaces** the default system prompt entirely |
+| `APPEND_SYSTEM.md` | **Appends** to the default system prompt |
+
+Both are discovered in the same locations: `~/.pi/agent/` (global) or `.pi/` (project-level). Project files take precedence over global ones.
+
+This repo ships with `~/.pi/agent/APPEND_SYSTEM.md` — a trimmed version of [Andrej Karpathy's coding guidelines](https://github.com/forrestchang/andrej-karpathy-skills/blob/main/CLAUDE.md) covering four rules: think before coding, simplicity first, surgical changes, and goal-driven execution. It's appended on every session without touching pi's built-in prompt.
 
 ### Themes
 
