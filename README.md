@@ -335,6 +335,8 @@ Review `git diff --cached`. Focus on: $@
 
 Saved to `~/.pi/agent/prompts/` (global) or `.pi/prompts/` (project). Invoked with `/review` or `/review security`.
 
+**Skills vs prompt templates:** if you're telling the agent *what to do*, use a prompt template. If you're telling it *how to behave*, use a skill. Example: a `/review` template kicks off a code review task; a `pi-extension-builder` skill shapes how the agent approaches extension work without you having to invoke it manually.
+
 ### System Prompt Customization
 
 Pi supports two special Markdown files for injecting content into the system prompt — no extension or code required.
