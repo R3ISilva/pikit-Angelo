@@ -13,6 +13,8 @@ agent/
 │   ├── protected-paths.json     # Protected path entries — gitignored, see protected-paths.example.json
 │   └── .env                     # Secret env vars — gitignored, see env-loader/.env.example
 ├── APPEND_SYSTEM.md             # Coding guidelines appended to the system prompt every session
+├── skills/
+│   └── pi-extension-builder/    # Guidelines for building and modifying extensions in this repo
 ├── themes/
 │   └── slop.json     # Custom warm color theme
 └── extensions/
@@ -307,6 +309,8 @@ my-skill/
 Pi implements the [Agent Skills standard](https://agentskills.io/specification). At startup, pi reads all skill names and descriptions into the system prompt. When a task matches, the agent reads the full `SKILL.md` on-demand (progressive disclosure). Skills can also be invoked explicitly with `/skill:name`.
 
 Skill locations: `~/.pi/agent/skills/`, `.pi/skills/`, `.agents/skills/`, or listed in `settings.json`.
+
+This repo ships with one skill: **`pi-extension-builder`** — auto-loaded when you ask to build or modify an extension. Covers file structure, code conventions, modularity patterns, and documentation requirements. Invoke explicitly with `/skill:pi-extension-builder`.
 
 ### MCP (Model Context Protocol)
 
