@@ -67,8 +67,8 @@ export default function protectedPathsExtension(pi: ExtensionAPI) {
     if (!blockedOps || !blockedOps.has(toolName)) return undefined;
 
     if (ctx.hasUI) {
-      ctx.ui.notify(`Blocked ${toolName} on protected path: ${toolPath}`, "warning");
+      ctx.ui.notify(`[protected-paths] Blocked ${toolName} on protected path: ${toolPath}\nEdit configs/protected-paths.json to adjust.`, "warning");
     }
-    return { block: true, reason: `Path "${toolPath}" is protected (${toolName} denied)` };
+    return { block: true, reason: `[protected-paths] Path "${toolPath}" is protected (${toolName} denied). You can override this by editing ~/.pi/agent/configs/protected-paths.json.` };
   });
 }

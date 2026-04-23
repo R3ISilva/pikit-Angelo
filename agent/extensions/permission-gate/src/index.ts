@@ -27,7 +27,7 @@ export default function permissionGateExtension(pi: ExtensionAPI) {
 
     if (!ctx.hasUI) {
       if (blockWithoutUI) {
-        return { block: true, reason: "Dangerous command blocked (no UI for confirmation)" };
+        return { block: true, reason: "[permission-gate] Command blocked \u2014 matches a dangerous pattern. You can override this by editing ~/.pi/agent/configs/permission-gate.json." };
       }
       return undefined;
     }
@@ -38,7 +38,7 @@ export default function permissionGateExtension(pi: ExtensionAPI) {
     );
 
     if (choice !== "Yes") {
-      return { block: true, reason: "Blocked by user" };
+      return { block: true, reason: "[permission-gate] Command blocked by user \u2014 matches a dangerous pattern. You can override this by editing ~/.pi/agent/configs/permission-gate.json." };
     }
 
     return undefined;
