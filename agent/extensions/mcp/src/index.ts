@@ -9,17 +9,29 @@
  * Config location:
  *   ~/.pi/agent/configs/mcp.json
  *
- * Config format (Claude Desktop-compatible):
+ * Config format (Claude Desktop-compatible + HTTP extension):
  * {
  *   "mcpServers": {
- *     "my-server": {
+ *     "my-stdio-server": {
  *       "command": "npx",
  *       "args": ["-y", "@modelcontextprotocol/server-filesystem", "/tmp"],
  *       "env": { "MY_VAR": "${SOME_ENV_VAR}" },
  *       "directTools": true
+ *     },
+ *     "my-http-server": {
+ *       "url": "https://my-mcp-server.com/mcp",
+ *       "headers": { "Authorization": "Bearer ${MY_API_TOKEN}" }
  *     }
  *   }
  * }
+ *
+ * Transports:
+ *   stdio  — spawns a local process and communicates over stdin/stdout.
+ *            Use "command" + optional "args" and "env".
+ *   http   — Streamable HTTP transport (MCP spec 2025-03-26).
+ *            Sends JSON-RPC as POST requests to "url"; responses may be
+ *            plain JSON or Server-Sent Events. Use "headers" for auth.
+ *            Header values support ${ENV_VAR} interpolation.
  *
  * directTools:
  *   true         — register all tools from this server as individual pi tools
@@ -30,8 +42,10 @@
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 import { Type } from "@sinclair/typebox";
 import { McpStdioClient } from "./client.js";
+import { McpHttpClient } from "./http-client.js";
 import { loadConfig } from "./config.js";
 import { loadServerCache, saveServerCache } from "./cache.js";
+import type { McpClient, McpTool } from "./types.js";
 import {
   openBrowser,
   isOAuthUrl,
@@ -44,7 +58,6 @@ import {
   formatSchema,
   buildStatusText,
 } from "./helpers.js";
-import type { McpTool } from "./types.js";
 
 export default function mcpExtension(pi: ExtensionAPI) {
   const config = loadConfig();
@@ -64,12 +77,12 @@ export default function mcpExtension(pi: ExtensionAPI) {
   }
 
   // Live connection state — reset on each session_start
-  let clients = new Map<string, McpStdioClient>();
-  let connecting = new Map<string, Promise<McpStdioClient>>();
+  let clients = new Map<string, McpClient>();
+  let connecting = new Map<string, Promise<McpClient>>();
 
   // ─── Lazy connection management ──────────────────────────────────────────────
 
-  async function getOrConnect(serverName: string, ctx: any): Promise<McpStdioClient> {
+  async function getOrConnect(serverName: string, ctx: any): Promise<McpClient> {
     const existing = clients.get(serverName);
     if (existing && !existing.isDead) return existing;
 
@@ -77,53 +90,78 @@ export default function mcpExtension(pi: ExtensionAPI) {
     if (pending) return pending;
 
     const serverConfig = config.mcpServers[serverName];
-    if (!serverConfig?.command) {
-      throw new Error(`MCP server "${serverName}" has no command configured`);
+    if (!serverConfig?.command && !serverConfig?.url) {
+      throw new Error(
+        `MCP server "${serverName}" has no command (stdio) or url (http) configured`,
+      );
     }
 
+    const isHttp = !!serverConfig.url;
+
     const promise = (async () => {
-      const client = new McpStdioClient(serverName, serverConfig);
-      const stderrLines: string[] = [];
-      const openedUrls = new Set<string>();
-      const removeStderr = client.onStderr((line) => {
-        stderrLines.push(line);
-        // Auto-open auth URLs (e.g. mcp-remote OAuth flow) as they appear.
-        // Only open URLs that look like real OAuth prompts: URLs with query params
-        // (authorization URLs always have ?client_id=... etc.) or localhost URLs
-        // (OAuth callbacks). Plain server URLs logged as status info are skipped.
-        const urlMatch = line.match(/https?:\/\/\S+/);
-        if (urlMatch && !openedUrls.has(urlMatch[0]) && isOAuthUrl(urlMatch[0])) {
-          openedUrls.add(urlMatch[0]);
-          const url = urlMatch[0];
-          ctx?.ui?.notify(`MCP [${serverName}]: opening browser for authentication\n${url}`, "info");
-          setTimeout(() => openBrowser(url), 1000);
-        }
-      });
-
-      try {
-        await client.initialize();
-      } catch (err) {
-        removeStderr();
-        client.close();
-        connecting.delete(serverName);
-        const msg = err instanceof Error ? err.message : String(err);
-        const detail = stderrLines.length ? `\n${stderrLines.join("\n")}` : "";
-        throw new Error(`Failed to connect to "${serverName}": ${msg}${detail}`);
-      }
-
-      removeStderr();
-      // initialize() succeeded — the connection is good.
-      // All stderr collected during startup was just chatter (mcp-remote logs,
-      // protocol traffic, etc.). Suppress it entirely; no regex filtering needed.
-      // If initialize() had thrown, the full stderr would be included in the error above.
-
       const excluded = new Set(serverConfig.excludeTools ?? []);
-      const tools = (await client.listTools()).filter((t) => !excluded.has(t.name));
-      clients.set(serverName, client);
-      connecting.delete(serverName);
-      toolsCache.set(serverName, tools);
-      saveServerCache(serverName, tools);
-      return client;
+
+      if (isHttp) {
+        // ── HTTP (Streamable HTTP) transport ─────────────────────────────────────────
+        const client = new McpHttpClient(serverName, serverConfig);
+        try {
+          await client.initialize();
+        } catch (err) {
+          client.close();
+          connecting.delete(serverName);
+          const msg = err instanceof Error ? err.message : String(err);
+          throw new Error(`Failed to connect to "${serverName}" via HTTP: ${msg}`);
+        }
+        const tools = (await client.listTools()).filter((t) => !excluded.has(t.name));
+        clients.set(serverName, client);
+        connecting.delete(serverName);
+        toolsCache.set(serverName, tools);
+        saveServerCache(serverName, tools);
+        return client;
+      } else {
+        // ── stdio transport ───────────────────────────────────────────────────────
+        const client = new McpStdioClient(serverName, serverConfig);
+        const stderrLines: string[] = [];
+        const openedUrls = new Set<string>();
+        const removeStderr = client.onStderr((line) => {
+          stderrLines.push(line);
+          // Auto-open auth URLs (e.g. mcp-remote OAuth flow) as they appear.
+          // Only open URLs that look like real OAuth prompts: URLs with query params
+          // (authorization URLs always have ?client_id=... etc.) or localhost URLs
+          // (OAuth callbacks). Plain server URLs logged as status info are skipped.
+          const urlMatch = line.match(/https?:\/\/\S+/);
+          if (urlMatch && !openedUrls.has(urlMatch[0]) && isOAuthUrl(urlMatch[0])) {
+            openedUrls.add(urlMatch[0]);
+            const url = urlMatch[0];
+            ctx?.ui?.notify(`MCP [${serverName}]: opening browser for authentication\n${url}`, "info");
+            setTimeout(() => openBrowser(url), 1000);
+          }
+        });
+
+        try {
+          await client.initialize();
+        } catch (err) {
+          removeStderr();
+          client.close();
+          connecting.delete(serverName);
+          const msg = err instanceof Error ? err.message : String(err);
+          const detail = stderrLines.length ? `\n${stderrLines.join("\n")}` : "";
+          throw new Error(`Failed to connect to "${serverName}": ${msg}${detail}`);
+        }
+
+        removeStderr();
+        // initialize() succeeded — the connection is good.
+        // All stderr collected during startup was just chatter (mcp-remote logs,
+        // protocol traffic, etc.). Suppress it entirely; no regex filtering needed.
+        // If initialize() had thrown, the full stderr would be included in the error above.
+
+        const tools = (await client.listTools()).filter((t) => !excluded.has(t.name));
+        clients.set(serverName, client);
+        connecting.delete(serverName);
+        toolsCache.set(serverName, tools);
+        saveServerCache(serverName, tools);
+        return client;
+      }
     })();
 
     connecting.set(serverName, promise);

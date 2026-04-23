@@ -1,6 +1,6 @@
 # mcp
 
-MCP bridge extension for pi. Connects to configured MCP servers on-demand and exposes their tools via a single proxy tool — keeping context window usage minimal — with optional per-server direct tool registration.
+MCP bridge extension for pi. Connects to configured MCP servers on-demand and exposes their tools via a single proxy tool — keeping context window usage minimal — with optional per-server direct tool registration. Supports both **stdio** (local process) and **HTTP** (Streamable HTTP, MCP spec 2025-03-26) transports.
 
 ## How it works
 
@@ -10,13 +10,13 @@ Tool metadata is cached to `~/.pi/agent/cache/mcp-{serverName}.json` (one file p
 
 ## Features
 
-- **Lazy server startup**: Servers only start when a tool is actually called
+- **Lazy connections**: Servers only connect when a tool is actually called
 - **Proxy tool pattern**: One `mcp` tool instead of N tool definitions — dramatically reduces context usage
+- **Two transports**: stdio (local process) and HTTP (Streamable HTTP — single endpoint, JSON or SSE responses)
 - **Metadata cache**: Tool names and descriptions cached to `~/.pi/agent/cache/mcp-{serverName}.json` (one file per server); search/describe work without live connections
 - **Direct tools (opt-in)**: Per-server `directTools` config registers specific tools individually alongside the proxy
 - **Session restart resilience**: Connections are closed and reset on each new session; servers reconnect lazily
-- **Config merging**: Reads from all standard MCP config locations and merges them
-- **`${VAR}` env interpolation**: Reference environment variables in config values without hardcoding secrets
+- **`${VAR}` interpolation**: Reference environment variables in `env` (stdio) and `headers` (http) values without hardcoding secrets
 - **Rich `/mcp` command**: status, tools, reconnect, and search subcommands
 
 ## Structure
@@ -27,12 +27,13 @@ mcp/
 ├── README.md
 ├── mcp.json.example
 └── src/
-    ├── types.ts    — all interfaces and shared types
-    ├── client.ts   — McpStdioClient (stdio JSON-RPC transport)
-    ├── config.ts   — loadConfig() from ~/.pi/agent/configs/mcp.json
-    ├── cache.ts    — disk cache read/write per server
-    ├── helpers.ts  — utilities and proxy tool formatters
-    └── index.ts    — extension entry point and wiring
+    ├── types.ts        — all interfaces and shared types (McpClient, McpServerConfig, …)
+    ├── client.ts       — McpStdioClient (stdio JSON-RPC transport)
+    ├── http-client.ts  — McpHttpClient (Streamable HTTP transport)
+    ├── config.ts       — loadConfig() from ~/.pi/agent/configs/mcp.json
+    ├── cache.ts        — disk cache read/write per server
+    ├── helpers.ts      — utilities and proxy tool formatters
+    └── index.ts        — extension entry point and wiring
 ```
 
 ## Installation
@@ -43,7 +44,7 @@ Auto-discovered from `~/.pi/agent/extensions/`. No additional registration requi
 
 Create `~/.pi/agent/configs/mcp.json`:
 
-### Basic config
+### stdio servers (local process)
 
 ```json
 {
@@ -61,13 +62,42 @@ Create `~/.pi/agent/configs/mcp.json`:
 }
 ```
 
+### HTTP servers (Streamable HTTP)
+
+For servers that expose a Streamable HTTP endpoint (MCP spec 2025-03-26): POST requests to a single URL, responses as JSON or SSE.
+
+```json
+{
+  "mcpServers": {
+    "my-api": {
+      "url": "https://my-mcp-server.com/mcp",
+      "headers": { "Authorization": "Bearer ${MY_API_TOKEN}" }
+    }
+  }
+}
+```
+
 ### All server options
+
+**stdio fields:**
 
 | Field | Description |
 |-------|-------------|
 | `command` | Executable to spawn (`npx`, absolute path, etc.) |
 | `args` | Arguments passed to the command |
 | `env` | Environment variables merged into the process environment. Supports `${VAR}` interpolation |
+
+**HTTP fields:**
+
+| Field | Description |
+|-------|-------------|
+| `url` | Full endpoint URL for the MCP server |
+| `headers` | HTTP headers sent with every request (e.g. `Authorization`). Supports `${VAR}` interpolation |
+
+**Shared fields:**
+
+| Field | Description |
+|-------|-------------|
 | `directTools` | `true`, `["tool1","tool2"]`, or `false` (default) — see below |
 | `excludeTools` | `["tool1","tool2"]` — hide these tools everywhere: search, describe, direct registration |
 
@@ -158,14 +188,18 @@ Note: `args` is always a JSON string, not an object.
 
 ## Authentication
 
-For OAuth servers (e.g. via `mcp-remote`), authenticate once in a terminal to cache tokens:
+### stdio — OAuth (via mcp-remote)
+
+Authenticate once in a terminal to cache tokens:
 
 ```bash
 npx mcp-remote https://mcp.sentry.dev/mcp
 # Complete the browser OAuth flow, then Ctrl+C
 ```
 
-For API-key servers, pass the key via `env` (use `${VAR}` to avoid hardcoding):
+Any stderr output during connection (auth URLs, warnings) appears as a pi notification. When an OAuth URL is detected, it is shown immediately so it can be copied, and the browser opens automatically after a 1-second delay.
+
+### stdio — API key via env
 
 ```json
 {
@@ -179,7 +213,36 @@ For API-key servers, pass the key via `env` (use `${VAR}` to avoid hardcoding):
 }
 ```
 
-Any stderr output from a server during connection (auth URLs, warnings) appears as a pi notification. When an auth URL is detected, the URL is shown in the notification immediately so it can be copied if needed, then the browser opens automatically after a 1-second delay.
+### HTTP — bearer token or custom headers
+
+```json
+{
+  "mcpServers": {
+    "my-api": {
+      "url": "https://my-mcp-server.com/mcp",
+      "headers": {
+        "Authorization": "Bearer ${MY_API_TOKEN}",
+        "X-Tenant-Id": "my-org"
+      }
+    }
+  }
+}
+```
+
+Header values support `${VAR}` interpolation from the environment, same as `env` does for stdio servers. All headers are sent with every request (initialize, tools/list, tools/call, and the session DELETE on close).
+
+## Environment variables
+
+All `${VAR}` references in `env` and `headers` are read from the environment pi inherits at startup — the same environment your shell has when you run `pi`. Add secrets to your shell profile so they're always available:
+
+```bash
+# ~/.zshrc (or ~/.bash_profile, ~/.bashrc, etc.)
+export GITHUB_TOKEN="ghp_..."
+export SLACK_MCP_TOKEN="xoxp-..."
+export MY_API_KEY="..."
+```
+
+Then reload (`source ~/.zshrc`) or open a new terminal before starting pi.
 
 ## Tool naming (direct tools)
 

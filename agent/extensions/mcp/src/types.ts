@@ -1,11 +1,26 @@
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 export interface McpServerConfig {
+  // stdio transport
   command?: string;
   args?: string[];
   env?: Record<string, string>;
+  // http (Streamable HTTP) transport
+  url?: string;
+  headers?: Record<string, string>;
+  // shared
   directTools?: boolean | string[];
   excludeTools?: string[];
+}
+
+/** Shared interface implemented by both McpStdioClient and McpHttpClient. */
+export interface McpClient {
+  readonly serverName: string;
+  readonly isDead: boolean;
+  initialize(): Promise<void>;
+  listTools(): Promise<McpTool[]>;
+  callTool(name: string, args: Record<string, unknown>): Promise<McpCallResult>;
+  close(): void;
 }
 
 export interface McpConfig {

@@ -1,10 +1,10 @@
 import { spawn, type ChildProcess } from "node:child_process";
 import { createInterface } from "node:readline";
-import type { McpServerConfig, McpTool, McpCallResult, JsonRpcRequest, JsonRpcResponse } from "./types.js";
+import type { McpClient, McpServerConfig, McpTool, McpCallResult, JsonRpcRequest, JsonRpcResponse } from "./types.js";
 
 // ─── McpStdioClient ───────────────────────────────────────────────────────────
 
-export class McpStdioClient {
+export class McpStdioClient implements McpClient {
   private proc: ChildProcess;
   private pending = new Map<
     number,

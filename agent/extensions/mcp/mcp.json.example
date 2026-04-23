@@ -4,6 +4,10 @@
       "command": "npx",
       "args": ["-y", "@modelcontextprotocol/server-filesystem", "/tmp"],
       "env": {}
+    },
+    "my-http-server": {
+      "url": "https://my-mcp-server.com/mcp",
+      "headers": { "Authorization": "Bearer ${MY_API_TOKEN}" }
     }
   }
 }

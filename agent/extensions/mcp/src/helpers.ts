@@ -1,6 +1,5 @@
 import { spawn } from "node:child_process";
-import type { McpConfig, McpTool, McpCallResult } from "./types.js";
-import type { McpStdioClient } from "./client.js";
+import type { McpConfig, McpClient, McpTool, McpCallResult } from "./types.js";
 
 // ─── General helpers ──────────────────────────────────────────────────────────
 
@@ -153,7 +152,7 @@ export function formatSchema(tool: McpTool): string {
 
 export function buildStatusText(
   config: McpConfig,
-  clients: Map<string, McpStdioClient>,
+  clients: Map<string, McpClient>,
   toolsCache: Map<string, McpTool[]>,
 ): string {
   const serverNames = Object.keys(config.mcpServers);
@@ -166,10 +165,11 @@ export function buildStatusText(
     const client = clients.get(name);
     const connected = !!client && !client.isDead;
     if (connected) connectedCount++;
+    const transport = config.mcpServers[name]?.url ? "http" : "stdio";
     const status = connected ? "connected" : "idle";
     const tools = toolsCache.get(name);
     const toolInfo = tools ? `${tools.length} tools` : "no cache";
-    lines.push(`  • ${name}: ${status} (${toolInfo})`);
+    lines.push(`  • ${name} [${transport}]: ${status} (${toolInfo})`);
   }
 
   return [
