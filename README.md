@@ -45,7 +45,7 @@ Segments are configured via `footer.json`. Supports Nerd Font icons with plain-A
 
 ### spinners
 
-Replaces the default "Thinking..." working message with ~180 rotating verbs. A new verb is picked every 2.5 seconds with a typewriter reveal effect (42ms per character). Hooks into `turn_start` / `message_update` / `turn_end` to start, stop, and clean up timers.
+Replaces the default "Thinking..." working message with 186 rotating verbs. A new verb is picked every 2.5 seconds with a typewriter reveal effect (42ms per character). Hooks into `turn_start` / `message_update` / `turn_end` to start, stop, and clean up timers.
 
 Sample verbs: Architecting, Boondoggling, Flibbertigibbeting, Hyperspacing, Lollygagging, Perambulating...
 
@@ -61,7 +61,7 @@ Intercepts `bash` tool calls and prompts for confirmation before running command
 
 ### protected-paths
 
-Blocks `read`, `write`, and `edit` tool calls to sensitive files and directories. Each entry defines a path and an explicit ops denylist, so you can block writes to `node_modules/` while still allowing reads for docs and type references. Bare entries like `.env` and `node_modules/` use exact path-segment matching — no false positives. Absolute and `~/`-prefixed entries are resolved and matched with `startsWith`. The agent is told why it was blocked and recovers gracefully. See [`agent/extensions/protected-paths/README.md`](agent/extensions/protected-paths/README.md).
+Blocks `read`, `write`, and `edit` tool calls to sensitive files and directories. Each entry defines a path and an explicit deny list, so you can block writes to `node_modules/` while still allowing reads for docs and type references. Bare entries like `.env` and `node_modules/` use exact path-segment matching — no false positives. Absolute and `~/`-prefixed entries are resolved and matched with `startsWith`. The agent is told why it was blocked and recovers gracefully. See [`agent/extensions/protected-paths/README.md`](agent/extensions/protected-paths/README.md).
 
 ### web-access
 
@@ -170,7 +170,7 @@ export FOOTER_NERD_FONTS=1
 
 ### 6. Configure protected paths (optional)
 
-The `protected-paths` extension ships with three built-in entries (`.env`, `.git/`, `node_modules/`). To customise them, copy the example config:
+The `protected-paths` extension ships with four built-in entries (`.env`, `.git/`, `node_modules/`, `~/.pi/agent/auth.json`). To customise them, copy the example config:
 
 ```bash
 cp ~/.pi/agent/extensions/protected-paths/protected-paths.example.json \

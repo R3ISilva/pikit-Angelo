@@ -1,6 +1,6 @@
 # spinners
 
-Replaces the standard **Thinking** verb shown during LLM inference with a random one picked from a curated list of 170+ alternatives — one per response.
+Replaces the standard **Thinking** verb shown during LLM inference with a random one picked from a curated list of 186 alternatives — one per response.
 
 ## What it does
 
