@@ -219,7 +219,12 @@ export default function slopFooter(pi: ExtensionAPI) {
           if (!currentCtx) return [];
 
           const effectiveConfig = getEffectiveConfig();
-          const segmentCtx = buildSegmentContext(currentCtx, width, theme);
+          let segmentCtx;
+          try {
+            segmentCtx = buildSegmentContext(currentCtx, width, theme);
+          } catch {
+            return [];
+          }
 
           const content = buildFooterContent(
             segmentCtx,
