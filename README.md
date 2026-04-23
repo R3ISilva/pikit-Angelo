@@ -197,7 +197,18 @@ cp ~/.pi/agent/extensions/mcp/mcp.json.example ~/.pi/agent/configs/mcp.json
 
 See [`agent/extensions/mcp/README.md`](agent/extensions/mcp/README.md) for the full configuration reference.
 
-### 9. Set up environment variables (optional)
+### 9. Install extension dependencies
+
+This repo uses npm workspaces. A single install at the root handles all extension dependencies:
+
+```bash
+cd ~/.pi
+npm install
+```
+
+All packages are hoisted to `~/.pi/node_modules/` — no per-extension `node_modules/` directories, no individual install steps. Any new extension you add with a `package.json` is picked up automatically on the next `npm install`.
+
+### 10. Set up environment variables (optional)
 
 If any extensions require API tokens (MCP servers, web-access search, etc.), store them in `~/.pi/agent/configs/.env` (gitignored) rather than your shell profile:
 
@@ -209,7 +220,7 @@ Edit the file with your actual values. The `env-loader` extension injects these 
 
 See [`agent/extensions/env-loader/README.md`](agent/extensions/env-loader/README.md) for details.
 
-### 10. Add custom or local models (optional)
+### 11. Add custom or local models (optional)
 
 `agent/models.json` is excluded from this repo. Create it to register local models (Ollama, LM Studio, vLLM) or any OpenAI-compatible endpoint:
 

@@ -32,10 +32,23 @@ web-access/
 
 Auto-discovered from `~/.pi/agent/extensions/`. No additional registration required.
 
+This repo uses npm workspaces. Run once from the pi root to install dependencies for all extensions:
+
 ```bash
-cd ~/.pi/agent/extensions/web-access
-npm install
+cd ~/.pi && npm install
 ```
+
+Dependencies are hoisted to `~/.pi/node_modules/` — no per-extension install needed. The dependencies declared by this extension are:
+
+| Package | Purpose |
+|---------|---------|
+| `@sinclair/typebox` | Tool parameter schema definitions |
+| `@mozilla/readability` | Article extraction from web pages |
+| `linkedom` | DOM parsing |
+| `turndown` | HTML to Markdown conversion |
+| `unpdf` | PDF text extraction |
+
+If pi fails to start with a `Cannot find module` error referencing this extension, `npm install` has not been run from `~/.pi`.
 
 ## Configuration
 
