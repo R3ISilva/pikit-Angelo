@@ -66,6 +66,7 @@ function buildRightColumn(
     ` ${dim("/")} for commands`,
     ` ${dim("!")} to run bash`,
     ` ${dim("Shift+Tab")} cycle thinking`,
+    ` ${dim("Ctrl+P")} cycle model`,
     separator,
     ` ${bold(theme.fg("accent", "Loaded"))}`,
     ...countLines,
