@@ -1,6 +1,6 @@
 # Custom pi.dev setup
 
-My opinionated configuration for [pi.dev](https://pi.dev/), a minimal terminal coding agent. This repo tweaks the TUI experience with a custom startup screen, footer status bar, dynamic spinner verbs, and a warm color theme — plus a permission gate for dangerous commands, protected-paths for sensitive files, and a web-access extension for searching the web and fetching pages.
+Opinionated configuration for [pi.dev](https://pi.dev/), a minimal terminal coding agent. This repo tweaks the TUI experience with a custom startup screen, footer status bar, dynamic spinner verbs, and a warm color theme — plus a permission gate for dangerous commands, protected-paths for sensitive files, and a web-access extension for searching the web and fetching pages.
 
 ## What's in here
 
