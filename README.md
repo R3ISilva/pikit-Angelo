@@ -1,6 +1,6 @@
 # Custom pi.dev setup
 
-My opinionated configuration for [pi.dev](https://pi.dev/), a minimal terminal coding agent. This repo tweaks the TUI experience with a custom startup screen, footer status bar, dynamic spinner verbs, and a warm color theme — plus a web-access extension for searching the web and fetching pages.
+My opinionated configuration for [pi.dev](https://pi.dev/), a minimal terminal coding agent. This repo tweaks the TUI experience with a custom startup screen, footer status bar, dynamic spinner verbs, and a warm color theme — plus a permission gate for dangerous commands and a web-access extension for searching the web and fetching pages.
 
 ## What's in here
 
@@ -16,6 +16,7 @@ agent/
     ├── env-loader/   # Injects .env tokens into process.env at startup
     ├── footer/       # Status bar with git, tokens, cost, context
     ├── mcp/          # MCP server bridge with lazy connections and proxy tool
+    ├── permission-gate/ # Confirms dangerous bash commands before running
     ├── spinners/     # Rotating spinner verbs while the agent thinks
     ├── startup/      # Welcome header shown at session start
     └── web-access/   # Web search, page fetching, and PDF extraction
@@ -47,6 +48,10 @@ Sample verbs: Architecting, Boondoggling, Flibbertigibbeting, Hyperspacing, Loll
 Bridges [Model Context Protocol (MCP)](https://modelcontextprotocol.io) servers into pi with minimal context overhead. Instead of registering every MCP tool individually at startup (which can burn thousands of tokens), it registers a single `mcp` proxy tool. The LLM searches for tools with `mcp({ search: "keyword" })`, inspects schemas with `mcp({ describe: "tool_name" })`, and calls them with `mcp({ tool: "tool_name", args: '{...}' })`. Servers start lazily — only when a tool is actually invoked. Tool metadata is cached to disk so discovery works without live connections.
 
 Key features: lazy server startup, proxy tool pattern, disk metadata cache, proper session restart lifecycle, per-server `directTools` opt-in, config merging across all standard MCP locations, `${VAR}` env interpolation, and connected-server count in the footer status bar. Use `/mcp` for status, `/mcp tools [server]` to list tools, `/mcp reconnect [server]`, `/mcp search <query>`.
+
+### permission-gate
+
+Intercepts `bash` tool calls and prompts for confirmation before running commands that match dangerous patterns (`rm -rf`, `sudo`, `chmod/chown 777`). Blocks silently in non-interactive mode. Patterns are fully configurable via `configs/permission-gate.json` — when the file is present it replaces the built-in defaults entirely; when absent the three defaults apply. Set `blockWithoutUI: false` to let commands through in headless/CI contexts. See [`agent/extensions/permission-gate/README.md`](agent/extensions/permission-gate/README.md).
 
 ### web-access
 
@@ -153,7 +158,18 @@ No config needed for Ghostty, WezTerm, Kitty, or Alacritty — icons work out of
 export FOOTER_NERD_FONTS=1
 ```
 
-### 6. Configure MCP servers (optional)
+### 6. Configure permission patterns (optional)
+
+The `permission-gate` extension ships with three built-in patterns. To customise them, copy the example config:
+
+```bash
+cp ~/.pi/agent/extensions/permission-gate/permission-gate.example.json \
+   ~/.pi/agent/configs/permission-gate.json
+```
+
+Edit `permission-gate.json` to add, remove, or replace patterns. See [`agent/extensions/permission-gate/README.md`](agent/extensions/permission-gate/README.md) for the full reference.
+
+### 7. Configure MCP servers (optional)
 
 Copy the example config and edit it with your servers:
 
@@ -163,7 +179,7 @@ cp ~/.pi/agent/extensions/mcp/mcp.json.example ~/.pi/agent/configs/mcp.json
 
 See [`agent/extensions/mcp/README.md`](agent/extensions/mcp/README.md) for the full configuration reference.
 
-### 7. Set up environment variables (optional)
+### 8. Set up environment variables (optional)
 
 If any extensions require API tokens (MCP servers, web-access search, etc.), store them in `~/.pi/agent/configs/.env` (gitignored) rather than your shell profile:
 
@@ -175,7 +191,7 @@ Edit the file with your actual values. The `env-loader` extension injects these 
 
 See [`agent/extensions/env-loader/README.md`](agent/extensions/env-loader/README.md) for details.
 
-### 8. Add custom or local models (optional)
+### 9. Add custom or local models (optional)
 
 `agent/models.json` is excluded from this repo. Create it to register local models (Ollama, LM Studio, vLLM) or any OpenAI-compatible endpoint:
 

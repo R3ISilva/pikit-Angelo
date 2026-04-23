@@ -1,0 +1,72 @@
+# permission-gate
+
+Intercepts `bash` tool calls and prompts for confirmation before running commands that match dangerous patterns. Blocks silently in non-interactive mode.
+
+## How it works
+
+On every `bash` tool call, the extension tests the command string against a list of regex patterns. If any pattern matches, the user is shown a confirmation prompt — `Yes` lets the command through, `No` blocks it and the agent is told it was blocked. When pi is running without an interactive UI (headless, piped input), the command is blocked automatically.
+
+## Structure
+
+```
+permission-gate/
+├── package.json
+├── README.md
+├── permission-gate.example.json
+└── src/
+    ├── config.ts  — loads permission-gate.json, falls back to built-in defaults
+    └── index.ts   — extension entry point, tool_call hook
+```
+
+## Default patterns
+
+These three patterns apply when no config file is present:
+
+| Pattern | What it catches |
+|---------|----------------|
+| `\brm\s+(-rf?\|--recursive)` | Recursive deletes |
+| `\bsudo\b` | Any command run as root |
+| `\b(chmod\|chown)\b.*777` | World-writable permission changes |
+
+## Configuration
+
+Copy the example config and edit it:
+
+```bash
+cp ~/.pi/agent/extensions/permission-gate/permission-gate.example.json \
+   ~/.pi/agent/configs/permission-gate.json
+```
+
+```json
+{
+  "patterns": [
+    "\\brm\\s+(-rf?|--recursive)",
+    "\\bsudo\\b",
+    "\\b(chmod|chown)\\b.*777"
+  ],
+  "blockWithoutUI": true
+}
+```
+
+### Options
+
+| Key | Type | Default | Description |
+|-----|------|---------|-------------|
+| `patterns` | `string[]` | *(built-in three)* | Regex strings to match against bash commands. When present, **replaces** the defaults entirely. |
+| `blockWithoutUI` | `boolean` | `true` | What to do when a dangerous command is detected but no UI is available. `true` = block it; `false` = let it through. |
+
+### Adding custom patterns
+
+Patterns are standard JavaScript regex strings — backslashes must be escaped (`\\b`, not `\b`):
+
+```json
+{
+  "patterns": [
+    "\\brm\\s+(-rf?|--recursive)",
+    "\\bsudo\\b",
+    "\\b(chmod|chown)\\b.*777",
+    "\\bdrop\\s+table\\b",
+    "\\bcurl\\b.*\\|.*\\bsh\\b"
+  ]
+}
+```
