@@ -2,6 +2,17 @@
 
 Blocks `read`, `write`, and/or `edit` tool calls to protected paths. Each entry defines a path and an explicit `deny` list — so you can block writes to `node_modules/` while still allowing the agent to read it for docs and type references. The agent is told why it was blocked and recovers gracefully.
 
+## Philosophy
+
+pi prioritizes flexibility. Extensions should be able to modify almost everything—skills, prompts, themes, even other extensions. This extension enforces **minimal, focused restrictions** on only the highest-risk vectors:
+
+1. **`auth.json`** — credentials and API keys. Blocks all access to prevent accidental leakage.
+2. **Dangerous bash commands** — handled by the `permission-gate` extension, not this one. Blocks `rm -rf`, `sudo`, `chmod 777`, etc.
+
+Everything else is fair game. **The agent is trusted to shape pi according to your needs.** The infrastructure (credentials, system integrity) is protected, but avoid pasting secrets directly into conversations—treat them like any other tool (Claude, ChatGPT, etc.).
+
+If you want additional restrictions (block session edits, lock down extensions, etc.), override the config. The defaults are intentionally permissive.
+
 ## How it works
 
 On every `read`, `write`, or `edit` tool call, the extension checks the target path against the protected entries. Each entry has a `path` and a `deny` array. If the path matches and the current operation is in that entry's `deny` list, the call is blocked. Operations not listed are allowed through.
@@ -63,6 +74,8 @@ cp ~/.pi/agent/extensions/protected-paths/protected-paths.example.json \
 - **`deny`** — list of operations to block; any op not listed is allowed through. Valid values: `"read"`, `"write"`, `"edit"`
 
 When the config file is present it **replaces** the defaults entirely — add the defaults back if you still want them.
+
+**Note:** The defaults are intentionally minimal (just credentials). If you want stricter controls, add more paths to your config. For example, to prevent all writes to sessions or extensions, add them to your config alongside the defaults.
 
 ### Matching strategies
 
