@@ -53,7 +53,9 @@ Sample verbs: Architecting, Boondoggling, Flibbertigibbeting, Hyperspacing, Loll
 
 Bridges [Model Context Protocol (MCP)](https://modelcontextprotocol.io) servers into pi with minimal context overhead. Instead of registering every MCP tool individually at startup (which can burn thousands of tokens), it registers a single `mcp` proxy tool. The LLM searches for tools with `mcp({ search: "keyword" })`, inspects schemas with `mcp({ describe: "tool_name" })`, and calls them with `mcp({ tool: "tool_name", args: '{...}' })`. Servers start lazily — only when a tool is actually invoked. Tool metadata is cached to disk so discovery works without live connections.
 
-Key features: lazy server startup, proxy tool pattern, disk metadata cache, proper session restart lifecycle, per-server `directTools` opt-in, config merging across all standard MCP locations, `${VAR}` env interpolation, and connected-server count in the footer status bar. Use `/mcp` for status, `/mcp tools [server]` to list tools, `/mcp reconnect [server]`, `/mcp search <query>`.
+Supports two transports: **stdio** (local process or `mcp-remote` bridge) and **HTTP** (Streamable HTTP with a pre-existing token). For OAuth-protected servers like Sentry and Atlassian, `mcp-remote` handles the full OAuth flow automatically — pi detects the auth URL from stderr and opens your browser, no manual steps. Slack requires a registered app (one-time setup) but the same automatic browser flow applies via `mcp-remote --static-oauth-client-info`. GitHub uses a plain Personal Access Token.
+
+Key features: lazy server startup, proxy tool pattern, disk metadata cache, proper session restart lifecycle, per-server `directTools` opt-in, `${VAR}` env interpolation, and auto OAuth browser-open for stdio servers. Use `/mcp` for status, `/mcp tools [server]` to list tools, `/mcp reconnect [server]`, `/mcp search <query>`. See [`agent/extensions/mcp/README.md`](agent/extensions/mcp/README.md) for full setup guides for each provider.
 
 ### permission-gate
 

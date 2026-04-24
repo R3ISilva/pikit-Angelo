@@ -29,7 +29,10 @@ export class McpStdioClient implements McpClient {
       env[k] = v.replace(/\$\{([^}]+)\}/g, (_, name) => process.env[name] ?? "");
     }
 
-    this.proc = spawn(config.command!, config.args ?? [], {
+    const interpolate = (v: string) => v.replace(/\$\{([^}]+)\}/g, (_, name) => process.env[name] ?? "");
+    const resolvedArgs = (config.args ?? []).map(interpolate);
+
+    this.proc = spawn(config.command!, resolvedArgs, {
       stdio: ["pipe", "pipe", "pipe"],
       env,
       shell: false,

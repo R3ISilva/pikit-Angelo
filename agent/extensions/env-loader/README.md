@@ -23,8 +23,9 @@ env-loader/
 Create `~/.pi/agent/configs/.env` (gitignored — never committed):
 
 ```
-SLACK_MCP_TOKEN=xoxp-...
-GITHUB_TOKEN=ghp-...
+GITHUB_TOKEN=ghp_...
+SLACK_CLIENT_ID=your-client-id
+SLACK_CLIENT_SECRET=your-client-secret
 GEMINI_API_KEY=AIza...
 ```
 
@@ -61,9 +62,10 @@ Use `/env` to verify what was loaded (key names only — values are never shown)
 
 ```
 /env
-→ 3 var(s) loaded from .env:
-    SLACK_MCP_TOKEN
+→ 4 var(s) loaded from .env:
     GITHUB_TOKEN
+    SLACK_CLIENT_ID
+    SLACK_CLIENT_SECRET
     GEMINI_API_KEY
 ```
 

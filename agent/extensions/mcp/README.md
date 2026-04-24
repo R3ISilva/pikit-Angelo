@@ -6,17 +6,18 @@ MCP bridge extension for pi. Connects to configured MCP servers on-demand and ex
 
 Instead of registering every MCP tool individually at startup (which burns the entire tool schema list into the context window whether or not they're used), mcp registers a single `mcp` proxy tool (~200 tokens). The LLM calls `mcp({ search: "keyword" })` to discover what's available, `mcp({ describe: "tool_name" })` to inspect schemas, and `mcp({ tool: "tool_name", args: '{"k":"v"}' })` to call tools. Servers connect lazily — only when a tool is actually needed.
 
-Tool metadata is cached to `~/.pi/agent/cache/mcp-{serverName}.json` (one file per server) after each connection, so search and describe work instantly without starting any server processes. Splitting by server keeps cache files small and independently manageable regardless of how many servers you configure.
+Tool metadata is cached to `~/.pi/agent/cache/mcp-{serverName}.json` (one file per server) after each connection, so search and describe work instantly without starting any server processes.
 
 ## Features
 
 - **Lazy connections**: Servers only connect when a tool is actually called
 - **Proxy tool pattern**: One `mcp` tool instead of N tool definitions — dramatically reduces context usage
 - **Two transports**: stdio (local process) and HTTP (Streamable HTTP — single endpoint, JSON or SSE responses)
-- **Metadata cache**: Tool names and descriptions cached to `~/.pi/agent/cache/mcp-{serverName}.json` (one file per server); search/describe work without live connections
+- **Metadata cache**: Tool names and descriptions cached to disk; search/describe work without live connections
 - **Direct tools (opt-in)**: Per-server `directTools` config registers specific tools individually alongside the proxy
 - **Session restart resilience**: Connections are closed and reset on each new session; servers reconnect lazily
-- **`${VAR}` interpolation**: Reference environment variables in `env` (stdio) and `headers` (http) values without hardcoding secrets
+- **`${VAR}` interpolation**: Reference environment variables in `args`, `env` (stdio), and `headers` (http) values without hardcoding secrets
+- **Auto OAuth**: When a stdio server (via `mcp-remote`) prints an OAuth URL, pi detects it, shows a notification, and opens your browser automatically
 - **Rich `/mcp` command**: status, tools, reconnect, and search subcommands
 
 ## Structure
@@ -42,9 +43,11 @@ Auto-discovered from `~/.pi/agent/extensions/`. No additional registration requi
 
 ## Configuration
 
-Create `~/.pi/agent/configs/mcp.json`:
+Create `~/.pi/agent/configs/mcp.json` (gitignored — never committed):
 
 ### stdio servers (local process)
+
+The most common setup. Pi spawns the process and communicates over stdin/stdout. Works for both local tools and remote servers (via `mcp-remote`).
 
 ```json
 {
@@ -64,7 +67,7 @@ Create `~/.pi/agent/configs/mcp.json`:
 
 ### HTTP servers (Streamable HTTP)
 
-For servers that expose a Streamable HTTP endpoint (MCP spec 2025-03-26): POST requests to a single URL, responses as JSON or SSE.
+For servers with a direct HTTP endpoint that accept a pre-existing token. Pi calls the endpoint directly — no subprocess involved.
 
 ```json
 {
@@ -84,7 +87,7 @@ For servers that expose a Streamable HTTP endpoint (MCP spec 2025-03-26): POST r
 | Field | Description |
 |-------|-------------|
 | `command` | Executable to spawn (`npx`, absolute path, etc.) |
-| `args` | Arguments passed to the command |
+| `args` | Arguments passed to the command. Supports `${VAR}` interpolation |
 | `env` | Environment variables merged into the process environment. Supports `${VAR}` interpolation |
 
 **HTTP fields:**
@@ -92,7 +95,7 @@ For servers that expose a Streamable HTTP endpoint (MCP spec 2025-03-26): POST r
 | Field | Description |
 |-------|-------------|
 | `url` | Full endpoint URL for the MCP server |
-| `headers` | HTTP headers sent with every request (e.g. `Authorization`). Supports `${VAR}` interpolation |
+| `headers` | HTTP headers sent with every request. Supports `${VAR}` interpolation |
 
 **Shared fields:**
 
@@ -133,8 +136,6 @@ Direct tools require a warm cache. Connect the server at least once (`/mcp recon
 
 ### Excluding tools
 
-Use `excludeTools` to hide specific tools from a server. Excluded tools won't appear in search results, describe, or direct tool registration — as if they don't exist:
-
 ```json
 {
   "mcpServers": {
@@ -147,13 +148,11 @@ Use `excludeTools` to hide specific tools from a server. Excluded tools won't ap
 }
 ```
 
-Exclusion is applied both when loading from the disk cache and when a fresh tool list is fetched from a live connection.
+Excluded tools won't appear in search results, describe, or direct tool registration.
 
 ## Usage
 
 ### Proxy tool (LLM-facing)
-
-The `mcp` proxy tool supports these modes:
 
 ```
 mcp({ search: "screenshot" })
@@ -188,75 +187,204 @@ Note: `args` is always a JSON string, not an object.
 
 ## Authentication
 
-### stdio — OAuth (via mcp-remote)
+There are three patterns depending on the server:
 
-Authenticate once in a terminal to cache tokens:
+### Pattern 1 — mcp-remote with automatic OAuth (Sentry, Atlassian)
 
-```bash
-npx mcp-remote https://mcp.sentry.dev/mcp
-# Complete the browser OAuth flow, then Ctrl+C
-```
+Some hosted MCP servers support dynamic client registration, meaning they can hand out credentials on the fly without you pre-registering an app. `mcp-remote` handles the full OAuth flow for you:
 
-Any stderr output during connection (auth URLs, warnings) appears as a pi notification. When an OAuth URL is detected, it is shown immediately so it can be copied, and the browser opens automatically after a 1-second delay.
+1. Pi starts `mcp-remote` as a subprocess
+2. `mcp-remote` detects the server needs OAuth and prints the auth URL to stderr
+3. Pi catches the URL and opens your browser automatically
+4. You approve access in the browser
+5. `mcp-remote` catches the callback on its own internal server (port 3334), exchanges the code for a token, and caches it in `~/.mcp-auth/`
+6. Done — tokens are reused on future connections
 
-### stdio — API key via env
+**No manual steps. No token to store.**
 
 ```json
 {
   "mcpServers": {
-    "my-api": {
+    "sentry": {
       "command": "npx",
-      "args": ["-y", "some-mcp-server"],
-      "env": { "API_KEY": "${MY_API_KEY_ENV_VAR}" }
+      "args": ["-y", "mcp-remote", "https://mcp.sentry.dev/mcp"]
     }
   }
 }
 ```
 
-### HTTP — bearer token or custom headers
+### Pattern 2 — mcp-remote with static client credentials (Slack)
+
+Some servers (Slack being the main example) require you to pre-register an OAuth app and supply a client ID and secret. `mcp-remote` still handles the callback and token exchange automatically — you just need to pass the credentials it needs.
 
 ```json
 {
   "mcpServers": {
-    "my-api": {
-      "url": "https://my-mcp-server.com/mcp",
-      "headers": {
-        "Authorization": "Bearer ${MY_API_TOKEN}",
-        "X-Tenant-Id": "my-org"
-      }
+    "slack": {
+      "command": "npx",
+      "args": [
+        "-y", "mcp-remote",
+        "https://mcp.slack.com/mcp",
+        "--static-oauth-client-info",
+        "{\"client_id\":\"${SLACK_CLIENT_ID}\",\"client_secret\":\"${SLACK_CLIENT_SECRET}\"}"
+      ]
     }
   }
 }
 ```
 
-Header values support `${VAR}` interpolation from the environment, same as `env` does for stdio servers. All headers are sent with every request (initialize, tools/list, tools/call, and the session DELETE on close).
+The OAuth flow is the same as Pattern 1 — browser opens automatically, you approve, done. The difference is that Slack needs the registered app's credentials to start the flow.
+
+### Pattern 3 — static API token (GitHub)
+
+Some servers don't use OAuth at all — they just need a token passed as an environment variable. Generate the token once, store it in `.env`, reference it in the config.
+
+```json
+{
+  "mcpServers": {
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": { "GITHUB_TOKEN": "${GITHUB_TOKEN}" }
+    }
+  }
+}
+```
 
 ## Environment variables
 
-All `${VAR}` references in `env` and `headers` are read from the environment pi inherits at startup. The recommended way to manage these without touching your shell profile is the **env-loader** extension — see [`agent/extensions/env-loader/README.md`](../env-loader/README.md).
+All `${VAR}` references in `args`, `env`, and `headers` are read from the environment pi inherits at startup. The recommended way to manage these is the **env-loader** extension — see [`agent/extensions/env-loader/README.md`](../env-loader/README.md).
 
 Create `~/.pi/agent/configs/.env` (gitignored):
 
 ```
-SLACK_MCP_TOKEN=xoxp-...
-GITHUB_TOKEN=ghp-...
+GITHUB_TOKEN=ghp_...
+GEMINI_API_KEY=AIza...
 ```
 
-Alternatively, export the variables in your shell profile before launching pi:
-
-```bash
-# ~/.zshrc
-export SLACK_MCP_TOKEN="xoxp-..."
-export GITHUB_TOKEN="ghp-..."
-```
+> **Slack credentials:** store `SLACK_CLIENT_ID` and `SLACK_CLIENT_SECRET` in `.env` and reference them in `args` — `${VAR}` interpolation works there too.
 
 ## Server setup guides
 
+### Sentry
+
+**Auth pattern:** automatic OAuth via mcp-remote (Pattern 1)
+**What you need:** a sentry.io account
+
+```json
+{
+  "mcpServers": {
+    "sentry": {
+      "command": "npx",
+      "args": ["-y", "mcp-remote", "https://mcp.sentry.dev/mcp"]
+    }
+  }
+}
+```
+
+That's it. First time you use a Sentry tool, `mcp-remote` kicks off OAuth, pi opens your browser, you log in and approve. Token is cached at `~/.mcp-auth/` — never need to do it again.
+
+To clear cached credentials and re-authenticate: `rm -rf ~/.mcp-auth`
+
+---
+
+### Atlassian (Jira + Confluence)
+
+**Auth pattern:** automatic OAuth via mcp-remote (Pattern 1)
+**What you need:** an Atlassian Cloud account
+
+```json
+{
+  "mcpServers": {
+    "atlassian": {
+      "command": "npx",
+      "args": ["-y", "mcp-remote", "https://mcp.atlassian.com/v1/mcp"]
+    }
+  }
+}
+```
+
+Same fully automatic OAuth flow as Sentry.
+
+**Multiple Atlassian workspaces:** use the `--resource` flag to isolate OAuth sessions per site:
+
+```json
+{
+  "mcpServers": {
+    "atlassian-work": {
+      "command": "npx",
+      "args": [
+        "-y", "mcp-remote",
+        "https://mcp.atlassian.com/v1/mcp",
+        "--resource", "https://your-work-site.atlassian.net/"
+      ]
+    },
+    "atlassian-personal": {
+      "command": "npx",
+      "args": [
+        "-y", "mcp-remote",
+        "https://mcp.atlassian.com/v1/mcp",
+        "--resource", "https://your-personal-site.atlassian.net/"
+      ]
+    }
+  }
+}
+```
+
+To clear cached credentials and re-authenticate: `rm -rf ~/.mcp-auth`
+
+---
+
+### GitHub
+
+**Auth pattern:** static PAT — no OAuth (Pattern 3)
+**What you need:** a GitHub Personal Access Token
+
+#### 1. Generate a token
+
+Go to [github.com/settings/tokens](https://github.com/settings/tokens) → **Generate new token (classic)**.
+
+Select scopes based on what you need:
+- `repo` — full access to private and public repos (read + write)
+- `public_repo` — public repos only
+- `read:org` — read org membership (needed for org repos)
+
+Copy the `ghp_...` token.
+
+#### 2. Store the token
+
+Add it to `~/.pi/agent/configs/.env`:
+
+```
+GITHUB_TOKEN=ghp_your-token-here
+```
+
+#### 3. Add to mcp.json
+
+```json
+{
+  "mcpServers": {
+    "github": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": { "GITHUB_TOKEN": "${GITHUB_TOKEN}" }
+    }
+  }
+}
+```
+
+No browser flow, no callbacks. The token never expires unless you revoke it.
+
+---
+
 ### Slack
 
-Slack's MCP server uses the Streamable HTTP transport and requires a registered Slack app with OAuth. Messages sent via the MCP server appear **as you** — your name, your avatar, no bot badge.
+**Auth pattern:** mcp-remote with static client credentials (Pattern 2)
+**What you need:** a registered Slack app (one-time setup)
 
-> **Work Slack / Enterprise Grid**: admin approval for app installs may be required. Creating the app is always fine; the install step is where you'd hit that gate. If approval is required you'll see a "Request to Install" prompt and will need to ask your Slack admin.
+Messages sent via the MCP server appear **as you** — your name, your avatar, no bot badge.
+
+> **Work Slack / Enterprise Grid**: admin approval for app installs may be required. Creating the app is always fine; the install step is where you'd hit that gate.
 
 #### 1. Create the app
 
@@ -276,7 +404,7 @@ Go to [api.slack.com/apps](https://api.slack.com/apps) → **Create New App** �
     }
   },
   "oauth_config": {
-    "redirect_urls": ["http://localhost:8080/callback"],
+    "redirect_urls": ["http://localhost:3334/callback"],
     "scopes": {
       "bot": ["users:read"],
       "user": [
@@ -297,82 +425,62 @@ Go to [api.slack.com/apps](https://api.slack.com/apps) → **Create New App** �
 }
 ```
 
-> The `bot_user` block and `users:read` bot scope are a required hack — Slack's OAuth flow silently fails without a bot user present. The bot is never used at runtime; all actions go through your user token.
+> The `bot_user` block and `users:read` bot scope are a required quirk — Slack's OAuth flow silently fails without a bot user present. The bot is never used at runtime.
 
 #### 2. Enable two settings
 
-- **OAuth & Permissions** → scroll down → find *Proof Key for Code Exchange (PKCE)* → **Opt In**
+- **OAuth & Permissions** → scroll down → *Proof Key for Code Exchange (PKCE)* → **Opt In**
 - **Agents & AI Apps** → *Model Context Protocol* → toggle **On**
 
 #### 3. Install to workspace
 
-Still in the app settings, hit **Install to Workspace**. Either it completes immediately (you're good) or you hit an admin approval gate — in which case request approval from your Slack admin and continue once approved.
+Hit **Install to Workspace**. Completes immediately or triggers an admin approval flow — wait for approval before continuing.
 
-#### 4. Get your user token (one-time)
+#### 4. Get your credentials
 
-The pi MCP extension uses a static Bearer token, so you need to complete the OAuth flow once to extract it. Run this in a terminal to catch the callback:
+Go to **Basic Information → App Credentials** and copy:
+- **Client ID**
+- **Client Secret**
 
-```bash
-node -e "
-const http = require('http');
-const server = http.createServer((req, res) => {
-  const code = new URL(req.url, 'http://localhost:8080').searchParams.get('code');
-  if (code) {
-    res.end('Got it — check your terminal');
-    console.log('CODE:', code);
-    server.close();
-  }
-});
-server.listen(8080, () => console.log('Waiting at http://localhost:8080/callback...'));
-"
-```
+#### 5. Add to mcp.json
 
-Then open this URL in your browser (replace `YOUR_CLIENT_ID` with the value from **Basic Information → App Credentials**):
+Add them to `~/.pi/agent/configs/.env`:
 
 ```
-https://slack.com/oauth/v2_user/authorize?client_id=YOUR_CLIENT_ID&scope=&user_scope=search:read.public,channels:history,groups:history,im:history,mpim:history,chat:write,users:read&redirect_uri=http://localhost:8080/callback&response_type=code
+SLACK_CLIENT_ID=your-client-id-here
+SLACK_CLIENT_SECRET=your-client-secret-here
 ```
 
-Approve in the browser. The code appears in your terminal. Exchange it for a token:
-
-```bash
-curl -X POST https://slack.com/api/oauth.v2.user.access \
-  -d "client_id=YOUR_CLIENT_ID" \
-  -d "code=THE_CODE_FROM_ABOVE" \
-  -d "redirect_uri=http://localhost:8080/callback"
-```
-
-Copy the `authed_user.access_token` value from the JSON response — that's your `xoxp-...` token.
-
-#### 5. Store the token
-
-Add it to `~/.pi/agent/configs/.env` (see [env-loader](../env-loader/README.md)):
-
-```
-SLACK_MCP_TOKEN=xoxp-...
-```
-
-#### 6. Add to mcp.json
+Then add to `mcp.json`:
 
 ```json
 {
   "mcpServers": {
     "slack": {
-      "url": "https://mcp.slack.com/mcp",
-      "headers": { "Authorization": "Bearer ${SLACK_MCP_TOKEN}" }
+      "command": "npx",
+      "args": [
+        "-y", "mcp-remote",
+        "https://mcp.slack.com/mcp",
+        "--static-oauth-client-info",
+        "{\"client_id\":\"${SLACK_CLIENT_ID}\",\"client_secret\":\"${SLACK_CLIENT_SECRET}\"}"
+      ]
     }
   }
 }
 ```
 
-Restart pi and run `/mcp connect slack` to verify.
+#### 6. Connect
+
+Restart pi. The next time you use a Slack tool, `mcp-remote` starts the OAuth flow — your browser opens automatically, you approve, and tokens are cached at `~/.mcp-auth/`. Done.
+
+To verify: `/mcp reconnect slack`
 
 #### Notes
 
-- The token does not expire unless explicitly revoked in your Slack app settings
+- Tokens are cached by `mcp-remote` in `~/.mcp-auth/` and reused automatically
+- To re-authenticate: `rm -rf ~/.mcp-auth` and reconnect
 - Messages sent via `chat:write` appear as you — not as a bot
 - The bot user shows in the workspace app directory but never joins channels or posts anything
-- Colleagues cannot tell the difference between you typing a message and the MCP server sending it on your behalf
 
 ---
 
