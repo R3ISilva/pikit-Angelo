@@ -60,7 +60,7 @@ Valid values for `defaultLevel`: `"off"` (default, don't auto-enable), `"lite"`,
 When active, a hammer icon and mode label appear in the footer status bar right after the thinking block:
 
 ```
-π › model › thinking › 🪨 full › ~/project main*    [context › tokens › cost]
+π › model › thinking › 🪨 Caveman (FULL) › ~/project main*    [context › tokens › cost]
 ```
 
 The segment is hidden when caveman is off.
