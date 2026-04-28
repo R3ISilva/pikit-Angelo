@@ -2,7 +2,7 @@ import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 import { discoverLoadedCounts } from "./discovery.js";
 import { renderBox } from "./layout.js";
 
-export default function slopStartup(pi: ExtensionAPI) {
+export default function startup(pi: ExtensionAPI) {
   pi.on("session_start", async (_event, ctx) => {
     if (!ctx.hasUI) return;
 

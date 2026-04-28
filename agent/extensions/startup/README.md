@@ -15,19 +15,11 @@ A startup header for the pi coding agent. Displays a three-column welcome box at
 
 ## Installation
 
-Install from npm using pi:
+This extension is included in the pi-dev repo and auto-discovered from
+`~/.pi/agent/extensions/`. No additional installation is required.
 
-```bash
-pi install npm:startup
-```
-
-Or copy the extension files to your pi extensions directory manually:
-
-```bash
-cp -r . ~/.pi/agent/extensions/startup
-```
-
-Or load it directly for testing:
+To use it outside this repo, copy the extension directory to your
+pi extensions folder manually or load it directly:
 
 ```bash
 pi -e ./src/index.ts
