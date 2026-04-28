@@ -1,4 +1,6 @@
-# Custom pi.dev setup
+<img src="banner.png" alt="opinionated pi.dev configuration">
+
+# Opinionated pi.dev configuration
 
 Opinionated configuration for [pi.dev](https://pi.dev/), a minimal terminal coding agent. This repo tweaks the TUI experience with a custom startup screen, footer status bar, dynamic spinner verbs, and a warm color theme — plus a permission gate for dangerous commands, protected-paths for sensitive files, and a web-access extension for searching the web and fetching pages.
 
@@ -60,8 +62,6 @@ A customizable footer that replaces pi's default status bar. Renders live data i
 
 Segments are configured via `footer.json`. Supports Nerd Font icons with plain-ASCII fallbacks. Git status is cached and invalidated automatically on file writes or git operations.
 
-<img src="agent/extensions/footer/demo.png" alt="footer">
-
 ### spinners
 
 Replaces the default "Thinking..." working message with 186 rotating verbs. A new verb is picked every 2.5 seconds with a typewriter reveal effect (42ms per character). Hooks into `turn_start` / `message_update` / `turn_end` to start, stop, and clean up timers.
@@ -91,8 +91,6 @@ Gives the agent web access via three tools: `web_search` (Google Search groundin
 ### startup
 
 Renders a three-column welcome box at session start showing: the pi logo, keyboard shortcut hints, and counts of loaded extensions / skills / MCP configs / prompt templates / context files. Agent version is shown in the top border. Hidden below 44 terminal columns.
-
-<img src="agent/extensions/startup/demo.png" alt="startup">
 
 ### slop theme
 

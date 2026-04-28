@@ -2,8 +2,6 @@
 
 A customizable footer for the pi coding agent. Provides a rich status bar at the bottom of the terminal showing model info, git status, token usage, and more.
 
-<img src="demo.png" alt="footer">
-
 ## Features
 
 - **Customizable segments**: Choose which info to display on the left and right sides
