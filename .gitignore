@@ -21,3 +21,4 @@ agent/cache/
 agent/configs/mcp.json
 agent/configs/permission-gate.json
 agent/configs/protected-paths.json
+agent/configs/caveman.json

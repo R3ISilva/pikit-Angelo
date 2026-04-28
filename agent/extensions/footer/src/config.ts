@@ -12,6 +12,8 @@ const DEFAULT_LEFT_SEGMENTS: StatusLineSegmentId[] = [
   "separator",
   "thinking",
   "separator",
+  "caveman",
+  "separator",
   "path",
   "git",
 ];

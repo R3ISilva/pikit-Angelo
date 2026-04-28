@@ -11,6 +11,7 @@ A customizable footer for the pi coding agent. Provides a rich status bar at the
 - **Token tracking**: Display input/output/total tokens and cache read/write
 - **Context awareness**: Shows context window usage percentage
 - **Thinking level**: Visual indicator of model reasoning level
+- **Caveman mode indicator**: Shows active caveman mode when the caveman extension is loaded
 - **Nerd Font support**: Automatic detection with ASCII fallbacks
 - **Live updates**: Git status refreshes automatically as you work
 
@@ -38,6 +39,8 @@ Create `~/.pi/agent/configs/footer.json` to customize the footer:
     "model",
     "separator",
     "thinking",
+    "separator",
+    "caveman",
     "separator",
     "path",
     "git"
@@ -122,6 +125,7 @@ Create `~/.pi/agent/configs/footer.json` to customize the footer:
 | `context_total` | Total context window size | — |
 | `separator` | Visual separator between segments | — |
 | `text:...` | Literal text, e.g. `text:⚡` | — |
+| `caveman` | Active caveman mode indicator (hidden when off or caveman extension not loaded) | — |
 
 ## Git Status Indicators
 

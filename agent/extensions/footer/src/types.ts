@@ -25,7 +25,8 @@ export type SemanticColor =
   | "contextError"
   | "cost"
   | "tokens"
-  | "separator";
+  | "separator"
+  | "caveman";
 
 // Color scheme mapping semantic names to actual colors
 export type ColorScheme = Partial<Record<SemanticColor, ColorValue>>;
@@ -45,6 +46,7 @@ export type StatusLineSegmentId =
   | "cache_read"
   | "cache_write"
   | "thinking"
+  | "caveman"
   | "separator"
   | `text:${string}`;
 

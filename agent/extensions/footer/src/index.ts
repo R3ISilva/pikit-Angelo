@@ -216,6 +216,9 @@ export default function slopFooter(pi: ExtensionAPI) {
       footerDataRef = footerData;
       tuiRef = tui;
 
+      // Expose a re-render trigger for out-of-turn state changes (e.g. /caveman toggle).
+      (globalThis as Record<string, unknown>).__footerRequestRender = () => tui.requestRender();
+
       // Subscribe to branch changes for re-render
       const unsub = footerData.onBranchChange(() => tui.requestRender());
 

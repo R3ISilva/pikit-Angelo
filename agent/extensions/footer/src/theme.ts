@@ -23,6 +23,7 @@ const DEFAULT_COLORS: Required<ColorScheme> = {
   cost: "text",
   tokens: "dim",
   separator: "dim",
+  caveman: "dim",
 };
 
 function isHexColor(color: ColorValue): color is `#${string}` {

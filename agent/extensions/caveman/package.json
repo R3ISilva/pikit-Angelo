@@ -1,0 +1,28 @@
+{
+  "name": "caveman",
+  "version": "1.0.0",
+  "description": "Caveman speak mode for pi — compresses LLM responses from professional to prehistoric",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/adrianapan/pi-dev.git"
+  },
+  "bugs": {
+    "url": "https://github.com/adrianapan/pi-dev/issues"
+  },
+  "homepage": "https://github.com/adrianapan/pi-dev#readme",
+  "keywords": [
+    "pi",
+    "extension",
+    "caveman",
+    "pi-package",
+    "pi-coding-agent"
+  ],
+  "pi": {
+    "extensions": [
+      "./src/index.ts"
+    ]
+  },
+  "author": "Adrian Apan",
+  "license": "MIT"
+}

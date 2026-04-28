@@ -7,6 +7,7 @@ Opinionated configuration for [pi.dev](https://pi.dev/), a minimal terminal codi
 ```
 agent/
 ├── configs/
+│   ├── caveman.json             # Caveman default level — gitignored, auto-created on first use
 │   ├── footer.json              # Footer segment configuration (tracked)
 │   ├── mcp.json                 # MCP server config — gitignored, see mcp/mcp.json.example
 │   ├── permission-gate.json     # Permission gate patterns — gitignored, see permission-gate.example.json
@@ -18,6 +19,7 @@ agent/
 ├── themes/
 │   └── slop.json     # Custom warm color theme
 └── extensions/
+    ├── caveman/      # Compresses LLM responses: lite (professional) / full (caveman) / ultra (max compression)
     ├── env-loader/   # Injects .env tokens into process.env at startup
     ├── footer/       # Status bar with git, tokens, cost, context
     ├── mcp/          # MCP server bridge with lazy connections and proxy tool
@@ -27,6 +29,23 @@ agent/
     ├── startup/      # Welcome header shown at session start
     └── web-access/   # Web search, page fetching, and PDF extraction
 ```
+
+### caveman
+
+Compresses pi's LLM responses from polished prose to prehistoric grunt. Three modes injected into the system prompt via `before_agent_start`:
+
+- **lite** — Professional, no fluff. Strips filler words, pleasantries, and preamble. Direct answers, tight sentences.
+- **full** — Classic caveman (default). Short words, short sentences. Simple language. "Me fix bug. Code work now."
+- **ultra** — Maximum compression. One line or one word where possible. Pure signal, zero noise.
+
+| Command | Description |
+|---------|-------------|
+| `/caveman` | Toggle on (full as default) / off |
+| `/caveman lite` | Professional, no fluff |
+| `/caveman full` | Classic caveman (default) |
+| `/caveman ultra` | Maximum compression |
+
+Active mode shows in the footer between the thinking block and path: `🪨 full`. Hidden when off. See [`agent/extensions/caveman/README.md`](agent/extensions/caveman/README.md).
 
 ### env-loader
 

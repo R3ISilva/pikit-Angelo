@@ -8,6 +8,7 @@ import { tokenInSegment, tokenOutSegment, tokenTotalSegment, cacheReadSegment, c
 import { costSegment } from "./cost.js";
 import { contextPctSegment, contextTotalSegment } from "./context.js";
 import { separatorSegment } from "./separator.js";
+import { cavemanSegment } from "./caveman.js";
 
 const SEGMENTS = {
   pi: piSegment,
@@ -24,6 +25,7 @@ const SEGMENTS = {
   cache_read: cacheReadSegment,
   cache_write: cacheWriteSegment,
   separator: separatorSegment,
+  caveman: cavemanSegment,
 };
 
 export function renderSegment(id: StatusLineSegmentId, ctx: SegmentContext): RenderedSegment {
