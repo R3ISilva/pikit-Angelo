@@ -55,3 +55,4 @@ agent/extensions/<name>/
 - If the extension doesn't have a `README.md`, create one with a brief description and usage instructions
 - Document any new permissions or lifecycle hooks used by the extension
 - Cross-reference and update any other relevant `README.md` files if the change impacts other extensions or the overall (including the root documentation)
+- When adding a new extension to the root `README.md`, follow the established style: one short paragraph (what it does, whether it's configurable, slash command only if it's the primary interface), a `→ README` link, no command tables, no implementation detail. Insert under `## Extensions` ordered by category: **UI** (visible every session, zero or minimal config) → **Security** (intercepts or blocks actions) → **Utils** (tools, bridges, integrations) → **Misc** (cosmetic or low-priority). Use judgment to place the new extension in the right category.
