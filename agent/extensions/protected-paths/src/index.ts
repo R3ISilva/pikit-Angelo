@@ -45,10 +45,10 @@ function matchesEntry(toolPath: string, entry: PathEntry): boolean {
   return toolPath.split("/").some((p) => p === segment);
 }
 
-function getBlockedOps(toolPath: string, paths: PathEntry[]): Set<Op> | null {
+function getBlockedOps(toolPath: string, paths: PathEntry[]): Op[] | null {
   for (const entry of paths) {
     if (matchesEntry(toolPath, entry)) {
-      return new Set(entry.deny);
+      return entry.deny;
     }
   }
   return null;
@@ -64,7 +64,7 @@ export default function protectedPathsExtension(pi: ExtensionAPI) {
     const toolPath = event.input.path as string;
     const blockedOps = getBlockedOps(toolPath, paths);
 
-    if (!blockedOps || !blockedOps.has(toolName)) return undefined;
+    if (!blockedOps || !blockedOps.includes(toolName)) return undefined;
 
     if (ctx.hasUI) {
       ctx.ui.notify(`[protected-paths] Blocked ${toolName} on protected path: ${toolPath}\nEdit configs/protected-paths.json to adjust.`, "warning");
