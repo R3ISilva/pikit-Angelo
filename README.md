@@ -96,9 +96,9 @@ Requires Node.js 18+. On macOS, the easiest way to get Node is via [nvm](https:/
 Pi looks for its config in `~/.pi/`. Clone this repo directly into that directory:
 
 ```bash
-git clone git@github.com:AdrianApan/pi-dev.git ~/.pi
+git clone git@github.com:adrianapan/pi-dev.git ~/.pi
 # or via HTTPS
-git clone https://github.com/AdrianApan/pi-dev.git ~/.pi
+git clone https://github.com/adrianapan/pi-dev.git ~/.pi
 ```
 
 > If `~/.pi/` already exists from a previous pi install, back it up first: `mv ~/.pi ~/.pi.bak`
