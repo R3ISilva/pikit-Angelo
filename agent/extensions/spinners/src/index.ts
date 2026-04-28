@@ -4,7 +4,7 @@ import { pickVerb } from "./verbs.js";
 const CYCLE_INTERVAL_MS = 2500;
 const TYPEWRITER_MS = 42;
 
-export default function slopSpinners(pi: ExtensionAPI) {
+export default function spinners(pi: ExtensionAPI) {
   let cycleTimer: ReturnType<typeof setInterval> | null = null;
   let typeTimer: ReturnType<typeof setInterval> | null = null;
   let current = "";
