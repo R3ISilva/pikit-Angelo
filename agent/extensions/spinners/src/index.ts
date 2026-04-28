@@ -1,4 +1,4 @@
-import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
+import type { ExtensionAPI, ExtensionContext, TurnStartEvent, MessageUpdateEvent, TurnEndEvent } from "@mariozechner/pi-coding-agent";
 import { pickVerb } from "./verbs.js";
 
 const CYCLE_INTERVAL_MS = 2500;
@@ -14,7 +14,7 @@ export default function slopSpinners(pi: ExtensionAPI) {
     if (typeTimer !== null) { clearInterval(typeTimer); typeTimer = null; }
   }
 
-  function typeVerb(ctx: any, verb: string) {
+  function typeVerb(ctx: ExtensionContext, verb: string) {
     if (typeTimer !== null) { clearInterval(typeTimer); typeTimer = null; }
     const full = verb + "...";
     let i = 1;
@@ -29,7 +29,7 @@ export default function slopSpinners(pi: ExtensionAPI) {
     }, TYPEWRITER_MS);
   }
 
-  function startCycling(ctx: any) {
+  function startCycling(ctx: ExtensionContext) {
     current = pickVerb();
     typeVerb(ctx, current);
 
@@ -41,18 +41,18 @@ export default function slopSpinners(pi: ExtensionAPI) {
     }, CYCLE_INTERVAL_MS);
   }
 
-  pi.on("turn_start", async (_event: any, ctx: any) => {
+  pi.on("turn_start", async (_event: TurnStartEvent, ctx: ExtensionContext) => {
     if (!ctx.hasUI) return;
     // If already cycling (e.g. rapid tool calls), leave it running smoothly.
     if (cycleTimer !== null || typeTimer !== null) return;
     startCycling(ctx);
   });
 
-  pi.on("message_update", async (event: any, _ctx: any) => {
+  pi.on("message_update", async (event: MessageUpdateEvent, _ctx: ExtensionContext) => {
     if (event?.delta?.type === "text") stopAll();
   });
 
-  pi.on("turn_end", async (_event: any, _ctx: any) => {
+  pi.on("turn_end", async (_event: TurnEndEvent, _ctx: ExtensionContext) => {
     stopAll();
   });
 }
