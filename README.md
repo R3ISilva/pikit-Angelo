@@ -18,7 +18,7 @@ agent/
 ├── APPEND_SYSTEM.md             # Coding guidelines appended to the system prompt every session
 ├── skills/
 │   ├── pi-extension-builder/    # Guidelines for building and modifying extensions in this repo
-│   └── add-ollama-cloud-model/  # Adds an Ollama Cloud model to models.json
+│   └── add-ollama-cloud-model/  # Guidelines for adding an Ollama Cloud model to models.json
 ├── themes/
 │   └── slop.json     # Custom warm color theme
 └── extensions/
