@@ -1,8 +1,7 @@
 import type { RenderedSegment, SegmentContext } from "../types.js";
-import { color, withIcon } from "./helpers.js";
+import { applyColor } from "../theme.js";
+import { color } from "./helpers.js";
 
-// Local mirror of CavemanState — no import dependency on the caveman extension.
-// The globalThis contract: caveman extension writes __caveman, footer reads it.
 interface CavemanState {
   enabled: boolean;
   mode: string;
@@ -18,8 +17,9 @@ export const cavemanSegment = {
     const state = readCavemanState();
     if (!state) return { content: "", visible: false };
 
-    const status = state.enabled ? state.mode : "off";
-    const content = withIcon(ctx.icons.caveman, `Caveman (${status.toUpperCase()})`);
-    return { content: color(ctx, "caveman", content), visible: true };
+    const label = applyColor(ctx.theme, "dim", "Caveman mode:");
+    const value = state.enabled ? state.mode.toUpperCase() : "OFF";
+
+    return { content: `${label} ${color(ctx, "caveman", value)}`, visible: true };
   },
 };

@@ -1,68 +1,40 @@
 {
   "_comment": "Place this file at ~/.pi/agent/configs/footer.json",
-
-  "leftSegments": [
+  "row1LeftSegments": [
     "pi",
     "separator",
     "model",
     "separator",
-    "thinking",
-    "separator",
     "path",
     "git"
   ],
-
-  "rightSegments": [
+  "row1RightSegments": [
     "context_pct",
-    "separator",
-    "token_total",
-    "token_in",
-    "token_out",
     "separator",
     "cost"
   ],
-
+  "row2LeftSegments": [
+    "thinking",
+    "separator",
+    "caveman"
+  ],
+  "row2RightSegments": [
+    "token_total"
+  ],
   "icons": {
-    "pi": "\uE22C",
-    "model": "\uEC19",
-    "folder": "\uF115",
-    "branch": "\uF126",
-    "git": "\uF1D3",
-    "tokens": "\uede8",
-    "contextPct": "\ueea8",
-    "contextTotal": "\uE70F",
-    "cost": "\uF155",
-    "cacheRead": "\uF1C0",
-    "cacheWrite": "\uF1C0",
-    "input": "\uf062",
-    "output": "\uf063",
-    "thinking": "\uf400",
-    "separator": "\uE0B1",
-    "auto": "\uF0068"
+    "pi": "\ue22c",
+    "folder": "\uf115",
+    "branch": "\uf126",
+    "git": "\uf1d3",
+    "separator": "|"
   },
-
   "colors": {
-    "pi": "accent",
-    "model": "#d787af",
-    "path": "#00afaf",
-    "git": "success",
-    "gitDirty": "warning",
-    "gitClean": "success",
-    "thinkingOff": "dim",
-    "thinkingMinimal": "muted",
-    "thinkingLow": "warning",
-    "thinkingMedium": "success",
+    "model": "#c07898",
     "thinkingHigh": "#afb9fe",
     "thinkingXhigh": "#9575cd",
-    "thinkingMax": "error",
-    "context": "dim",
-    "contextWarn": "warning",
-    "contextError": "error",
-    "cost": "text",
-    "tokens": "muted",
-    "separator": "dim"
+    "thinkingMax": "#ce93d8",
+    "separator": "#87827a"
   },
-
   "segmentOptions": {
     "path": {
       "mode": "basename"
@@ -72,9 +44,6 @@
       "showStaged": true,
       "showUnstaged": true,
       "showUntracked": true
-    },
-    "context_pct": {
-      "showAutoIcon": false
     }
   }
 }

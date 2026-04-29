@@ -1,35 +1,16 @@
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
-import type { SlopFooterUserConfig, StatusLineSegmentId, ColorScheme, StatusLineSegmentOptions } from "./types.js";
+import type { FooterUserConfig, StatusLineSegmentId, ColorScheme, StatusLineSegmentOptions } from "./types.js";
 import { getDefaultColors } from "./theme.js";
 import type { IconSet } from "./icons.js";
 
-// Default segment configuration
-const DEFAULT_LEFT_SEGMENTS: StatusLineSegmentId[] = [
-  "pi",
-  "separator",
-  "model",
-  "separator",
-  "thinking",
-  "separator",
-  "caveman",
-  "separator",
-  "path",
-  "git",
-];
-
-const DEFAULT_RIGHT_SEGMENTS: StatusLineSegmentId[] = [
-  "context_pct",
-  "separator",
-  "token_total",
-  "token_in",
-  "token_out",
-  "separator",
-  "cost",
-];
+// Default segment configuration — two rows
+const DEFAULT_ROW1_LEFT: StatusLineSegmentId[] = ["pi", "separator", "model", "separator", "path", "git"];
+const DEFAULT_ROW1_RIGHT: StatusLineSegmentId[] = ["context_pct", "separator", "cost"];
+const DEFAULT_ROW2_LEFT: StatusLineSegmentId[] = ["thinking", "separator", "caveman"];
+const DEFAULT_ROW2_RIGHT: StatusLineSegmentId[] = ["token_total"];
 
 const DEFAULT_SEGMENT_OPTIONS: StatusLineSegmentOptions = {
-  model: { showThinkingLevel: false },
   path: { mode: "basename" },
   git: {
     showBranch: true,
@@ -37,11 +18,10 @@ const DEFAULT_SEGMENT_OPTIONS: StatusLineSegmentOptions = {
     showUnstaged: true,
     showUntracked: true,
   },
-  context_pct: { showAutoIcon: false },
 };
 
 // Cache for user config
-let userConfigCache: SlopFooterUserConfig | null = null;
+let userConfigCache: FooterUserConfig | null = null;
 let userConfigCacheTime = 0;
 const CACHE_TTL = 5000; // 5 seconds
 
@@ -50,7 +30,7 @@ function getConfigPath(): string {
   return join(homeDir, ".pi", "agent", "configs", "footer.json");
 }
 
-export function loadUserConfig(): SlopFooterUserConfig | null {
+export function loadUserConfig(): FooterUserConfig | null {
   const now = Date.now();
   if (userConfigCache && now - userConfigCacheTime < CACHE_TTL) {
     return userConfigCache;
@@ -61,7 +41,7 @@ export function loadUserConfig(): SlopFooterUserConfig | null {
     if (existsSync(configPath)) {
       const content = readFileSync(configPath, "utf-8");
       const parsed = JSON.parse(content);
-      userConfigCache = parsed as SlopFooterUserConfig;
+      userConfigCache = parsed as FooterUserConfig;
       userConfigCacheTime = now;
       return userConfigCache;
     }
@@ -80,8 +60,10 @@ export function clearUserConfigCache(): void {
 }
 
 export function getEffectiveConfig(): {
-  leftSegments: StatusLineSegmentId[];
-  rightSegments: StatusLineSegmentId[];
+  row1LeftSegments: StatusLineSegmentId[];
+  row1RightSegments: StatusLineSegmentId[];
+  row2LeftSegments: StatusLineSegmentId[];
+  row2RightSegments: StatusLineSegmentId[];
   colors: ColorScheme;
   segmentOptions: StatusLineSegmentOptions;
   icons: Partial<IconSet>;
@@ -89,8 +71,10 @@ export function getEffectiveConfig(): {
   const userConfig = loadUserConfig();
 
   return {
-    leftSegments: userConfig?.leftSegments ?? DEFAULT_LEFT_SEGMENTS,
-    rightSegments: userConfig?.rightSegments ?? DEFAULT_RIGHT_SEGMENTS,
+    row1LeftSegments: userConfig?.row1LeftSegments ?? DEFAULT_ROW1_LEFT,
+    row1RightSegments: userConfig?.row1RightSegments ?? DEFAULT_ROW1_RIGHT,
+    row2LeftSegments: userConfig?.row2LeftSegments ?? DEFAULT_ROW2_LEFT,
+    row2RightSegments: userConfig?.row2RightSegments ?? DEFAULT_ROW2_RIGHT,
     colors: userConfig?.colors ?? getDefaultColors(),
     segmentOptions: {
       ...DEFAULT_SEGMENT_OPTIONS,

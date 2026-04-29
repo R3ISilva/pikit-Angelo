@@ -1,10 +1,11 @@
 import type { Theme, ThemeColor } from "@mariozechner/pi-coding-agent";
 import type { ColorScheme, ColorValue, SemanticColor } from "./types.js";
 
-// Default color scheme
-const DEFAULT_COLORS: Required<ColorScheme> = {
+// Default color scheme — thinkingXhigh and thinkingMax are intentionally absent;
+// their absence signals "use rainbow" in thinking.ts.
+const DEFAULT_COLORS: ColorScheme = {
   pi: "accent",
-  model: "#d787af",
+  model: "#c07898",
   path: "dim",
   git: "success",
   gitDirty: "warning",
@@ -16,14 +17,12 @@ const DEFAULT_COLORS: Required<ColorScheme> = {
   thinkingLow: "warning",
   thinkingMedium: "success",
   thinkingHigh: "#afb9fe",
-  thinkingXhigh: "#9575cd",
-  thinkingMax: "error",
   context: "dim",
   contextWarn: "warning",
   contextError: "error",
-  cost: "text",
-  tokens: "dim",
-  separator: "dim",
+  cost: "muted",
+  tokens: "muted",
+  separator: "#4e4c49",
   caveman: "muted",
 };
 
@@ -57,6 +56,7 @@ export function fg(
   presetColors?: ColorScheme
 ): string {
   const color = presetColors?.[semantic] ?? DEFAULT_COLORS[semantic];
+  if (color === undefined) return text;
   return applyColor(theme, color, text);
 }
 
@@ -87,6 +87,6 @@ export function rainbow(text: string): string {
   return result + "\x1b[0m";
 }
 
-export function getDefaultColors(): Required<ColorScheme> {
+export function getDefaultColors(): ColorScheme {
   return { ...DEFAULT_COLORS };
 }

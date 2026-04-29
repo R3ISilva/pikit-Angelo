@@ -1,14 +1,24 @@
 # footer
 
-A customizable footer for the pi coding agent. Provides a rich status bar at the bottom of the terminal showing model info, git status, token usage, and more.
+A customizable two-row footer for the pi coding agent. Provides a rich status bar at the bottom of the terminal showing model info, git status, token usage, and more.
+
+## Layout
+
+```
+Row 1 left:  π | <model name> (<provider>) | <folder> <path> <branch> <dirty>
+Row 1 right: <context bar> <pct%> | $<cost>
+
+Row 2 left:  Thinking: <LEVEL> | Caveman mode: <VALUE>
+Row 2 right: T: <total> (<cached> cached) ↑ <in> ↓ <out>
+```
 
 ## Features
 
-- **Customizable segments**: Choose which info to display on the left and right sides
+- **Two-row layout**: Info grouped by purpose across two lines
+- **Context bar**: 20-character gradient block bar with configurable colours and % indicator
 - **Git integration**: Shows current branch and working tree status (staged, unstaged, untracked)
-- **Token tracking**: Display input/output/total tokens and cache read/write
-- **Context awareness**: Shows context window usage percentage
-- **Thinking level**: Visual indicator of model reasoning level
+- **Token tracking**: Composite `T:` line with total, cached, input, and output counts
+- **Thinking level**: Faint label + CAPS level name with per-level colour
 - **Caveman mode indicator**: Shows active caveman mode when the caveman extension is loaded
 - **Nerd Font support**: Automatic detection with ASCII fallbacks
 - **Live updates**: Git status refreshes automatically as you work
@@ -27,114 +37,89 @@ pi -e ./src/index.ts
 
 ## Configuration
 
-Create `~/.pi/agent/configs/footer.json` to customize the footer:
+Create `~/.pi/agent/configs/footer.json` to customise the footer. Each row's
+left and right segments are configured independently:
 
 ```json
 {
-  "leftSegments": [
-    "pi",
-    "separator",
-    "model",
-    "separator",
-    "thinking",
-    "separator",
-    "caveman",
-    "separator",
-    "path",
-    "git"
-  ],
+  "row1LeftSegments":  ["pi", "separator", "model", "separator", "path", "git"],
+  "row1RightSegments": ["context_pct", "separator", "cost"],
+  "row2LeftSegments":  ["thinking", "separator", "caveman"],
+  "row2RightSegments": ["token_total"],
 
-  "rightSegments": [
-    "context_pct",
-    "separator",
-    "token_total",
-    "token_in",
-    "token_out",
-    "separator",
-    "cost"
-  ],
-  "icons": {
-    "pi": "π",
-    "model": "🧠",
-    "thinking": "💡",
-    "folder": "📂",
-    "git": "⎇",
-    "tokens": "🧮",
-    "input": "⬆",
-    "output": "⬇",
-    "cacheRead": "↙",
-    "cacheWrite": "↗",
-    "contextPct": "📚",
-    "separator": "›"
-  },
   "colors": {
-    "pi": "accent",
-    "model": "#d787af",
-    "path": "#00afaf",
-    "git": "success",
-    "gitDirty": "warning",
-    "gitClean": "success",
-    "thinkingOff": "dim",
-    "thinkingMinimal": "muted",
-    "thinkingLow": "warning",
-    "thinkingMedium": "success",
+    "model": "#c07898",
     "thinkingHigh": "#afb9fe",
-    "thinkingXhigh": "#9575cd",
-    "thinkingMax": "error",
-    "context": "dim",
-    "contextWarn": "warning",
-    "contextError": "error",
-    "cost": "text",
-    "tokens": "muted",
-    "separator": "dim"
+    "separator": "#87827a"
   },
+
   "segmentOptions": {
-    "path": {
-      "mode": "basename"
-    },
+    "path": { "mode": "basename" },
     "git": {
       "showBranch": true,
       "showStaged": true,
       "showUnstaged": true,
       "showUntracked": true
-    },
-    "context_pct": {
-      "showAutoIcon": false
     }
   }
 }
 ```
 
+See `footer.example.json` in this directory for a full annotated example.
+
 ## Available Segments
 
-| Segment | Description | `segmentOptions` |
-|---------|-------------|-----------------|
-| `pi` | Pi logo/icon | — |
-| `model` | Current model name and provider | `showThinkingLevel` (bool, default `false`) — appends thinking level inline with a `·` separator. Provider is shown as a dim `(provider)` label after the model name (e.g. `(ollama)`, `(anthropic)`). |
-| `thinking` | Standalone thinking/reasoning level indicator | `prefix` (string) — prepended to the level label, e.g. `"Thinking: "`<br><br>Each level can be colored independently via `thinkingOff`, `thinkingMinimal`, `thinkingLow`, `thinkingMedium`, `thinkingHigh`, `thinkingXhigh`, `thinkingMax` in the `colors` config. Omitted entries fall back to the built-in defaults.<br><br>`xhigh` and `max` render the label text as a rainbow gradient (hues spread evenly across characters); the `colors` config for those levels only affects the icon. |
-| `path` | Current working directory | `mode`: `"basename"` (default) · `"abbreviated"` (with `~`, capped at `maxLength`) · `"full"` |
-| `git` | Git branch and status | `showBranch`, `showStaged`, `showUnstaged`, `showUntracked` (all bool, all default `true`) |
-| `token_in` | Input tokens this session | `mode`: `"icons"` (default) · `"text"` (renders as `In: 12k`) |
-| `token_out` | Output tokens this session | `mode`: `"icons"` (default) · `"text"` (renders as `Out: 4k`) |
-| `token_total` | Total tokens (input + output + cache) | `mode`: `"icons"` (default) · `"text"` (renders as `Tokens: 16k`) |
+| Segment | Description | Notes |
+|---------|-------------|-------|
+| `pi` | π symbol in accent blue | — |
+| `model` | Model name in pink + `(provider)` in dim | No icon; provider omitted if unavailable |
+| `path` | Current working directory | `segmentOptions.path.mode`: `"basename"` (default) · `"abbreviated"` · `"full"` |
+| `git` | Git branch and dirty indicators | `showBranch`, `showStaged`, `showUnstaged`, `showUntracked` (all bool) |
+| `context_pct` | 20-char gradient bar + `X.X%` | Bar colours configurable in `context.ts`; % uses `caveman` colour. Set `DEBUG_PCT` in `context.ts` to a number (0–100) to pin the bar at a fixed value for visual testing. |
+| `cost` | `$<amount>` | `$` dim, amount in `cost` colour (`muted` by default) |
+| `thinking` | `Thinking: <LEVEL>` | Dim label, CAPS level with per-level colour; always visible |
+| `caveman` | `Caveman mode: <MODE>` | Hidden when caveman extension not loaded |
+| `token_total` | `T: <total> (<cached> cached) ↑ <in> ↓ <out>` | Labels dim, numbers in `tokens` colour (`muted` by default) |
+| `token_in` | Input tokens | Available for custom layouts |
+| `token_out` | Output tokens | Available for custom layouts |
 | `cache_read` | Cache read tokens (hidden if zero) | — |
 | `cache_write` | Cache write tokens (hidden if zero) | — |
-| `cost` | Estimated API cost in USD | — |
-| `context_pct` | Context window usage percentage | `showAutoIcon` (bool, default `false`) — shows auto-compact icon when enabled |
 | `context_total` | Total context window size | — |
-| `separator` | Visual separator between segments | — |
+| `separator` | `\|` divider | Coloured via `separator` in `colors` |
 | `text:...` | Literal text, e.g. `text:⚡` | — |
-| `caveman` | Active caveman mode indicator (hidden when off or caveman extension not loaded) | — |
+
+## Thinking Levels
+
+The `thinking` segment shows per-level colours:
+
+| Level | Display | Default colour |
+|-------|---------|---------------|
+| `off` | `OFF` | dim |
+| `minimal` | `MINIMAL` | muted |
+| `low` | `LOW` | warning |
+| `medium` | `MEDIUM` | success |
+| `high` | `HIGH` | `#afb9fe` |
+| `xhigh` | `EXTRA HIGH` | rainbow gradient |
+| `max` | `MAX` | rainbow gradient |
+
+Override any level colour via the corresponding key in `colors`. Setting `thinkingXhigh` or `thinkingMax` replaces the rainbow gradient with a solid colour:
+
+```json
+{
+  "colors": {
+    "thinkingXhigh": "#9575cd",
+    "thinkingMax": "#ce93d8"
+  }
+}
+```
 
 ## Git Status Indicators
 
 The `git` segment shows:
-- Branch name with icon
-- `*N` - Unstaged changes (warning color)
-- `+N` - Staged changes (success color)  
-- `?N` - Untracked files (muted color)
-
-Colors indicate clean (green) vs dirty (yellow) working tree.
+- Branch name coloured green (clean) or amber (dirty)
+- `*N` — unstaged changes
+- `+N` — staged changes
+- `?N` — untracked files
 
 ## Icons
 
@@ -161,13 +146,13 @@ Other fonts available via `brew search nerd-font`.
 
 ### Custom Icons
 
-To swap out any icon, add an `icons` key to your `~/.pi/agent/configs/footer.json`. You can browse all available Nerd Font glyphs at [nerdfonts.com/cheat-sheet](https://www.nerdfonts.com/cheat-sheet) — copy the **UTF-8 codepoint** (e.g. `\uF126`) or the glyph character directly and paste it into your config:
+To swap out any icon, add an `icons` key to your `~/.pi/agent/configs/footer.json`. Browse available Nerd Font glyphs at [nerdfonts.com/cheat-sheet](https://www.nerdfonts.com/cheat-sheet):
 
 ```json
 {
   "icons": {
-    "branch": "\uF126",
-    "separator": "\uE0B1"
+    "branch": "",
+    "separator": "|"
   }
 }
 ```

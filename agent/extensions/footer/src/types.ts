@@ -53,7 +53,6 @@ export type StatusLineSegmentId =
 
 // Per-segment options
 export interface StatusLineSegmentOptions {
-  model?: { showThinkingLevel?: boolean };
   path?: {
     mode?: "basename" | "abbreviated" | "full";
     maxLength?: number;
@@ -64,11 +63,6 @@ export interface StatusLineSegmentOptions {
     showUnstaged?: boolean;
     showUntracked?: boolean;
   };
-  thinking?: { prefix?: string };
-  context_pct?: { showAutoIcon?: boolean };
-  token_in?: { mode?: "icons" | "text" };
-  token_out?: { mode?: "icons" | "text" };
-  token_total?: { mode?: "icons" | "text" };
 }
 
 // Git status data
@@ -97,7 +91,6 @@ export interface SegmentContext {
   usageStats: UsageStats;
   contextPercent: number;
   contextWindow: number;
-  autoCompactEnabled: boolean;
   usingSubscription: boolean;
   sessionStartTime: number;
   git: GitStatus;
@@ -138,9 +131,11 @@ export interface RenderedSegment {
 }
 
 // User configuration from footer.json
-export interface SlopFooterUserConfig {
-  leftSegments?: StatusLineSegmentId[];
-  rightSegments?: StatusLineSegmentId[];
+export interface FooterUserConfig {
+  row1LeftSegments?: StatusLineSegmentId[];
+  row1RightSegments?: StatusLineSegmentId[];
+  row2LeftSegments?: StatusLineSegmentId[];
+  row2RightSegments?: StatusLineSegmentId[];
   colors?: ColorScheme;
   segmentOptions?: StatusLineSegmentOptions;
   icons?: Partial<IconSet>;

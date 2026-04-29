@@ -34,7 +34,7 @@ export const NERD_ICONS: IconSet = {
   input: "\uf062",      // nf-fa-arrow_up
   output: "\uf063",     // nf-fa-arrow_down
   thinking: "\uf400",   // nf-oct-light_bulb
-  separator: "\uE0B1",  // nf-pl-left_soft_divider
+  separator: "|",
   auto: "\uF0068",      // nf-md-lightning_bolt
   caveman: "🪨",    // or use "\ueeff" (nf-fa-hammer)
 };
@@ -55,7 +55,7 @@ export const ASCII_ICONS: IconSet = {
   input: "⬆",
   output: "⬇",
   thinking: "💡",
-  separator: "›",
+  separator: "|",
   auto: "⚡",
   caveman: "🪨",
 };

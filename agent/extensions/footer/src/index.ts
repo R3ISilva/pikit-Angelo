@@ -7,7 +7,7 @@ import { renderSegment } from "./segments/index.js";
 import { getGitStatus, invalidateGitStatus, invalidateGitBranch } from "./git-status.js";
 import { getEffectiveConfig } from "./config.js";
 import { getIcons } from "./icons.js";
-import { getDefaultColors } from "./theme.js";
+import { getDefaultColors, fg } from "./theme.js";
 
 const GIT_BRANCH_PATTERNS: RegExp[] = [
   /\bgit\s+(checkout|switch|branch\s+-[dDmM]|merge|rebase|pull|reset|worktree)/,
@@ -94,7 +94,7 @@ function buildFooterContent(
 // Extension
 // ═══════════════════════════════════════════════════════════════════════════
 
-export default function slopFooter(pi: ExtensionAPI) {
+export default function footer(pi: ExtensionAPI) {
   let sessionStartTime = Date.now();
   let currentCtx: ExtensionContext | null = null;
   let footerDataRef: ReadonlyFooterDataProvider | null = null;
@@ -202,7 +202,6 @@ export default function slopFooter(pi: ExtensionAPI) {
       usageStats,
       contextPercent,
       contextWindow,
-      autoCompactEnabled: ctx.settingsManager?.getCompactionSettings?.()?.enabled ?? true,
       usingSubscription,
       sessionStartTime,
       git: gitStatus,
@@ -239,14 +238,22 @@ export default function slopFooter(pi: ExtensionAPI) {
             return [];
           }
 
-          const content = buildFooterContent(
+          const row1 = buildFooterContent(
             segmentCtx,
-            effectiveConfig.leftSegments,
-            effectiveConfig.rightSegments,
+            effectiveConfig.row1LeftSegments,
+            effectiveConfig.row1RightSegments,
+            width,
+          );
+          const row2 = buildFooterContent(
+            segmentCtx,
+            effectiveConfig.row2LeftSegments,
+            effectiveConfig.row2RightSegments,
             width,
           );
 
-          return [content];
+          const divider = fg(theme, "separator", "─".repeat(width), segmentCtx.colors);
+
+          return ["", row1, divider, row2];
         },
       };
     });
