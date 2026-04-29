@@ -1,4 +1,5 @@
 {
+  "_comment": "Place this file at ~/.pi/agent/configs/mcp.json",
   "mcpServers": {
     "sentry": {
       "command": "npx",

@@ -20,7 +20,7 @@ agent/
 ├── configs/
 │   ├── caveman.json             # Caveman default level — gitignored, auto-created on first use
 │   ├── footer.json              # Footer segment configuration (tracked)
-│   ├── mcp.json                 # MCP server config — gitignored, see mcp/mcp.json.example
+│   ├── mcp.json                 # MCP server config — gitignored, see mcp/mcp.example.json
 │   ├── permission-gate.json     # Permission gate patterns — gitignored, see permission-gate.example.json
 │   ├── protected-paths.json     # Protected path entries — gitignored, see protected-paths.example.json
 │   └── .env                     # Secret env vars — gitignored, see env-loader/.env.example
@@ -223,7 +223,7 @@ See [`agent/extensions/permission-gate/README.md`](agent/extensions/permission-g
 Copy the example config and edit it with your servers:
 
 ```bash
-cp ~/.pi/agent/extensions/mcp/mcp.json.example ~/.pi/agent/configs/mcp.json
+cp ~/.pi/agent/extensions/mcp/mcp.example.json ~/.pi/agent/configs/mcp.json
 ```
 
 See [`agent/extensions/mcp/README.md`](agent/extensions/mcp/README.md) for the full configuration reference.
