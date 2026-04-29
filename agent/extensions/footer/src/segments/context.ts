@@ -1,6 +1,7 @@
 import type { RenderedSegment, SegmentContext } from "../types.js";
 import { applyColor } from "../theme.js";
 import { color } from "./helpers.js";
+import { formatTokens } from "./helpers.js";
 
 // Set to a number (0–100) to override context % for visual testing, null to disable
 const DEBUG_PCT: number | null = null;
@@ -61,9 +62,11 @@ export const contextPctSegment = {
     bar += "\x1b[0m";
 
     const pctLabel = `${pct.toFixed(1)}%`;
-    const pctStr = color(ctx, "caveman", pctLabel);
+    const pctStr = color(ctx, "contextLabel", pctLabel);
+    const tokensLabel = `/ ${formatTokens(ctx.contextWindow)}`;
+    const tokensStr = color(ctx, "contextLabel", tokensLabel);
 
-    return { content: `${bar} ${pctStr}`, visible: true };
+    return { content: `${bar} ${pctStr} ${tokensStr}`, visible: true };
   },
 };
 

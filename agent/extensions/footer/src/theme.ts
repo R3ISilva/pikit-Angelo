@@ -20,10 +20,11 @@ const DEFAULT_COLORS: ColorScheme = {
   context: "dim",
   contextWarn: "warning",
   contextError: "error",
+  contextLabel: "muted",
   cost: "muted",
   tokens: "muted",
   separator: "#4e4c49",
-  caveman: "muted",
+  modeIndicator: "muted",
 };
 
 function isHexColor(color: ColorValue): color is `#${string}` {

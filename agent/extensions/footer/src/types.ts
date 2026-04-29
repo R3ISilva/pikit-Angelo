@@ -24,10 +24,11 @@ export type SemanticColor =
   | "context"
   | "contextWarn"
   | "contextError"
+  | "contextLabel"
   | "cost"
   | "tokens"
   | "separator"
-  | "caveman";
+  | "modeIndicator";
 
 // Color scheme mapping semantic names to actual colors
 export type ColorScheme = Partial<Record<SemanticColor, ColorValue>>;

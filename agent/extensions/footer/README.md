@@ -6,10 +6,10 @@ A customizable two-row footer for the pi coding agent. Provides a rich status ba
 
 ```
 Row 1 left:  π | <model name> (<provider>) | <folder> <path> <branch> <dirty>
-Row 1 right: <context bar> <pct%> | $<cost>
+Row 1 right: <context bar> <pct%> / <max tokens>
 
 Row 2 left:  Thinking: <LEVEL> | Caveman mode: <VALUE>
-Row 2 right: T: <total> (<cached> cached) ↑ <in> ↓ <out>
+Row 2 right: T: <total> (<cached> cached) ↑ <in> ↓ <out> | $<cost>
 ```
 
 ## Features
@@ -43,9 +43,9 @@ left and right segments are configured independently:
 ```json
 {
   "row1LeftSegments":  ["pi", "separator", "model", "separator", "path", "git"],
-  "row1RightSegments": ["context_pct", "separator", "cost"],
+  "row1RightSegments": ["context_pct"],
   "row2LeftSegments":  ["thinking", "separator", "caveman"],
-  "row2RightSegments": ["token_total"],
+  "row2RightSegments": ["token_total", "separator", "cost"],
 
   "colors": {
     "model": "#c07898",
@@ -75,7 +75,7 @@ See `footer.example.json` in this directory for a full annotated example.
 | `model` | Model name in pink + `(provider)` in dim | No icon; provider omitted if unavailable |
 | `path` | Current working directory | `segmentOptions.path.mode`: `"basename"` (default) · `"abbreviated"` · `"full"` |
 | `git` | Git branch and dirty indicators | `showBranch`, `showStaged`, `showUnstaged`, `showUntracked` (all bool) |
-| `context_pct` | 20-char gradient bar + `X.X%` | Bar colours configurable in `context.ts`; % uses `caveman` colour. Set `DEBUG_PCT` in `context.ts` to a number (0–100) to pin the bar at a fixed value for visual testing. |
+| `context_pct` | 20-char gradient bar + `X.X%` + max tokens | Bar colours configurable in `context.ts`; % and max tokens use `contextLabel` colour. Max tokens formatted with K/M suffix (e.g. `128k`, `2M`). Set `DEBUG_PCT` in `context.ts` to a number (0–100) to pin the bar at a fixed value for visual testing. |
 | `cost` | `$<amount>` | `$` dim, amount in `cost` colour (`muted` by default) |
 | `thinking` | `Thinking: <LEVEL>` | Dim label, CAPS level with per-level colour; always visible |
 | `caveman` | `Caveman mode: <MODE>` | Hidden when caveman extension not loaded |

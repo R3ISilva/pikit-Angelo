@@ -20,6 +20,6 @@ export const cavemanSegment = {
     const label = applyColor(ctx.theme, "dim", "Caveman mode:");
     const value = state.enabled ? state.mode.toUpperCase() : "OFF";
 
-    return { content: `${label} ${color(ctx, "caveman", value)}`, visible: true };
+    return { content: `${label} ${color(ctx, "modeIndicator", value)}`, visible: true };
   },
 };

@@ -9,9 +9,7 @@
     "git"
   ],
   "row1RightSegments": [
-    "context_pct",
-    "separator",
-    "cost"
+    "context_pct"
   ],
   "row2LeftSegments": [
     "thinking",
@@ -19,7 +17,9 @@
     "caveman"
   ],
   "row2RightSegments": [
-    "token_total"
+    "token_total",
+    "separator",
+    "cost"
   ],
   "icons": {
     "pi": "\ue22c",
