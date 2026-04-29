@@ -345,9 +345,9 @@ To clear cached credentials and re-authenticate: `rm -rf ~/.mcp-auth`
 Go to [github.com/settings/tokens](https://github.com/settings/tokens) → **Generate new token (classic)**.
 
 Select scopes based on what you need:
-- `repo` — full access to private and public repos (read + write)
-- `public_repo` — public repos only
-- `read:org` — read org membership (needed for org repos)
+- `repo` - (the parent checkbox — this covers all sub-scopes including private repo access)
+- `read:org` under `admin:org`
+- `read:user` under `user`
 
 Copy the `ghp_...` token.
 
