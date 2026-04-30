@@ -30,17 +30,6 @@ export default function envLoaderExtension(pi: ExtensionAPI) {
     });
   }
 
-  // Scrub injected keys from process.env after all extension factories have run and
-  // resolved their ${VAR} references. This prevents bash/printenv tool calls from
-  // leaking secrets into the LLM context window during the session.
-  if (result.keys.length > 0) {
-    pi.on("session_start", async () => {
-      for (const key of result.keys) {
-        delete process.env[key];
-      }
-    });
-  }
-
   // ─── /env command ─────────────────────────────────────────────────────────
 
   pi.registerCommand("env", {

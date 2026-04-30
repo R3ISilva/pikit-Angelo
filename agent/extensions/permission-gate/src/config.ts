@@ -28,6 +28,8 @@ const DEFAULT_PATTERNS: RegExp[] = [
   /\brm\s+(-rf?|--recursive)/i,
   /\bsudo\b/i,
   /\b(chmod|chown)\s+(?:-[a-z]+\s+)*777(?:\b|$)/i,
+  /\bprintenv\b/i,
+  /(^|\s)env(\s|$)/i,
 ];
 
 const CONFIG_PATH = join(homedir(), ".pi", "agent", "configs", "permission-gate.json");
