@@ -50,7 +50,6 @@ These entries apply when no config file is present:
 | `.git/` | `read`, `write`, `edit` | Git internals — block everything |
 | `node_modules/` | `write`, `edit` | Reads allowed (docs/types); writes blocked |
 | `~/.pi/agent/auth.json` | `read`, `write`, `edit`, `bash` | Auth credentials — block file tools and bash |
-| `~/.pi/agent/configs/mcp.json` | `read`, `write`, `edit`, `bash` | MCP server config — block file tools and bash |
 
 ## Configuration
 
@@ -68,7 +67,7 @@ cp ~/.pi/agent/extensions/protected-paths/protected-paths.example.json \
     { "path": ".git/",                         "deny": ["read", "write", "edit"] },
     { "path": "node_modules/",                 "deny": ["write", "edit"] },
     { "path": "~/.pi/agent/auth.json",         "deny": ["read", "write", "edit", "bash"] },
-    { "path": "~/.pi/agent/configs/mcp.json",  "deny": ["read", "write", "edit", "bash"] }
+    { "path": "~/.pi/agent/configs/mcp.json",  "deny": ["write", "edit"] }
   ]
 }
 ```

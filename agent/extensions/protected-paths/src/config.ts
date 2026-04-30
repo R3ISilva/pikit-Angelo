@@ -11,7 +11,6 @@
  *     { "path": ".git/",                         "deny": ["read", "write", "edit"] },
  *     { "path": "node_modules/",                 "deny": ["write", "edit"] },
  *     { "path": "~/.pi/agent/auth.json",         "deny": ["read", "write", "edit", "bash"] },
- *     { "path": "~/.pi/agent/configs/mcp.json",  "deny": ["read", "write", "edit", "bash"] }
  *   ]
  * }
  *
@@ -38,7 +37,6 @@ export const DEFAULT_PATHS: PathEntry[] = [
   { path: ".git/",         deny: ["read", "write", "edit"] },
   { path: "node_modules/", deny: ["write", "edit"] },
   { path: "~/.pi/agent/auth.json",        deny: ["read", "write", "edit", "bash"] },
-  { path: "~/.pi/agent/configs/mcp.json", deny: ["read", "write", "edit", "bash"] },
 ];
 
 const CONFIG_PATH = join(homedir(), ".pi", "agent", "configs", "protected-paths.json");
