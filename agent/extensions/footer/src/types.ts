@@ -13,7 +13,6 @@ export type SemanticColor =
   | "gitDirty"
   | "gitClean"
   | "thinking"
-  | "thinkingIcon"
   | "thinkingOff"
   | "thinkingMinimal"
   | "thinkingLow"

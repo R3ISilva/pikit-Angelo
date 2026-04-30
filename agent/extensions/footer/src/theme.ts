@@ -11,7 +11,6 @@ const DEFAULT_COLORS: ColorScheme = {
   gitDirty: "warning",
   gitClean: "success",
   thinking: "muted",
-  thinkingIcon: "warning",
   thinkingOff: "dim",
   thinkingMinimal: "muted",
   thinkingLow: "warning",
