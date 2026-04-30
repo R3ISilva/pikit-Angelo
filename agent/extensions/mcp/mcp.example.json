@@ -1,5 +1,5 @@
 {
-  "_comment": "Place this file at ~/.pi/agent/configs/mcp.json",
+  "_comment": "Place this file at ~/.pi/agent/configs/mcp.json (chmod 600)",
   "mcpServers": {
     "sentry": {
       "command": "npx",

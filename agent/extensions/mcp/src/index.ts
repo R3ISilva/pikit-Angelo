@@ -59,11 +59,40 @@ import {
   buildStatusText,
 } from "./helpers.js";
 
+// Resolve known ${VAR} placeholders from process.env, leaving unresolvable ones intact.
+// Called at factory time so secrets are captured before env-loader scrubs process.env.
+function resolveKnownVars(v: string): string {
+  return v.replace(/\$\{([^}]+)\}/g, (match, name: string) => {
+    const found = process.env[name];
+    return found !== undefined ? found : match;
+  });
+}
+
+function resolveServerConfig(sc: ReturnType<typeof loadConfig>["mcpServers"][string]) {
+  return {
+    ...sc,
+    args: sc.args?.map(resolveKnownVars),
+    env: sc.env
+      ? Object.fromEntries(Object.entries(sc.env).map(([k, v]) => [k, resolveKnownVars(v)]))
+      : undefined,
+    headers: sc.headers
+      ? Object.fromEntries(Object.entries(sc.headers).map(([k, v]) => [k, resolveKnownVars(v)]))
+      : undefined,
+  };
+}
+
 export default function mcpExtension(pi: ExtensionAPI) {
   const config = loadConfig();
   const serverNames = Object.keys(config.mcpServers);
 
   if (serverNames.length === 0) return;
+
+  // Pre-resolve all ${VAR} references now, while process.env still has the secrets.
+  // env-loader will scrub its injected keys on session_start; by then all values are
+  // already stored in JS memory here and no longer needed in the environment.
+  const resolvedConfigs = new Map(
+    Object.entries(config.mcpServers).map(([name, sc]) => [name, resolveServerConfig(sc)]),
+  );
 
   // Seed tool metadata from per-server disk cache — enables search/describe without connecting
   const toolsCache = new Map<string, McpTool[]>();
@@ -89,7 +118,7 @@ export default function mcpExtension(pi: ExtensionAPI) {
     const pending = connecting.get(serverName);
     if (pending) return pending;
 
-    const serverConfig = config.mcpServers[serverName];
+    const serverConfig = resolvedConfigs.get(serverName);
     if (!serverConfig?.command && !serverConfig?.url) {
       throw new Error(
         `MCP server "${serverName}" has no command (stdio) or url (http) configured`,

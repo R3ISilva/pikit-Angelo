@@ -233,6 +233,13 @@ Some servers (Slack being the main example) require you to pre-register an OAuth
 }
 ```
 
+Store the credentials in `~/.pi/agent/configs/.env`:
+
+```
+SLACK_CLIENT_ID=your-client-id
+SLACK_CLIENT_SECRET=your-client-secret
+```
+
 The OAuth flow is the same as Pattern 1 — browser opens automatically, you approve, done. The difference is that Slack needs the registered app's credentials to start the flow.
 
 ### Pattern 3 — static API token (GitHub)
@@ -251,18 +258,29 @@ Some servers don't use OAuth at all — they just need a token passed as an envi
 }
 ```
 
-## Environment variables
+## Authentication & secrets
 
-All `${VAR}` references in `args`, `env`, and `headers` are read from the environment pi inherits at startup. The recommended way to manage these is the **env-loader** extension — see [`agent/extensions/env-loader/README.md`](../env-loader/README.md).
+**Never hardcode tokens directly in `mcp.json`.** The config file may be read by the coding agent during grep, find, or file exploration and secrets would land in the LLM context window.
 
-Create `~/.pi/agent/configs/.env` (gitignored):
+**Recommended pattern:** store all tokens in `~/.pi/agent/configs/.env` (loaded by the env-loader extension) and reference them via `${VAR}` in `mcp.json`:
 
-```
+```env
+# ~/.pi/agent/configs/.env
 GITHUB_TOKEN=ghp_...
-GEMINI_API_KEY=AIza...
+MY_API_TOKEN=sk-...
 ```
 
-> **Slack credentials:** store `SLACK_CLIENT_ID` and `SLACK_CLIENT_SECRET` in `.env` and reference them in `args` — `${VAR}` interpolation works there too.
+```json
+{ "env": { "GITHUB_TOKEN": "${GITHUB_TOKEN}" } }
+```
+
+The `${VAR}` references are resolved at runtime from environment variables before the subprocess starts. The `.env` file is protected from agent reads by default (via the protected-paths extension).
+
+For servers that need credentials:
+
+- **stdio servers:** reference the token via `${VAR}` in `env`
+- **HTTP servers:** reference the token via `${VAR}` in `headers`
+- **mcp-remote OAuth (Sentry, Atlassian):** no token needed — OAuth is fully automatic
 
 ## Server setup guides
 
@@ -351,15 +369,15 @@ Select scopes based on what you need:
 
 Copy the `ghp_...` token.
 
-#### 2. Store the token
+#### 2. Add to .env and mcp.json
 
-Add it to `~/.pi/agent/configs/.env`:
+Add the token to `~/.pi/agent/configs/.env`:
 
 ```
 GITHUB_TOKEN=ghp_your-token-here
 ```
 
-#### 3. Add to mcp.json
+Then reference it in `mcp.json`:
 
 ```json
 {
@@ -442,16 +460,16 @@ Go to **Basic Information → App Credentials** and copy:
 - **Client ID**
 - **Client Secret**
 
-#### 5. Add to mcp.json
+#### 5. Add to .env and mcp.json
 
-Add them to `~/.pi/agent/configs/.env`:
+Add the credentials to `~/.pi/agent/configs/.env`:
 
 ```
 SLACK_CLIENT_ID=your-client-id-here
 SLACK_CLIENT_SECRET=your-client-secret-here
 ```
 
-Then add to `mcp.json`:
+Then reference them in `mcp.json`:
 
 ```json
 {

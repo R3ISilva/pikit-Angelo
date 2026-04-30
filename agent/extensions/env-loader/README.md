@@ -6,6 +6,8 @@ Injects `~/.pi/agent/configs/.env` into `process.env` at startup. A pi-native al
 
 The extension loads synchronously in its factory function, before `session_start` and before any other extension runs. Shell environment always takes precedence: if a key is already set in your shell, the file value is silently skipped.
 
+Injected keys are **scrubbed from `process.env` on `session_start`**, after all other extensions have had a chance to read them (e.g. the mcp extension pre-resolves `${VAR}` references at factory time). This means the values are never visible to bash tool calls like `printenv` or `echo $KEY` during the session — they live only in the memory of the extensions that consumed them.
+
 ## Structure
 
 ```

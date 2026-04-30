@@ -22,6 +22,7 @@ export class McpHttpClient implements McpClient {
   private _dead = false;
   private sessionId: string | undefined;
   private readonly resolvedHeaders: Record<string, string>;
+  private nextId = 1;
 
   constructor(
     readonly serverName: string,
@@ -30,10 +31,18 @@ export class McpHttpClient implements McpClient {
   ) {
     // Resolve ${VAR} placeholders in header values from process.env
     this.resolvedHeaders = {};
+    const unresolved: string[] = [];
     for (const [k, v] of Object.entries(config.headers ?? {})) {
-      this.resolvedHeaders[k] = v.replace(
-        /\$\{([^}]+)\}/g,
-        (_, name) => process.env[name] ?? "",
+      const result = v.replace(/\$\{([^}]+)\}/g, (_, name: string) => {
+        const found = process.env[name];
+        if (found === undefined) unresolved.push(`${k} → ${name}`);
+        return found ?? "";
+      });
+      this.resolvedHeaders[k] = result;
+    }
+    if (unresolved.length > 0) {
+      throw new Error(
+        `MCP HTTP server "${this.serverName}" requires missing env vars:\n  ${unresolved.join("\n  ")}`,
       );
     }
   }
@@ -52,7 +61,7 @@ export class McpHttpClient implements McpClient {
 
   /** Send a JSON-RPC request and return the result. */
   private async sendRequest(method: string, params?: unknown): Promise<unknown> {
-    const id = Math.floor(Math.random() * 2_147_483_647) + 1;
+    const id = this.nextId++;
     const body: JsonRpcRequest = { jsonrpc: "2.0", id, method, params: params ?? {} };
 
     const controller = new AbortController();
@@ -119,29 +128,37 @@ export class McpHttpClient implements McpClient {
         if (done) break;
         buf += decoder.decode(value, { stream: true });
 
-        // SSE events are delimited by blank lines (\n\n)
+        // Normalize \r\n → \n for cross-platform SSE compliance, then split on blank lines
+        const normalized = buf.replace(/\r\n/g, "\n");
+        if (normalized !== buf) buf = normalized;
+
         let boundary: number;
         while ((boundary = buf.indexOf("\n\n")) !== -1) {
           const block = buf.slice(0, boundary);
           buf = buf.slice(boundary + 2);
 
+          const eventData: string[] = [];
           for (const line of block.split("\n")) {
-            if (!line.startsWith("data:")) continue;
-            const data = line.slice(5).trim();
-            if (!data || data === "[DONE]") continue;
-            try {
-              const msg = JSON.parse(data) as JsonRpcResponse;
-              if (msg.id === expectedId) {
-                reader.cancel().catch(() => {});
-                if (msg.error) {
-                  throw new Error(`MCP error ${msg.error.code}: ${msg.error.message}`);
-                }
-                return msg.result;
-              }
-            } catch (e) {
-              if (e instanceof Error && e.message.startsWith("MCP error")) throw e;
-              // ignore parse errors for non-JSON SSE events (heartbeats, etc.)
+            const trimmed = line.trimEnd();
+            if (trimmed.startsWith("data:")) {
+              eventData.push(trimmed.slice(5).trimStart());
             }
+            // event: field is intentionally ignored — we only need the JSON-RPC payloads
+          }
+          const data = eventData.join("\n");
+          if (!data || data === "[DONE]") continue;
+          try {
+            const msg = JSON.parse(data) as JsonRpcResponse;
+            if (msg.id === expectedId) {
+              await reader.cancel().catch(() => {});
+              if (msg.error) {
+                throw new Error(`MCP error ${msg.error.code}: ${msg.error.message}`);
+              }
+              return msg.result;
+            }
+          } catch (e) {
+            if (e instanceof Error && e.message.startsWith("MCP error")) throw e;
+            // ignore parse errors for non-JSON SSE events (heartbeats, etc.)
           }
         }
       }
@@ -179,7 +196,7 @@ export class McpHttpClient implements McpClient {
     await this.sendRequest("initialize", {
       protocolVersion: "2024-11-05",
       capabilities: { tools: {} },
-      clientInfo: { name: "mcp", version: "2.0.0" },
+      clientInfo: { name: "mcp", version: "1.0.0" },
     });
     await this.sendNotification("notifications/initialized");
   }

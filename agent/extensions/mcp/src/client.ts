@@ -2,6 +2,18 @@ import { spawn, type ChildProcess } from "node:child_process";
 import { createInterface } from "node:readline";
 import type { McpClient, McpServerConfig, McpTool, McpCallResult, JsonRpcRequest, JsonRpcResponse } from "./types.js";
 
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function interpolateWithErrors(v: string): { value: string; unresolved: string[] } {
+  const unresolved: string[] = [];
+  const value = v.replace(/\$\{([^}]+)\}/g, (_, name: string) => {
+    const found = process.env[name];
+    if (found === undefined) unresolved.push(name);
+    return found ?? "";
+  });
+  return { value, unresolved };
+}
+
 // ─── McpStdioClient ───────────────────────────────────────────────────────────
 
 export class McpStdioClient implements McpClient {
@@ -25,12 +37,25 @@ export class McpStdioClient implements McpClient {
     for (const [k, v] of Object.entries(process.env)) {
       if (v !== undefined) env[k] = v;
     }
+
+    const allUnresolved: string[] = [];
     for (const [k, v] of Object.entries(config.env ?? {})) {
-      env[k] = v.replace(/\$\{([^}]+)\}/g, (_, name) => process.env[name] ?? "");
+      const { value, unresolved } = interpolateWithErrors(v);
+      env[k] = value;
+      allUnresolved.push(...unresolved.map((n) => `env.${k} → ${n}`));
     }
 
-    const interpolate = (v: string) => v.replace(/\$\{([^}]+)\}/g, (_, name) => process.env[name] ?? "");
-    const resolvedArgs = (config.args ?? []).map(interpolate);
+    const resolvedArgs = (config.args ?? []).map((v) => {
+      const { value, unresolved } = interpolateWithErrors(v);
+      allUnresolved.push(...unresolved.map((n) => `arg → ${n}`));
+      return value;
+    });
+
+    if (allUnresolved.length > 0) {
+      throw new Error(
+        `MCP server "${this.serverName}" requires missing env vars:\n  ${allUnresolved.join("\n  ")}`,
+      );
+    }
 
     this.proc = spawn(config.command!, resolvedArgs, {
       stdio: ["pipe", "pipe", "pipe"],
@@ -40,8 +65,11 @@ export class McpStdioClient implements McpClient {
 
     this.proc.stderr?.on("data", (chunk: Buffer) => {
       const lines = chunk.toString().split("\n").filter(Boolean);
-      this.stderrLines.push(...lines);
-      if (this.stderrLines.length > 20) this.stderrLines.splice(0, this.stderrLines.length - 20);
+      // Fixed-size ring buffer: keep only last 20 lines
+      for (const line of lines) {
+        this.stderrLines.push(line);
+        if (this.stderrLines.length > 20) this.stderrLines.shift();
+      }
       for (const line of lines) {
         for (const h of this.stderrHandlers) h(line);
       }
@@ -113,7 +141,7 @@ export class McpStdioClient implements McpClient {
     await this.send("initialize", {
       protocolVersion: "2024-11-05",
       capabilities: { tools: {} },
-      clientInfo: { name: "mcp", version: "2.0.0" },
+      clientInfo: { name: "mcp", version: "1.0.0" },
     });
     this.proc.stdin!.write(
       JSON.stringify({ jsonrpc: "2.0", method: "notifications/initialized" }) + "\n",
@@ -139,6 +167,13 @@ export class McpStdioClient implements McpClient {
 
   close(): void {
     if (!this._dead) {
+      this._dead = true;
+      const err = new Error(`MCP server "${this.serverName}" closed`);
+      for (const { reject, timer } of this.pending.values()) {
+        clearTimeout(timer);
+        reject(err);
+      }
+      this.pending.clear();
       this.proc.stdin?.end();
       this.proc.kill("SIGTERM");
     }

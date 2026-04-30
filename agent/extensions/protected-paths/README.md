@@ -7,7 +7,8 @@ Blocks `read`, `write`, and/or `edit` tool calls to protected paths. Each entry 
 pi prioritizes flexibility. Extensions should be able to modify almost everything—skills, prompts, themes, even other extensions. This extension enforces **minimal, focused restrictions** on only the highest-risk vectors:
 
 1. **`auth.json`** — credentials and API keys. Blocks all access to prevent accidental leakage.
-2. **Dangerous bash commands** — handled by the `permission-gate` extension, not this one. Blocks `rm -rf`, `sudo`, `chmod 777`, etc.
+2. **Secret config files** — `.env`, `mcp.json`, `auth.json`. Blocks both file tool access and bash commands that reference these paths.
+3. **Dangerous bash commands** — handled by the `permission-gate` extension, not this one. Blocks `rm -rf`, `sudo`, `chmod 777`, etc.
 
 Everything else is fair game. **The agent is trusted to shape pi according to your needs.** The infrastructure (credentials, system integrity) is protected, but avoid pasting secrets directly into conversations—treat them like any other tool (Claude, ChatGPT, etc.).
 
@@ -15,7 +16,7 @@ If you want additional restrictions (block session edits, lock down extensions, 
 
 ## How it works
 
-On every `read`, `write`, or `edit` tool call, the extension checks the target path against the protected entries. Each entry has a `path` and a `deny` array. If the path matches and the current operation is in that entry's `deny` list, the call is blocked. Operations not listed are allowed through.
+On every `read`, `write`, `edit`, or `bash` tool call, the extension checks against the protected entries. Each entry has a `path` and a `deny` array. If the path matches and the current operation is in that entry's `deny` list, the call is blocked. Operations not listed are allowed through.
 
 Two matching strategies are used depending on the entry's `path` format:
 
@@ -45,10 +46,11 @@ These entries apply when no config file is present:
 
 | Path | Blocked ops | Rationale |
 |------|-------------|-----------|
-| `.env` | `read`, `write`, `edit` | Contains secrets — block everything |
+| `.env` | `read`, `write`, `edit`, `bash` | Contains secrets — block file tools and bash (substring match — also catches `.envrc`, `.env.local`) |
 | `.git/` | `read`, `write`, `edit` | Git internals — block everything |
 | `node_modules/` | `write`, `edit` | Reads allowed (docs/types); writes blocked |
-| `~/.pi/agent/auth.json` | `read`, `write`, `edit` | Auth credentials — block everything |
+| `~/.pi/agent/auth.json` | `read`, `write`, `edit`, `bash` | Auth credentials — block file tools and bash |
+| `~/.pi/agent/configs/mcp.json` | `read`, `write`, `edit`, `bash` | MCP server config — block file tools and bash |
 
 ## Configuration
 
@@ -62,22 +64,25 @@ cp ~/.pi/agent/extensions/protected-paths/protected-paths.example.json \
 ```json
 {
   "paths": [
-    { "path": ".env",                    "deny": ["read", "write", "edit"] },
-    { "path": ".git/",                   "deny": ["read", "write", "edit"] },
-    { "path": "node_modules/",           "deny": ["write", "edit"] },
-    { "path": "~/.pi/agent/auth.json",   "deny": ["read", "write", "edit"] }
+    { "path": ".env",                         "deny": ["read", "write", "edit", "bash"] },
+    { "path": ".git/",                         "deny": ["read", "write", "edit"] },
+    { "path": "node_modules/",                 "deny": ["write", "edit"] },
+    { "path": "~/.pi/agent/auth.json",         "deny": ["read", "write", "edit", "bash"] },
+    { "path": "~/.pi/agent/configs/mcp.json",  "deny": ["read", "write", "edit", "bash"] }
   ]
 }
 ```
 
 - **`path`** — the file or directory to protect (see matching strategies below)
-- **`deny`** — list of operations to block; any op not listed is allowed through. Valid values: `"read"`, `"write"`, `"edit"`
+- **`deny`** — list of operations to block; any op not listed is allowed through. Valid values: `"read"`, `"write"`, `"edit"`, `"bash"`
 
 When the config file is present it **replaces** the defaults entirely — add the defaults back if you still want them.
 
 **Note:** The defaults are intentionally minimal (just credentials). If you want stricter controls, add more paths to your config. For example, to prevent all writes to sessions or extensions, add them to your config alongside the defaults.
 
 ### Matching strategies
+
+**File tools (`read`, `write`, `edit`):**
 
 | Path format | How it matches | Example |
 |---|---|---|
@@ -86,15 +91,24 @@ When the config file is present it **replaces** the defaults entirely — add th
 | Absolute (`/etc/`) | Resolved `startsWith` — anything nested inside | Blocks all files under `/etc/` |
 | Home-relative (`~/.pi/agent/configs/`) | Resolved `startsWith` — anything nested inside | Blocks all files under `~/.pi/agent/configs/` |
 
+**Bash tool (`bash`):**
+
+The command string is checked for the protected path. Two strategies:
+
+- **Absolute/home-relative entries** — checked against the resolved absolute path and the original `~/...` form. Precise, no false positives.
+- **Bare entries** (e.g. `.env`) — checked as a substring of the command. Catches `cat .env`, `cat project/.env`, etc. Also hits `.envrc` and `.env.local`, which is intentional — those are sensitive too.
+
+Does not catch indirect access where the path doesn't appear literally in the command (e.g. a Python script that opens the file internally).
+
 ### Examples
 
 ```json
 {
   "paths": [
-    { "path": ".env",                    "deny": ["read", "write", "edit"] },
+    { "path": ".env",                    "deny": ["read", "write", "edit", "bash"] },
     { "path": ".git/",                   "deny": ["read", "write", "edit"] },
     { "path": "node_modules/",           "deny": ["write", "edit"] },
-    { "path": "~/.pi/agent/configs/",   "deny": ["read", "write", "edit"] },
+    { "path": "~/.pi/agent/configs/",    "deny": ["read", "write", "edit", "bash"] },
     { "path": "/etc/",                   "deny": ["write", "edit"] }
   ]
 }
