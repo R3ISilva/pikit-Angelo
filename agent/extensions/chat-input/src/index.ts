@@ -22,6 +22,8 @@ function plainText(line: string): string {
 class ChatInput extends CustomEditor {
 	private border: (s: string) => string;
 	private accent: (s: string) => string;
+	private bashBorder: (s: string) => string;
+	private bashAccent: (s: string) => string;
 
 	constructor(
 		tui: TUI,
@@ -29,10 +31,19 @@ class ChatInput extends CustomEditor {
 		keybindings: KeybindingsManager,
 		colorFn: (s: string) => string,
 		accentFn: (s: string) => string,
+		bashColorFn: (s: string) => string,
+		bashAccentFn: (s: string) => string,
 	) {
 		super(tui, theme, keybindings, { paddingX: 0 });
 		this.border = colorFn;
 		this.accent = accentFn;
+		this.bashBorder = bashColorFn;
+		this.bashAccent = bashAccentFn;
+	}
+
+	private isBashMode(): boolean {
+		const text = (this as any).getText?.();
+		return typeof text === "string" && text.trimStart().startsWith("!");
 	}
 
 	render(width: number): string[] {
@@ -42,7 +53,9 @@ class ChatInput extends CustomEditor {
 		const stock = super.render(contentWidth);
 		if (stock.length < 2) return super.render(width);
 
-		const border = this.border;
+		const isBash = this.isBashMode();
+		const border = isBash ? this.bashBorder : this.border;
+		const accent = isBash ? this.bashAccent : this.accent;
 		const innerWidth = width - 2;
 
 		// Solid border: after stripping ANSI every char is "─"
@@ -98,7 +111,7 @@ class ChatInput extends CustomEditor {
 
 			const vw = visibleWidth(stock[i]!);
 			const pad = vw < contentWidth ? " ".repeat(contentWidth - vw) : "";
-			body.push(border("│") + leftPad + this.accent(PREFIX) + leftPad + stock[i]! + pad + rightPad + border("│"));
+			body.push(border("│") + leftPad + accent(PREFIX) + leftPad + stock[i]! + pad + rightPad + border("│"));
 		}
 
 		// ── menu lines (after last border/indicator) ──
@@ -123,7 +136,9 @@ export default function (pi: ExtensionAPI) {
 		ctx.ui.setEditorComponent((tui: TUI, theme: EditorTheme, kb: KeybindingsManager) => {
 			const colorFn = (s: string) => ctx.ui.theme.fg(BORDER_TOKEN, s);
 			const accentFn = (s: string) => ctx.ui.theme.fg(ACCENT_TOKEN, s);
-			return new ChatInput(tui, theme, kb, colorFn, accentFn);
+			const bashColorFn = (s: string) => ctx.ui.theme.fg("bashMode", s);
+			const bashAccentFn = (s: string) => ctx.ui.theme.fg("bashMode", s);
+			return new ChatInput(tui, theme, kb, colorFn, accentFn, bashColorFn, bashAccentFn);
 		});
 	});
 }
