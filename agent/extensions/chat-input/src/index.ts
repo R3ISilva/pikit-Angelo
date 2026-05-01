@@ -8,6 +8,8 @@ const BOX_PAD_X = 1;          // spaces between │ and text inside the box
 const MENU_GAP = 0;           // blank lines between box bottom and menu
 const EXTRA_MENU_INDENT = 1;  // extra spaces before menu lines below box
 const BORDER_TOKEN = "border" as const; // border colour from theme
+const ACCENT_TOKEN = "accent" as const; // accent colour for prefix
+const PREFIX = "\u276F";      // ❯ unicode prefix character (can also use "\u203A" for a lighter version)
 
 // ─── Helpers ──────────────────────────────────────────────────────────────
 const ANSI_RE = /\x1b\[[0-9;]*m|\x1b\[0?m/g;
@@ -19,21 +21,24 @@ function plainText(line: string): string {
 // ─── Component ────────────────────────────────────────────────────────────
 class ChatInput extends CustomEditor {
 	private border: (s: string) => string;
+	private accent: (s: string) => string;
 
 	constructor(
 		tui: TUI,
 		theme: EditorTheme,
 		keybindings: KeybindingsManager,
 		colorFn: (s: string) => string,
+		accentFn: (s: string) => string,
 	) {
 		super(tui, theme, keybindings, { paddingX: 0 });
 		this.border = colorFn;
+		this.accent = accentFn;
 	}
 
 	render(width: number): string[] {
-		if (width < 4 + BOX_PAD_X * 2) return super.render(width);
+		if (width < 5 + BOX_PAD_X * 3) return super.render(width);
 
-		const contentWidth = width - 2 - BOX_PAD_X * 2;
+		const contentWidth = width - 3 - BOX_PAD_X * 3;
 		const stock = super.render(contentWidth);
 		if (stock.length < 2) return super.render(width);
 
@@ -93,7 +98,7 @@ class ChatInput extends CustomEditor {
 
 			const vw = visibleWidth(stock[i]!);
 			const pad = vw < contentWidth ? " ".repeat(contentWidth - vw) : "";
-			body.push(border("│") + leftPad + stock[i]! + pad + rightPad + border("│"));
+			body.push(border("│") + leftPad + this.accent(PREFIX) + leftPad + stock[i]! + pad + rightPad + border("│"));
 		}
 
 		// ── menu lines (after last border/indicator) ──
@@ -117,7 +122,8 @@ export default function (pi: ExtensionAPI) {
 	pi.on("session_start", async (_event, ctx) => {
 		ctx.ui.setEditorComponent((tui: TUI, theme: EditorTheme, kb: KeybindingsManager) => {
 			const colorFn = (s: string) => ctx.ui.theme.fg(BORDER_TOKEN, s);
-			return new ChatInput(tui, theme, kb, colorFn);
+			const accentFn = (s: string) => ctx.ui.theme.fg(ACCENT_TOKEN, s);
+			return new ChatInput(tui, theme, kb, colorFn, accentFn);
 		});
 	});
 }
