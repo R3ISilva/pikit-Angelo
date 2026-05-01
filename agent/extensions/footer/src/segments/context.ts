@@ -4,7 +4,7 @@ import { color } from "./helpers.js";
 import { formatTokens } from "./helpers.js";
 
 // Set to a number (0–100) to override context % for visual testing, null to disable
-const DEBUG_PCT: number | null = 75;
+const DEBUG_PCT: number | null = null;
 
 const DEFAULT_BAR_WIDTH     = 18;
 const DEFAULT_FILLED_CHAR   = "▋";
