@@ -92,3 +92,22 @@ export function rainbow(text: string): string {
 export function getDefaultColors(): ColorScheme {
   return { ...DEFAULT_COLORS };
 }
+
+// Resolve any ColorValue to an RGB triple for gradient math.
+// Named theme tokens are probed by applying them to a dummy string and parsing
+// the resulting ANSI 24-bit escape sequence. Returns null when the theme uses a
+// non-24-bit code (e.g. 256-colour or named colour) — callers should fall back.
+export function resolveColorToRgb(
+  theme: Theme,
+  color: ColorValue
+): { r: number; g: number; b: number } | null {
+  if (isHexColor(color)) {
+    const h = color.replace("#", "");
+    if (!/^[0-9a-fA-F]{6}$/.test(h)) return null;
+    return { r: parseInt(h.slice(0, 2), 16), g: parseInt(h.slice(2, 4), 16), b: parseInt(h.slice(4, 6), 16) };
+  }
+  const probed = theme.fg(color as ThemeColor, "X");
+  const match = probed.match(/\x1b\[38;2;(\d+);(\d+);(\d+)m/);
+  if (!match) return null;
+  return { r: parseInt(match[1]), g: parseInt(match[2]), b: parseInt(match[3]) };
+}

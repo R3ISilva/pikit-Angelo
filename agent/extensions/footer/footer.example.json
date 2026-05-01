@@ -44,6 +44,16 @@
       "showStaged": true,
       "showUnstaged": true,
       "showUntracked": true
+    },
+    "contextBar": {
+      "barWidth": 25,
+      "filledChar": "▋",
+      "unfilledChar": "▋",
+      "unfilledColor": "#3e3e3e",
+      "gradientStart": "#f29373",
+      "gradientMid": "#d67858",
+      "gradientEnd": "#ae4f2f",
+      "gradientMidPoint": 0.55
     }
   }
 }

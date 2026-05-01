@@ -1,46 +1,44 @@
 import type { RenderedSegment, SegmentContext } from "../types.js";
-import { applyColor } from "../theme.js";
+import { applyColor, resolveColorToRgb } from "../theme.js";
 import { color } from "./helpers.js";
 import { formatTokens } from "./helpers.js";
 
 // Set to a number (0–100) to override context % for visual testing, null to disable
 const DEBUG_PCT: number | null = null;
 
-const BAR_WIDTH = 20;
-const FILLED_CHAR   = "\u2593";
-const UNFILLED_CHAR = "\u2592";
-const UNFILLED_COLOR = "#87827a";
-
-// Convert a hex string to an RGB object for gradient interpolation.
-// To get a two-colour ramp, set MID the same as START or END.
-function hex(h: string): { r: number; g: number; b: number } {
-  const c = h.replace("#", "");
-  return { r: parseInt(c.slice(0, 2), 16), g: parseInt(c.slice(2, 4), 16), b: parseInt(c.slice(4, 6), 16) };
-}
-
-// Gradient stops — drop in any hex values here
-const START = hex("#b8b4ae"); 
-const MID   = hex("#d67858");
-const END   = hex("#d67858");
-const MID_FRAC = 0.55;       // 0–1: where MID sits along the bar
+const DEFAULT_BAR_WIDTH     = 25;
+const DEFAULT_FILLED_CHAR   = "▋";
+const DEFAULT_UNFILLED_CHAR = "▋";
+const DEFAULT_UNFILLED_COLOR = "#3e3e3e";
+const DEFAULT_START = { r: 0xf2, g: 0x93, b: 0x73 };
+const DEFAULT_MID   = { r: 0xd6, g: 0x78, b: 0x58 };
+const DEFAULT_END   = { r: 0xae, g: 0x4f, b: 0x2f };
+const DEFAULT_MID_FRAC = 0.55; // 0–1: where MID sits along the gradient
 
 function lerp(a: number, b: number, t: number): number {
   return Math.round(a + (b - a) * t);
 }
 
-function positionColor(pos: number): string {
-  const t = pos / (BAR_WIDTH - 1);
+function positionColor(
+  pos: number,
+  barWidth: number,
+  start: { r: number; g: number; b: number },
+  mid: { r: number; g: number; b: number },
+  end: { r: number; g: number; b: number },
+  midFrac: number,
+): string {
+  const t = pos / Math.max(barWidth - 1, 1);
   let r: number, g: number, b: number;
-  if (t <= MID_FRAC) {
-    const f = t / MID_FRAC;
-    r = lerp(START.r, MID.r, f);
-    g = lerp(START.g, MID.g, f);
-    b = lerp(START.b, MID.b, f);
+  if (t <= midFrac) {
+    const f = t / midFrac;
+    r = lerp(start.r, mid.r, f);
+    g = lerp(start.g, mid.g, f);
+    b = lerp(start.b, mid.b, f);
   } else {
-    const f = (t - MID_FRAC) / (1 - MID_FRAC);
-    r = lerp(MID.r, END.r, f);
-    g = lerp(MID.g, END.g, f);
-    b = lerp(MID.b, END.b, f);
+    const f = (t - midFrac) / (1 - midFrac);
+    r = lerp(mid.r, end.r, f);
+    g = lerp(mid.g, end.g, f);
+    b = lerp(mid.b, end.b, f);
   }
   return `\x1b[38;2;${r};${g};${b}m`;
 }
@@ -49,14 +47,25 @@ export const contextPctSegment = {
   id: "context_pct" as const,
   render(ctx: SegmentContext): RenderedSegment {
     const pct = DEBUG_PCT ?? ctx.contextPercent;
-    const filled = Math.round((pct / 100) * BAR_WIDTH);
+    const barOpts = ctx.options.contextBar ?? {};
+
+    const barWidth     = barOpts.barWidth     ?? DEFAULT_BAR_WIDTH;
+    const filledChar   = barOpts.filledChar   ?? DEFAULT_FILLED_CHAR;
+    const unfilledChar = barOpts.unfilledChar ?? DEFAULT_UNFILLED_CHAR;
+    const unfilledColor = barOpts.unfilledColor ?? DEFAULT_UNFILLED_COLOR;
+    const start   = (barOpts.gradientStart ? resolveColorToRgb(ctx.theme, barOpts.gradientStart) : null) ?? DEFAULT_START;
+    const mid     = (barOpts.gradientMid   ? resolveColorToRgb(ctx.theme, barOpts.gradientMid)   : null) ?? DEFAULT_MID;
+    const end     = (barOpts.gradientEnd   ? resolveColorToRgb(ctx.theme, barOpts.gradientEnd)   : null) ?? DEFAULT_END;
+    const midFrac = barOpts.gradientMidPoint ?? DEFAULT_MID_FRAC;
+
+    const filled = Math.round((pct / 100) * barWidth);
 
     let bar = "";
-    for (let i = 0; i < BAR_WIDTH; i++) {
+    for (let i = 0; i < barWidth; i++) {
       if (i < filled) {
-        bar += positionColor(i) + FILLED_CHAR;
+        bar += positionColor(i, barWidth, start, mid, end, midFrac) + filledChar;
       } else {
-        bar += applyColor(ctx.theme, UNFILLED_COLOR, UNFILLED_CHAR);
+        bar += applyColor(ctx.theme, unfilledColor, unfilledChar);
       }
     }
     bar += "\x1b[0m";

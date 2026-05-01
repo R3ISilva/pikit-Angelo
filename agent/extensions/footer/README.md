@@ -75,7 +75,7 @@ See `footer.example.json` in this directory for a full annotated example.
 | `model` | Model name in pink + `(provider)` in dim | No icon; provider omitted if unavailable |
 | `path` | Current working directory | `segmentOptions.path.mode`: `"basename"` (default) · `"abbreviated"` · `"full"` |
 | `git` | Git branch and dirty indicators | `showBranch`, `showStaged`, `showUnstaged`, `showUntracked` (all bool) |
-| `context_pct` | 20-char gradient bar + `X.X%` + max tokens | Bar colours configurable in `context.ts`; % and max tokens use `contextLabel` colour. Max tokens formatted with K/M suffix (e.g. `128k`, `2M`). Set `DEBUG_PCT` in `context.ts` to a number (0–100) to pin the bar at a fixed value for visual testing. |
+| `context_pct` | Gradient bar + `X.X%` + max tokens | Bar fully configurable via `segmentOptions.contextBar` (see below). % and max tokens use `contextLabel` colour. Max tokens formatted with K/M suffix (e.g. `128k`, `2M`). Set `DEBUG_PCT` in `context.ts` to a number (0–100) to pin the bar at a fixed value for visual testing. |
 | `cost` | `$<amount>` | `$` dim, amount in `cost` colour (`muted` by default) |
 | `thinking` | `Thinking: <LEVEL>` | Dim label, CAPS level with per-level colour; always visible |
 | `caveman` | `Caveman mode: <MODE>` | Hidden when caveman extension not loaded |
@@ -87,6 +87,38 @@ See `footer.example.json` in this directory for a full annotated example.
 | `context_total` | Total context window size | — |
 | `separator` | `\|` divider | Coloured via `separator` in `colors` |
 | `text:...` | Literal text, e.g. `text:⚡` | — |
+
+## Context Bar
+
+The `context_pct` segment's bar is fully configurable via `segmentOptions.contextBar`:
+
+| Key | Type | Default | Description |
+|-----|------|---------|-------------|
+| `barWidth` | number | `25` | Number of characters wide |
+| `filledChar` | string | `"▋"` | Character used for the filled portion |
+| `unfilledChar` | string | `"▋"` | Character used for the unfilled portion |
+| `unfilledColor` | color | `"#3e3e3e"` | Color of the unfilled portion — hex or pi theme token |
+| `gradientStart` | color | `"#f29373"` | Gradient color at the left/empty end — hex or pi theme token |
+| `gradientMid` | color | `"#d67858"` | Gradient midpoint color — hex or pi theme token |
+| `gradientEnd` | color | `"#ae4f2f"` | Gradient color at the right/full end — hex or pi theme token |
+| `gradientMidPoint` | number | `0.55` | Where `gradientMid` sits along the bar (0–1). Below this fraction the gradient runs start→mid; above it mid→end |
+
+All color fields accept either a hex string (e.g. `"#ff6347"`) or a pi theme token (e.g. `"accent"`, `"warning"`, `"dim"`).
+
+```json
+{
+  "segmentOptions": {
+    "contextBar": {
+      "barWidth": 20,
+      "unfilledColor": "dim",
+      "gradientStart": "#56b6c2",
+      "gradientMid": "#61afef",
+      "gradientEnd": "#c678dd",
+      "gradientMidPoint": 0.4
+    }
+  }
+}
+```
 
 ## Thinking Levels
 

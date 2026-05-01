@@ -63,6 +63,16 @@ export interface StatusLineSegmentOptions {
     showUnstaged?: boolean;
     showUntracked?: boolean;
   };
+  contextBar?: {
+    barWidth?: number;
+    filledChar?: string;
+    unfilledChar?: string;
+    unfilledColor?: ColorValue;
+    gradientStart?: ColorValue;
+    gradientMid?: ColorValue;
+    gradientEnd?: ColorValue;
+    gradientMidPoint?: number;
+  };
 }
 
 // Git status data
