@@ -1,5 +1,19 @@
-import type { ExtensionAPI, ExtensionContext, TurnStartEvent, MessageUpdateEvent, TurnEndEvent } from "@mariozechner/pi-coding-agent";
+import type { ExtensionAPI, ExtensionContext, TurnStartEvent, MessageUpdateEvent, TurnEndEvent, SessionStartEvent } from "@mariozechner/pi-coding-agent";
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
+import { homedir } from "node:os";
 import { pickVerb } from "./verbs.js";
+
+function getThinkingToggleKey(): string {
+  const path = join(homedir(), ".pi", "agent", "keybindings.json");
+  if (!existsSync(path)) return "ctrl+t";
+  try {
+    const bindings = JSON.parse(readFileSync(path, "utf-8"));
+    return (bindings["app.thinking.toggle"] as string) ?? "ctrl+t";
+  } catch {
+    return "ctrl+t";
+  }
+}
 
 const CYCLE_INTERVAL_MS = 2500;
 const TYPEWRITER_MS = 42;
@@ -40,6 +54,11 @@ export default function spinners(pi: ExtensionAPI) {
       typeVerb(ctx, current);
     }, CYCLE_INTERVAL_MS);
   }
+
+  pi.on("session_start", async (_event: SessionStartEvent, ctx: ExtensionContext) => {
+    if (!ctx.hasUI) return;
+    ctx.ui.setHiddenThinkingLabel(`\u21B3 ${getThinkingToggleKey()} to expand`);
+  });
 
   pi.on("turn_start", async (_event: TurnStartEvent, ctx: ExtensionContext) => {
     if (!ctx.hasUI) return;
