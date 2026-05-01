@@ -177,6 +177,9 @@ See the full provider list in the [pi providers docs](https://github.com/badlogi
 
 Open `/settings` inside pi, navigate to **Theme**, and select `slop`.
 
+> For a smoother UX, I'd recommend enabling the quite startup mode in pi's settings
+> `/settings > Quiet startup (true)`
+
 ### 6. Set up Nerd Fonts (recommended)
 
 The footer and startup extensions use Nerd Font icons for git status, model info, and other indicators. Most modern terminals (Ghostty, WezTerm, Kitty, Alacritty) auto-detect support — iTerm2 needs a small one-time config.
