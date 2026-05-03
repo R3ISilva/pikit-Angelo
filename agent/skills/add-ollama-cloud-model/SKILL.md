@@ -84,7 +84,7 @@ Do not duplicate a model that is already present in the list.
 
 ### Step 6 — Confirm
 
-Tell the user the model was added, then remind them of the two steps to start using it:
+Do not verify the API key or make any test API calls at this stage. Just update the `models.json` file and confirm to the user that the model was added successfully. Tell the user the model was added, then remind them of the two steps to start using it:
 
 1. Run `/scoped-models` to enable the model
 2. Run `/model` to open the picker and switch to it
