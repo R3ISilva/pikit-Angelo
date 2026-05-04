@@ -3,19 +3,20 @@ name: pi-extension-builder
 description: Guidelines for creating or modifying pi.dev extensions in this repo (~/.pi). Load when the user asks to build, edit, debug, or refactor a pi.dev extension.
 ---
 
-## Pi Extension Development Guidelines
+## Pi Extension Development Guide
 
 ### Before writing any code
 
-- Read the root `README.md` — it documents every extension, the file tree, and setup conventions
-- Read the specific extension's `README.md` if one exists
-- Read the existing `src/index.ts` of the extension being modified to understand current patterns before changing anything
-- The source of truth is always the code, not the `README.md`
+- Read root `README.md` — documents extensions, file tree, setup conventions
+- Read extension's `README.md` if exists
+- Read existing `src/index.ts` to understand current patterns
+- Source of truth: code, not README
 
-### Directory structure
+### Structure decision: simple vs complex
 
-Every extension follows this layout — don't deviate:
+Judge scope first, then pick pattern:
 
+**Simple** (spinner, env-loader, single tool):
 ```
 agent/extensions/<name>/
 ├── README.md
@@ -24,35 +25,93 @@ agent/extensions/<name>/
     └── index.ts
 ```
 
-- Single entry point: `src/index.ts`
-- `package.json` must include `"pi": { "extensions": ["./src/index.ts"] }` and follow the same shape as existing extensions (see `web-access/package.json` as reference)
-- New extensions must be added to the npm workspace in the root `package.json`
+**Complex** (TUI components, user config, multiple tools, layered logic):
+```
+agent/extensions/<name>/
+├── README.md
+├── package.json
+└── src/
+    ├── index.ts           # Wiring only
+    ├── config.ts          # Dumb values (single source of truth)
+    ├── utils.ts           # Pure helpers
+    └── components/        # TUI components if needed
+        └── <name>.ts
+```
+
+**Rules:**
+- Start simple — split only when needed
+- `index.ts` always the entry point, always exports default function receiving `ExtensionAPI`
+- `package.json` must include `"pi": { "extensions": ["./src/index.ts"] }` — see `web-access/package.json`
+- New extensions go in root npm workspace
 
 ### Code conventions
 
-- Export a single default function receiving `ExtensionAPI` — no classes, no extra exports
-- Use existing extensions as reference: `web-access` for tool registration, `startup` for lifecycle hooks, `permission-gate` for interception patterns
-- Match the TypeScript style of the file being edited — don't introduce new patterns or abstractions
-- Keep extensions small and focused — one concern per extension
+- Export single default function receiving `ExtensionAPI` — no classes, no extra exports
+- Reference existing extensions: `web-access` (tool registration), `startup` (lifecycle), `permission-gate` (interception)
+- Match TypeScript style of file being edited — no new patterns
+- One concern per extension
 
-### Modularity
+### Complex extension patterns
 
-- Keep the default export function lean — wiring only (registering tools, commands, event hooks)
-- Extract non-trivial logic into named helper functions in the same file
-- Only split into additional files under `src/` when a chunk is clearly reusable across multiple parts of the extension
-- Pure functions (parsers, formatters, validators) should be extracted and named clearly — they're easier to test and reason about in isolation
+Apply only when structure warrants it:
+
+**1. Single source of truth** — Config defined once, derived values computed:
+```typescript
+// config.ts
+export const CONFIG = { DOT_PREFIX: "●" };
+
+// component.ts
+const WIDTH = getVisibleWidth(CONFIG.DOT_PREFIX) + 2;  // Auto-computed
+const PADDING = " ".repeat(WIDTH);  // Auto-matched
+```
+
+**2. Separation of concerns**
+- `index.ts` — Wiring (patches, events, registrations)
+- `config.ts` — Dumb values only (no logic)
+- `utils.ts` — Pure helpers (parsers, validators, formatters)
+- `components/` — TUI rendering (implement `render(width)` interface)
+
+**3. Clean porting** — From reference implementations:
+- Draw from functionality, not implementation
+- Don't replicate convoluted code — reinterpret cleanly
+- Extract in order: config → utils → components → wire in index.ts
+
+**4. Patching pattern** — Modifying pi components:
+```typescript
+import { PATCH_FLAG } from "./utils.js";
+
+export default function(pi) {
+  const proto = TargetComponent.prototype as any;
+  if (proto[PATCH_FLAG]) return;  // Prevent double-patching
+  
+  const original = proto.method;
+  proto.method = function(...args) {
+    const result = original.call(this, ...args);
+    // Enhance/modify
+    return result;
+  };
+  proto[PATCH_FLAG] = true;
+}
+```
 
 ### Don't over-engineer
 
-- Only register tools/commands/events explicitly asked for
-- No config abstraction layers unless the extension already has one
-- No helper files unless the logic genuinely can't fit in `index.ts`
-- If in doubt, look at how the simplest existing extension (`spinners` or `env-loader`) handles it
+- Register only tools/commands/events explicitly asked for
+- No config abstraction unless extension already has one
+- No helper files unless logic genuinely can't fit in `index.ts`
+- In doubt: mirror simplest existing extension (`spinners`, `env-loader`)
 
 ### Documentation
 
-- Update the extension's `README.md` with any new features, tools, or commands added
-- If the extension doesn't have a `README.md`, create one with a brief description and usage instructions
-- Document any new permissions or lifecycle hooks used by the extension
-- Cross-reference and update any other relevant `README.md` files if the change impacts other extensions or the overall (including the root documentation)
-- When adding a new extension to the root `README.md`, follow the established style: one short paragraph (what it does, whether it's configurable, slash command only if it's the primary interface), a `→ README` link, no command tables, no implementation detail. Insert under `## Extensions` ordered by category: **UI** (visible every session, zero or minimal config) → **Security** (intercepts or blocks actions) → **Utils** (tools, bridges, integrations) → **Misc** (cosmetic or low-priority). Use judgment to place the new extension in the right category.
+- Update extension's `README.md` with new features, tools, commands
+- If no `README.md` exists, create one with description + usage
+- Document new permissions or lifecycle hooks
+- Update other READMEs if change impacts other extensions
+
+**Root README additions** — under `## Extensions`, ordered by category:
+1. **UI** — visible every session, zero/minimal config
+2. **Security** — intercepts or blocks actions
+3. **Utils** — tools, bridges, integrations
+4. **Misc** — cosmetic or low-priority
+
+Format: one short paragraph (what it does, configurable?, slash command if primary interface), `→ README` link. No command tables, no implementation detail.
