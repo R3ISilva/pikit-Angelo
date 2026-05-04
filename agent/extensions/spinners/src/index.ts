@@ -174,6 +174,8 @@ export default function spinners(pi: ExtensionAPI) {
    */
   function syncWorkingMessage(ctx: ExtensionContext, verb?: string): void {
     if (!ctx.hasUI) return;
+    // Skip if typewriter animation is in progress to avoid flicker
+    if (typeTimer) return;
     try {
       ctx.ui.setWorkingMessage(buildWorkingMessage(ctx, verb));
     } catch {
@@ -282,7 +284,10 @@ export default function spinners(pi: ExtensionAPI) {
       let next = pickVerb();
       while (next === currentVerb) next = pickVerb();
       currentVerb = next;
-      if (activeCtx?.hasUI) typeVerb(activeCtx, currentVerb);
+      if (activeCtx?.hasUI) {
+        if (typeTimer) { clearInterval(typeTimer); typeTimer = null; }
+        typeVerb(activeCtx, currentVerb);
+      }
     }, CYCLE_INTERVAL_MS);
   }
 
