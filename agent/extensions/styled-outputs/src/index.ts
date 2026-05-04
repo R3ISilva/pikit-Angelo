@@ -3,6 +3,7 @@ import { AssistantMessageComponent } from "@mariozechner/pi-coding-agent";
 import { Markdown } from "@mariozechner/pi-tui";
 import { PATCH_FLAG } from "./utils.js";
 import { AssistantMessage } from "./components/assistant-message.js";
+import { ThinkingMessage } from "./components/thinking-message.js";
 
 export default function styledOutputs(pi: ExtensionAPI) {
   const proto = AssistantMessageComponent.prototype as any;
@@ -27,7 +28,9 @@ export default function styledOutputs(pi: ExtensionAPI) {
         if (!text) continue;
 
         const isThinking = !!child.defaultTextStyle?.italic;
-        if (!isThinking) {
+        if (isThinking) {
+          container.children[i] = new ThinkingMessage(text, mdTheme);
+        } else {
           container.children[i] = new AssistantMessage(text, mdTheme);
         }
       }
