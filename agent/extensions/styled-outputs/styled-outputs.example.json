@@ -1,0 +1,6 @@
+{
+  "_comment": "Place this file at ~/.pi/agent/configs/styled-outputs.json",
+  "assistantPrefix": "●",
+  "thinkingPrefix": "✽",
+  "thinkingLabel": "Thinking:"
+}

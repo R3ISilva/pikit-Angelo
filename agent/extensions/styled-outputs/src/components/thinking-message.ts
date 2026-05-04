@@ -2,9 +2,9 @@ import { Markdown } from "@mariozechner/pi-tui";
 import { CONFIG } from "../config.js";
 import { getVisibleWidth, hasVisibleContent } from "../utils.js";
 
-const FULL_PREFIX = ` ${CONFIG.THINKING_PREFIX} ${CONFIG.THINKING_LABEL} `;
+const FULL_PREFIX = ` ${CONFIG.thinkingPrefix} ${CONFIG.thinkingLabel} `;
 const FIRST_LINE_PREFIX_WIDTH = getVisibleWidth(FULL_PREFIX);
-const PREFIX_WIDTH = getVisibleWidth(CONFIG.THINKING_PREFIX) + 2;
+const PREFIX_WIDTH = getVisibleWidth(CONFIG.thinkingPrefix) + 2;
 const PADDING_PREFIX = " ".repeat(PREFIX_WIDTH);
 
 export class ThinkingMessage {

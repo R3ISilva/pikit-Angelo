@@ -2,7 +2,7 @@ import { Markdown } from "@mariozechner/pi-tui";
 import { CONFIG } from "../config.js";
 import { getVisibleWidth, hasVisibleContent } from "../utils.js";
 
-const ASSISTANT_PREFIX_WIDTH = getVisibleWidth(CONFIG.ASSISTANT_PREFIX) + 2;
+const ASSISTANT_PREFIX_WIDTH = getVisibleWidth(CONFIG.assistantPrefix) + 2;
 const PADDING_PREFIX = " ".repeat(ASSISTANT_PREFIX_WIDTH);
 
 export class AssistantMessage {
@@ -25,7 +25,7 @@ export class AssistantMessage {
 
     if (width <= ASSISTANT_PREFIX_WIDTH) {
       this.cachedWidth = width;
-      this.cachedLines = [` ${CONFIG.ASSISTANT_PREFIX} `];
+      this.cachedLines = [` ${CONFIG.assistantPrefix} `];
       return this.cachedLines;
     }
 
@@ -35,7 +35,7 @@ export class AssistantMessage {
     const rendered = mdLines.map((line: string) => {
       if (!dotPlaced && hasVisibleContent(line)) {
         dotPlaced = true;
-        return ` ${CONFIG.ASSISTANT_PREFIX} ${line}`;
+        return ` ${CONFIG.assistantPrefix} ${line}`;
       }
       return `${PADDING_PREFIX}${line}`;
     });
