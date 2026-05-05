@@ -15,40 +15,41 @@ function getFullPrefix(): string {
   return ` ${prefix}${CONFIG.isThinkingLabelVisible ? ` ${label} ` : ` `}`;
 }
 
-export class ThinkingMessage {
-  private md: InstanceType<typeof Markdown>;
-  private cachedWidth?: number;
-  private cachedLines?: string[];
+export interface ThinkingMessage {
+  invalidate(): void;
+  render(width: number): string[];
+}
 
-  constructor(text: string, markdownTheme: any) {
-    this.md = new Markdown(text, 0, 0, markdownTheme, {
-      color: (t: string) => {
-        if (!currentTheme) return t;
-        return applyColor(currentTheme, CONFIG.thinkingMessageColor, t);
-      },
-      italic: true,
-    });
+export function createThinkingMessage(text: string, markdownTheme: any): ThinkingMessage {
+  const md = new Markdown(text, 0, 0, markdownTheme, {
+    color: (t: string) => {
+      if (!currentTheme) return t;
+      return applyColor(currentTheme, CONFIG.thinkingMessageColor, t);
+    },
+    italic: true,
+  });
+  let cachedWidth: number | undefined;
+  let cachedLines: string[] | undefined;
+
+  function invalidate(): void {
+    cachedWidth = undefined;
+    cachedLines = undefined;
+    md.invalidate();
   }
 
-  invalidate(): void {
-    this.cachedWidth = undefined;
-    this.cachedLines = undefined;
-    this.md.invalidate();
-  }
-
-  render(width: number): string[] {
-    if (this.cachedLines && this.cachedWidth === width) return this.cachedLines;
+  function render(width: number): string[] {
+    if (cachedLines && cachedWidth === width) return cachedLines;
 
     const fullPrefix = getFullPrefix();
     const firstLinePrefixWidth = getVisibleWidth(fullPrefix);
 
     if (width <= firstLinePrefixWidth) {
-      this.cachedWidth = width;
-      this.cachedLines = [fullPrefix.trimEnd()];
-      return this.cachedLines;
+      cachedWidth = width;
+      cachedLines = [fullPrefix.trimEnd()];
+      return cachedLines;
     }
 
-    const mdLines = this.md.render(width - firstLinePrefixWidth);
+    const mdLines = md.render(width - firstLinePrefixWidth);
     let prefixPlaced = false;
 
     const rendered = mdLines.map((line: string) => {
@@ -59,8 +60,10 @@ export class ThinkingMessage {
       return `${PADDING_PREFIX}${line}`;
     });
 
-    this.cachedWidth = width;
-    this.cachedLines = rendered;
+    cachedWidth = width;
+    cachedLines = rendered;
     return rendered;
   }
+
+  return { invalidate, render };
 }

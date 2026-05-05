@@ -2,8 +2,8 @@ import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 import { AssistantMessageComponent } from "@mariozechner/pi-coding-agent";
 import { Markdown } from "@mariozechner/pi-tui";
 import { PATCH_FLAG, setCurrentTheme } from "./utils.js";
-import { AssistantMessage } from "./components/assistant-message.js";
-import { ThinkingMessage } from "./components/thinking-message.js";
+import { createAssistantMessage } from "./components/assistant-message.js";
+import { createThinkingMessage } from "./components/thinking-message.js";
 
 export default function styledOutputs(pi: ExtensionAPI) {
   pi.on("session_start", async (_event, ctx) => {
@@ -33,9 +33,9 @@ export default function styledOutputs(pi: ExtensionAPI) {
 
         const isThinking = !!child.defaultTextStyle?.italic;
         if (isThinking) {
-          container.children[i] = new ThinkingMessage(text, mdTheme);
+          container.children[i] = createThinkingMessage(text, mdTheme);
         } else {
-          container.children[i] = new AssistantMessage(text, mdTheme);
+          container.children[i] = createAssistantMessage(text, mdTheme);
         }
       }
     }

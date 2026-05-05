@@ -5,34 +5,35 @@ import { getVisibleWidth, hasVisibleContent, currentTheme, applyColor } from "..
 const ASSISTANT_PREFIX_WIDTH = getVisibleWidth(CONFIG.assistantPrefix) + 2;
 const PADDING_PREFIX = " ".repeat(ASSISTANT_PREFIX_WIDTH);
 
-export class AssistantMessage {
-  private md: InstanceType<typeof Markdown>;
-  private cachedWidth?: number;
-  private cachedLines?: string[];
+export interface AssistantMessage {
+  invalidate(): void;
+  render(width: number): string[];
+}
 
-  constructor(text: string, markdownTheme: any) {
-    this.md = new Markdown(text, 0, 0, markdownTheme);
+export function createAssistantMessage(text: string, markdownTheme: any): AssistantMessage {
+  const md = new Markdown(text, 0, 0, markdownTheme);
+  let cachedWidth: number | undefined;
+  let cachedLines: string[] | undefined;
+
+  function invalidate(): void {
+    cachedWidth = undefined;
+    cachedLines = undefined;
+    md.invalidate();
   }
 
-  invalidate(): void {
-    this.cachedWidth = undefined;
-    this.cachedLines = undefined;
-    this.md.invalidate();
-  }
-
-  render(width: number): string[] {
-    if (this.cachedLines && this.cachedWidth === width) return this.cachedLines;
+  function render(width: number): string[] {
+    if (cachedLines && cachedWidth === width) return cachedLines;
 
     if (width <= ASSISTANT_PREFIX_WIDTH) {
-      this.cachedWidth = width;
+      cachedWidth = width;
       const prefix = currentTheme
         ? applyColor(currentTheme, CONFIG.assistantPrefixColor, CONFIG.assistantPrefix)
         : CONFIG.assistantPrefix;
-      this.cachedLines = [` ${prefix} `];
-      return this.cachedLines;
+      cachedLines = [` ${prefix} `];
+      return cachedLines;
     }
 
-    const mdLines = this.md.render(width - ASSISTANT_PREFIX_WIDTH);
+    const mdLines = md.render(width - ASSISTANT_PREFIX_WIDTH);
     let dotPlaced = false;
 
     const rendered = mdLines.map((line: string) => {
@@ -46,8 +47,10 @@ export class AssistantMessage {
       return `${PADDING_PREFIX}${line}`;
     });
 
-    this.cachedWidth = width;
-    this.cachedLines = rendered;
+    cachedWidth = width;
+    cachedLines = rendered;
     return rendered;
   }
+
+  return { invalidate, render };
 }

@@ -7,12 +7,18 @@ description: Architecture patterns for building the styled-outputs pi.dev extens
 
 ### Core Principles
 
-**1. Single Source of Truth**
+**1. Functional Over Class-Based**
+- Prefer factory functions + closures over classes
+- No `this` — closure variables are lexically scoped, truly private, no binding issues
+- Every component: factory fn → `{ render(width), invalidate() }` object
+- Easier to reason about, compose, and refactor as extension grows
+
+**2. Single Source of Truth**
 - Config values defined once, derived values computed automatically
 - No hardcoded magic numbers that duplicate config
 - If you change a config value, all dependent values auto-adjust
 
-**2. Separation of Concerns**
+**3. Separation of Concerns**
 ```
 extension-name/
 ├── package.json
@@ -24,7 +30,7 @@ extension-name/
         └── <name>.ts
 ```
 
-**3. Clean Porting**
+**4. Clean Porting**
 - Draw inspiration from functionality, not implementation
 - Don't replicate convoluted code from reference repos
 - Build cleaner, simpler, more maintainable
@@ -50,7 +56,8 @@ extension-name/
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 import { AssistantMessageComponent } from "@mariozechner/pi-coding-agent";
 import { PATCH_FLAG } from "./utils.js";
-import { AssistantMessage } from "./components/assistant-message.js";
+import { createAssistantMessage } from "./components/assistant-message.js";
+import { createThinkingMessage } from "./components/thinking-message.js";
 
 export default function styledOutputs(pi: ExtensionAPI) {
   const proto = AssistantMessageComponent.prototype as any;
@@ -75,8 +82,10 @@ export default function styledOutputs(pi: ExtensionAPI) {
         if (!text) continue;
 
         const isThinking = !!child.defaultTextStyle?.italic;
-        if (!isThinking) {
-          container.children[i] = new AssistantMessage(text, mdTheme);
+        if (isThinking) {
+          container.children[i] = createThinkingMessage(text, mdTheme);
+        } else {
+          container.children[i] = createAssistantMessage(text, mdTheme);
         }
       }
     }
@@ -100,7 +109,7 @@ export default function styledOutputs(pi: ExtensionAPI) {
 **Example:**
 ```typescript
 export const CONFIG = {
-  DOT_PREFIX: "●",
+  assistantPrefix: "●",
 };
 ```
 
@@ -108,9 +117,9 @@ export const CONFIG = {
 ```typescript
 // ❌ Don't do this in config.ts
 export const CONFIG = {
-  DOT_PREFIX: "●",
-  DOT_PREFIX_WIDTH: 3,  // Hardcoded! Will break if DOT_PREFIX changes
-  PADDING_PREFIX: "   ", // Must manually sync with DOT_PREFIX_WIDTH
+  assistantPrefix: "●",
+  assistantPrefixWidth: 3,  // Hardcoded! Will break if assistantPrefix changes
+  assistantPaddingPrefix: "   ", // Must manually sync with assistantPrefixWidth
 };
 ```
 
@@ -151,8 +160,8 @@ export function generatePadding(prefix: string): string {
 **Key Pattern:** Derived values computed from config
 ```typescript
 // In component or module scope:
-const DOT_PREFIX_WIDTH = getVisibleWidth(CONFIG.DOT_PREFIX) + 2;
-const PADDING_PREFIX = " ".repeat(DOT_PREFIX_WIDTH);
+const ASSISTANT_PREFIX_WIDTH = getVisibleWidth(CONFIG.assistantPrefix) + 2;
+const ASSISTANT_PADDING_PREFIX = " ".repeat(ASSISTANT_PREFIX_WIDTH);
 ```
 
 ---
@@ -162,9 +171,22 @@ const PADDING_PREFIX = " ".repeat(DOT_PREFIX_WIDTH);
 **Purpose:** Custom rendering for pi TUI
 
 **Contains:**
-- Component classes implementing `render(width)` interface
+- Module-level derived config (computed from CONFIG values)
+- Optional module-level helper functions (string building, color application)
+- Exported TypeScript interface for the component shape
+- Exported factory function → `{ render(width), invalidate() }` object
+- State held in closure variables (truly private, no `this`)
 - Cached rendering for performance
 - **No pi lifecycle logic** — pure rendering only
+
+**Standard file shape:**
+```
+components/<name>.ts
+  ├── Module-level derived config (ASSISTANT_PREFIX_WIDTH, ASSISTANT_PADDING_PREFIX)
+  ├── Optional helper fns (getFullPrefix, etc.)
+  ├── Exported interface (type only)
+  └── Exported factory fn → { render, invalidate }
+```
 
 **Example:**
 ```typescript
@@ -172,48 +194,51 @@ import { Markdown } from "@mariozechner/pi-tui";
 import { CONFIG } from "../config.js";
 import { getVisibleWidth, hasVisibleContent } from "../utils.js";
 
-const DOT_PREFIX_WIDTH = getVisibleWidth(CONFIG.DOT_PREFIX) + 2;
-const PADDING_PREFIX = " ".repeat(DOT_PREFIX_WIDTH);
+const ASSISTANT_PREFIX_WIDTH = getVisibleWidth(CONFIG.assistantPrefix) + 2;
+const ASSISTANT_PADDING_PREFIX = " ".repeat(ASSISTANT_PREFIX_WIDTH);
 
-export class AssistantMessage {
-  private md: InstanceType<typeof Markdown>;
-  private cachedWidth?: number;
-  private cachedLines?: string[];
+export interface AssistantMessage {
+  invalidate(): void;
+  render(width: number): string[];
+}
 
-  constructor(text: string, markdownTheme: any) {
-    this.md = new Markdown(text, 0, 0, markdownTheme);
+export function createAssistantMessage(text: string, markdownTheme: any): AssistantMessage {
+  const md = new Markdown(text, 0, 0, markdownTheme);
+  let cachedWidth: number | undefined;
+  let cachedLines: string[] | undefined;
+
+  function invalidate(): void {
+    cachedWidth = undefined;
+    cachedLines = undefined;
+    md.invalidate();
   }
 
-  invalidate(): void {
-    this.cachedWidth = undefined;
-    this.cachedLines = undefined;
-    this.md.invalidate();
-  }
+  function render(width: number): string[] {
+    if (cachedLines && cachedWidth === width) return cachedLines;
 
-  render(width: number): string[] {
-    if (this.cachedLines && this.cachedWidth === width) return this.cachedLines;
-
-    if (width <= DOT_PREFIX_WIDTH) {
-      this.cachedWidth = width;
-      this.cachedLines = [` ${CONFIG.DOT_PREFIX} `];
-      return this.cachedLines;
+    if (width <= ASSISTANT_PREFIX_WIDTH) {
+      cachedWidth = width;
+      cachedLines = [` ${CONFIG.assistantPrefix} `];
+      return cachedLines;
     }
 
-    const mdLines = this.md.render(width - DOT_PREFIX_WIDTH);
-    let dotPlaced = false;
+    const mdLines = md.render(width - ASSISTANT_PREFIX_WIDTH);
+    let prefixPlaced = false;
 
     const rendered = mdLines.map((line: string) => {
-      if (!dotPlaced && hasVisibleContent(line)) {
-        dotPlaced = true;
-        return ` ${CONFIG.DOT_PREFIX} ${line}`;
+      if (!prefixPlaced && hasVisibleContent(line)) {
+        prefixPlaced = true;
+        return ` ${CONFIG.assistantPrefix} ${line}`;
       }
-      return `${PADDING_PREFIX}${line}`;
+      return `${ASSISTANT_PADDING_PREFIX}${line}`;
     });
 
-    this.cachedWidth = width;
-    this.cachedLines = rendered;
+    cachedWidth = width;
+    cachedLines = rendered;
     return rendered;
   }
+
+  return { invalidate, render };
 }
 ```
 
@@ -269,7 +294,7 @@ export default function myExtension(pi: ExtensionAPI) {
 ```typescript
 // config.ts
 export const CONFIG = {
-  DOT_PREFIX: "●",  // Single source of truth
+  assistantPrefix: "●",  // Single source of truth
 };
 
 // utils.ts
@@ -278,12 +303,12 @@ export function getVisibleWidth(text: string): number {
 }
 
 // component.ts
-const DOT_PREFIX_WIDTH = getVisibleWidth(CONFIG.DOT_PREFIX) + 2;  // Auto-computed
-const PADDING_PREFIX = " ".repeat(DOT_PREFIX_WIDTH);  // Auto-matched
+const ASSISTANT_PREFIX_WIDTH = getVisibleWidth(CONFIG.assistantPrefix) + 2;  // Auto-computed
+const ASSISTANT_PADDING_PREFIX = " ".repeat(ASSISTANT_PREFIX_WIDTH);  // Auto-matched
 ```
 
 **Benefits:**
-- Change `DOT_PREFIX` → everything auto-adjusts
+- Change `assistantPrefix` → everything auto-adjusts
 - No manual sync required
 - Impossible to have mismatched values
 
@@ -317,9 +342,9 @@ Result: 4 focused files, each doing one thing well.
 ```typescript
 // config.ts
 export const CONFIG = {
-  DOT_PREFIX: "●",
-  DOT_PREFIX_WIDTH: 3,      // ❌ Hardcoded
-  PADDING_PREFIX: "   ",    // ❌ Must manually sync
+  assistantPrefix: "●",
+  assistantPrefixWidth: 3,      // ❌ Hardcoded
+  assistantPaddingPrefix: "   ",    // ❌ Must manually sync
 };
 ```
 
@@ -327,11 +352,11 @@ export const CONFIG = {
 ```typescript
 // config.ts
 export const CONFIG = {
-  DOT_PREFIX: "●",
+  assistantPrefix: "●",
 };
 
 // component.ts
-const WIDTH = getVisibleWidth(CONFIG.DOT_PREFIX) + 2;
+const WIDTH = getVisibleWidth(CONFIG.assistantPrefix) + 2;
 const PADDING = " ".repeat(WIDTH);
 ```
 
@@ -341,9 +366,9 @@ const PADDING = " ".repeat(WIDTH);
 ```typescript
 // config.ts
 export const CONFIG = {
-  DOT_PREFIX: "●",
-  get DOT_PREFIX_WIDTH() {  // ❌ Config should be dumb
-    return getVisibleWidth(this.DOT_PREFIX);
+  assistantPrefix: "●",
+  get assistantPrefixWidth() {  // ❌ Config should be dumb
+    return getVisibleWidth(this.assistantPrefix);
   },
 };
 ```
@@ -351,13 +376,13 @@ export const CONFIG = {
 ### ✅ Logic in Utils/Components
 ```typescript
 // config.ts
-export const CONFIG = { DOT_PREFIX: "●" };
+export const CONFIG = { assistantPrefix: "●" };
 
 // utils.ts
 export function getVisibleWidth(text: string): number { ... }
 
 // component.ts
-const WIDTH = getVisibleWidth(CONFIG.DOT_PREFIX);
+const WIDTH = getVisibleWidth(CONFIG.assistantPrefix);
 ```
 
 ---
@@ -373,8 +398,8 @@ export default function(pi) {
 ### ✅ Separated Concerns
 ```typescript
 // index.ts - 40 lines of wiring only
-import { AssistantMessage } from "./components/assistant-message.js";
-import { CONFIG } from "./config.js";
+import { createAssistantMessage } from "./components/assistant-message.js";
+import { createThinkingMessage } from "./components/thinking-message.js";
 import { PATCH_FLAG } from "./utils.js";
 
 export default function(pi) {
@@ -390,12 +415,42 @@ Before considering a feature complete:
 
 - [ ] Config values are in `config.ts` (dumb values only)
 - [ ] Helper functions are in `utils.ts` (pure functions)
-- [ ] Components are in `components/` (rendering only)
+- [ ] Components use factory functions + closures (not classes)
+- [ ] Each component exports interface + factory fn → `{ render, invalidate }`
 - [ ] `index.ts` is wiring only (no business logic)
 - [ ] Derived values auto-compute from config
 - [ ] Patch flag prevents double-patching
 - [ ] No hardcoded duplication
 - [ ] Reference code inspiration, not replication
+
+---
+
+### ❌ Using Classes for Components
+```typescript
+// ❌ Avoid classes — `this` binding issues, `private` is fake privacy, harder to compose
+export class AssistantMessage {
+  private md: InstanceType<typeof Markdown>;
+  constructor(text: string, markdownTheme: any) {
+    this.md = new Markdown(text, 0, 0, markdownTheme);
+  }
+  invalidate(): void { this.md.invalidate(); }
+  render(width: number): string[] { /* ... */ }
+}
+```
+
+### ✅ Factory Functions with Closures
+```typescript
+// ✅ Prefer factory functions — lexical scope, true privacy, no `this`
+export function createAssistantMessage(text: string, markdownTheme: any) {
+  const md = new Markdown(text, 0, 0, markdownTheme);
+  let cachedWidth: number | undefined;
+
+  function invalidate(): void { cachedWidth = undefined; md.invalidate(); }
+  function render(width: number): string[] { /* use closure vars */ }
+
+  return { invalidate, render };
+}
+```
 
 ---
 
