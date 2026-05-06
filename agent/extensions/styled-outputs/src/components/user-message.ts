@@ -2,7 +2,7 @@ import { Markdown } from "@mariozechner/pi-tui";
 import { CONFIG } from "../config.js";
 import { getVisibleWidth, hasVisibleContent, currentTheme, applyColor } from "../utils.js";
 
-const USER_PREFIX_WIDTH = getVisibleWidth(CONFIG.userPrefix) + 2;
+const USER_PREFIX_WIDTH = getVisibleWidth(CONFIG.userMessage.prefix) + 2;
 const PADDING_PREFIX = " ".repeat(USER_PREFIX_WIDTH);
 
 export interface UserMessage {
@@ -32,8 +32,8 @@ export function createUserMessage(text: string, markdownTheme: any): UserMessage
     if (width <= USER_PREFIX_WIDTH) {
       cachedWidth = width;
       const prefix = currentTheme
-        ? applyColor(currentTheme, CONFIG.userPrefixColor, CONFIG.userPrefix)
-        : CONFIG.userPrefix;
+        ? applyColor(currentTheme, CONFIG.userMessage.color, CONFIG.userMessage.prefix)
+        : CONFIG.userMessage.prefix;
       cachedLines = [` ${prefix} `];
       return cachedLines;
     }
@@ -45,8 +45,8 @@ export function createUserMessage(text: string, markdownTheme: any): UserMessage
       if (!prefixPlaced && hasVisibleContent(line)) {
         prefixPlaced = true;
         const prefix = currentTheme
-          ? applyColor(currentTheme, CONFIG.userPrefixColor, CONFIG.userPrefix)
-          : CONFIG.userPrefix;
+          ? applyColor(currentTheme, CONFIG.userMessage.color, CONFIG.userMessage.prefix)
+          : CONFIG.userMessage.prefix;
         return ` ${prefix} ${line}`;
       }
       return `${PADDING_PREFIX}${line}`;

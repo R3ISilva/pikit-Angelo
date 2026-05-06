@@ -2,7 +2,7 @@ import { Markdown } from "@mariozechner/pi-tui";
 import { CONFIG } from "../config.js";
 import { getVisibleWidth, hasVisibleContent, currentTheme, applyColor } from "../utils.js";
 
-const ASSISTANT_PREFIX_WIDTH = getVisibleWidth(CONFIG.assistantPrefix) + 2;
+const ASSISTANT_PREFIX_WIDTH = getVisibleWidth(CONFIG.assistantMessage.prefix) + 2;
 const PADDING_PREFIX = " ".repeat(ASSISTANT_PREFIX_WIDTH);
 
 export interface AssistantMessage {
@@ -27,8 +27,8 @@ export function createAssistantMessage(text: string, markdownTheme: any): Assist
     if (width <= ASSISTANT_PREFIX_WIDTH) {
       cachedWidth = width;
       const prefix = currentTheme
-        ? applyColor(currentTheme, CONFIG.assistantPrefixColor, CONFIG.assistantPrefix)
-        : CONFIG.assistantPrefix;
+        ? applyColor(currentTheme, CONFIG.assistantMessage.color, CONFIG.assistantMessage.prefix)
+        : CONFIG.assistantMessage.prefix;
       cachedLines = [` ${prefix} `];
       return cachedLines;
     }
@@ -40,8 +40,8 @@ export function createAssistantMessage(text: string, markdownTheme: any): Assist
       if (!dotPlaced && hasVisibleContent(line)) {
         dotPlaced = true;
         const prefix = currentTheme
-          ? applyColor(currentTheme, CONFIG.assistantPrefixColor, CONFIG.assistantPrefix)
-          : CONFIG.assistantPrefix;
+          ? applyColor(currentTheme, CONFIG.assistantMessage.color, CONFIG.assistantMessage.prefix)
+          : CONFIG.assistantMessage.prefix;
         return ` ${prefix} ${line}`;
       }
       return `${PADDING_PREFIX}${line}`;

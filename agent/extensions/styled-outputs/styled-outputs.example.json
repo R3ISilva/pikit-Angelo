@@ -1,22 +1,45 @@
 {
   "_comment": "Place this file at ~/.pi/agent/configs/styled-outputs.json",
-  "assistantPrefix": "●",
-  "thinkingPrefix": "✽",
-  "thinkingLabel": "Thinking:",
-  "assistantPrefixColor": "text",
-  "thinkingPrefixColor": "accent",
-  "thinkingLabelColor": "dim",
-  "thinkingMessageColor": "dim",
-  "userPrefix": "❯",
-  "userPrefixColor": "accent",
-  "isThemeBackgroundVisible": true,
-  "toolDot": "●",
-  "toolSuccessColor": "success",
-  "toolErrorColor": "error",
-  "toolBranch": "└─",
-  "toolBranchColor": "dim",
-  "toolTitleColor": "toolTitle",
-  "toolSummaryColor": "muted",
-  "toolOutputColor": "dim",
-  "toolExpandHintColor": "dim"
+  "assistantMessage": {
+    "prefix": "●",
+    "color": "text"
+  },
+  "userMessage": {
+    "prefix": "❯",
+    "color": "accent",
+    "isThemeBackgroundVisible": true
+  },
+  "thinkingMessage": {
+    "prefix": "✽",
+    "prefixColor": "accent",
+    "label": "Thinking:",
+    "labelColor": "muted",
+    "isLabelVisible": false,
+    "messageColor": "dim"
+  },
+  "toolSpinnerPrefix": {
+    "prefixChars": ["·", "✢", "✳", "✶", "✻", "✽"],
+    "color": "muted"
+  },
+  "toolSuccess": {
+    "prefix": "●",
+    "prefixColor": "success",
+    "labelColor": "success"
+  },
+  "toolError": {
+    "prefix": "●",
+    "prefixColor": "error",
+    "labelColor": "error"
+  },
+  "toolBranch": {
+    "prefix": "└─",
+    "color": "dim"
+  },
+  "general": {
+    "titleColor": "toolTitle",
+    "summaryColor": "dim",
+    "countColor": "muted",
+    "expandHintColor": "dim",
+    "outputColor": "dim"
+  }
 }

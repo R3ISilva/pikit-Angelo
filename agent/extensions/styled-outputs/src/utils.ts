@@ -48,8 +48,8 @@ export function applyColor(theme: Theme, color: string, text: string): string {
   }
 }
 
-export function toolDot(theme: Theme): string {
-  return `${applyColor(theme, CONFIG.toolTitleColor, CONFIG.toolDot)} `;
+export function toolPrefix(theme: Theme): string {
+  return `${applyColor(theme, CONFIG.toolSuccess.prefixColor, CONFIG.toolSuccess.prefix)} `;
 }
 
 export function shortenPath(filePath: string, cwd: string): string {

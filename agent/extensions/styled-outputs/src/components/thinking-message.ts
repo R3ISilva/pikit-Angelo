@@ -2,17 +2,17 @@ import { Markdown } from "@mariozechner/pi-tui";
 import { CONFIG } from "../config.js";
 import { getVisibleWidth, hasVisibleContent, currentTheme, applyColor } from "../utils.js";
 
-const PREFIX_WIDTH = getVisibleWidth(CONFIG.thinkingPrefix) + 2;
+const PREFIX_WIDTH = getVisibleWidth(CONFIG.thinkingMessage.prefix) + 2;
 const PADDING_PREFIX = " ".repeat(PREFIX_WIDTH);
 
 function getFullPrefix(): string {
   const prefix = currentTheme
-    ? applyColor(currentTheme, CONFIG.thinkingPrefixColor, CONFIG.thinkingPrefix)
-    : CONFIG.thinkingPrefix;
+    ? applyColor(currentTheme, CONFIG.thinkingMessage.prefixColor, CONFIG.thinkingMessage.prefix)
+    : CONFIG.thinkingMessage.prefix;
   const label = currentTheme
-    ? applyColor(currentTheme, CONFIG.thinkingLabelColor, CONFIG.thinkingLabel)
-    : CONFIG.thinkingLabel;
-  return ` ${prefix}${CONFIG.isThinkingLabelVisible ? ` ${label} ` : ` `}`;
+    ? applyColor(currentTheme, CONFIG.thinkingMessage.labelColor, CONFIG.thinkingMessage.label)
+    : CONFIG.thinkingMessage.label;
+  return ` ${prefix}${CONFIG.thinkingMessage.isLabelVisible ? ` ${label} ` : ` `}`;
 }
 
 export interface ThinkingMessage {
@@ -24,7 +24,7 @@ export function createThinkingMessage(text: string, markdownTheme: any): Thinkin
   const md = new Markdown(text, 0, 0, markdownTheme, {
     color: (t: string) => {
       if (!currentTheme) return t;
-      return applyColor(currentTheme, CONFIG.thinkingMessageColor, t);
+      return applyColor(currentTheme, CONFIG.thinkingMessage.messageColor, t);
     },
     italic: true,
   });

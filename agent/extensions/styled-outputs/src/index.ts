@@ -72,7 +72,7 @@ export default function styledOutputs(pi: ExtensionAPI) {
         
         contentBox.paddingX = 0;
         
-        if (!CONFIG.isThemeBackgroundVisible) {
+        if (!CONFIG.userMessage.isThemeBackgroundVisible) {
           contentBox.paddingY = 0;
           contentBox.setBgFn(undefined);
         }

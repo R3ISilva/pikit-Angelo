@@ -4,55 +4,101 @@ import { join } from "node:path";
 
 export const DEFAULT_CONFIG = {
   // Assistant message
-  ASSISTANT_PREFIX: "●",
-  ASSISTANT_PREFIX_COLOR: "text",
+  ASSISTANT_MESSAGE: {
+    PREFIX: "●",
+    COLOR: "text",
+  },
 
   // User message
-  USER_PREFIX: "❯",
-  USER_PREFIX_COLOR: "accent",
-  IS_THEME_BACKGROUND_VISIBLE: true,
+  USER_MESSAGE: {
+    PREFIX: "❯",
+    COLOR: "accent",
+    IS_THEME_BACKGROUND_VISIBLE: true,
+  },
   
   // Thinking message
-  THINKING_PREFIX: "✽",
-  THINKING_PREFIX_COLOR: "accent",
-  THINKING_LABEL: "Thinking:",
-  THINKING_LABEL_COLOR: "muted",
-  IS_THINKING_LABEL_VISIBLE: false,
-  THINKING_MESSAGE_COLOR: "dim",
+  THINKING_MESSAGE: {
+    PREFIX: "✽",
+    PREFIX_COLOR: "accent",
+    LABEL: "Thinking:",
+    LABEL_COLOR: "muted",
+    IS_LABEL_VISIBLE: false,
+    MESSAGE_COLOR: "dim",
+  },
 
   // Tools
-  TOOL_DOT: "●",
-  TOOL_SUCCESS_COLOR: "success",
-  TOOL_ERROR_COLOR: "error",
-  TOOL_BRANCH: "└─",
-  TOOL_BRANCH_COLOR: "dim",
-  TOOL_TITLE_COLOR: "toolTitle",
-  TOOL_SUMMARY_COLOR: "dim",
-  TOOL_OUTPUT_COLOR: "dim",
-  TOOL_EXPAND_HINT_COLOR: "dim",
+  TOOL_SPINNER_PREFIX: {
+    PREFIX_CHARS: ["·", "✢", "✳", "✶", "✻", "✽"],   // tool loading spinner characters
+    COLOR: "muted",                                 // color for the spinner prefix
+  },
+  TOOL_SUCCESS: {
+    PREFIX: "●",                                    // icon for successful tool execution
+    PREFIX_COLOR: "success",                        // color for the success prefix
+    LABEL_COLOR: "success",                        // color for the success label (DONE on the 2nd line, the status line)
+  },
+  TOOL_ERROR: {
+    PREFIX: "●",                                    // icon for error tool execution
+    PREFIX_COLOR: "error",                          // color for the error prefix
+    LABEL_COLOR: "error",                           // color for the error label (ERROR on the 2nd line, the status line)
+  },
+  TOOL_BRANCH: {
+    PREFIX: "└─",                                   // icon use right before the status line
+    COLOR: "dim",                                   // color for the branch icon
+  },
+  GENERAL: {
+    TITLE_COLOR: "toolTitle",                      // color for tool titles (bash, ls, read, write, etc.)
+    SUMMARY_COLOR: "dim",                          // color for tool summary (1st line, right after the title)
+    COUNT_COLOR: "muted",                          // color for tool counts (e.g., "Tool 1 of 3")
+    EXPAND_HINT_COLOR: "dim",                      // color for hints about expanding tool outputs
+    OUTPUT_COLOR: "dim",                           // color for tool outputs
+  },
 };
 
+// --- User config types (camelCase, partial) ---
+
 interface StyledOutputsUserConfig {
-  assistantPrefix?: string;
-  thinkingPrefix?: string;
-  thinkingLabel?: string;
-  assistantPrefixColor?: string;
-  thinkingPrefixColor?: string;
-  thinkingLabelColor?: string;
-  isThinkingLabelVisible?: boolean;
-  thinkingMessageColor?: string;
-  userPrefix?: string;
-  userPrefixColor?: string;
-  isThemeBackgroundVisible?: boolean;
-  toolDot?: string;
-  toolSuccessColor?: string;
-  toolErrorColor?: string;
-  toolBranch?: string;
-  toolBranchColor?: string;
-  toolTitleColor?: string;
-  toolSummaryColor?: string;
-  toolOutputColor?: string;
-  toolExpandHintColor?: string;
+  assistantMessage?: {
+    prefix?: string;
+    color?: string;
+  };
+  userMessage?: {
+    prefix?: string;
+    color?: string;
+    isThemeBackgroundVisible?: boolean;
+  };
+  thinkingMessage?: {
+    prefix?: string;
+    prefixColor?: string;
+    label?: string;
+    labelColor?: string;
+    isLabelVisible?: boolean;
+    messageColor?: string;
+  };
+  toolSpinnerPrefix?: {
+    prefixChars?: string[];
+    color?: string;
+  };
+  toolSuccess?: {
+    prefix?: string;
+    prefixColor?: string;
+    labelColor?: string;
+  };
+  toolError?: {
+    prefix?: string;
+    prefixColor?: string;
+    labelColor?: string;
+  };
+  toolBranch?: {
+    prefix?: string;
+    color?: string;
+  };
+  general?: {
+    titleColor?: string;
+    summaryColor?: string;
+    countColor?: string;
+    expandHintColor?: string;
+    outputColor?: string;
+  };
 }
 
 const CONFIG_PATH = join(homedir(), ".pi", "agent", "configs", "styled-outputs.json");
@@ -69,24 +115,46 @@ function loadUserConfig(): StyledOutputsUserConfig {
 const userConfig = loadUserConfig();
 
 export const CONFIG = {
-  assistantPrefix: userConfig.assistantPrefix ?? DEFAULT_CONFIG.ASSISTANT_PREFIX,
-  thinkingPrefix: userConfig.thinkingPrefix ?? DEFAULT_CONFIG.THINKING_PREFIX,
-  thinkingLabel: userConfig.thinkingLabel ?? DEFAULT_CONFIG.THINKING_LABEL,
-  assistantPrefixColor: userConfig.assistantPrefixColor ?? DEFAULT_CONFIG.ASSISTANT_PREFIX_COLOR,
-  thinkingPrefixColor: userConfig.thinkingPrefixColor ?? DEFAULT_CONFIG.THINKING_PREFIX_COLOR,
-  thinkingLabelColor: userConfig.thinkingLabelColor ?? DEFAULT_CONFIG.THINKING_LABEL_COLOR,
-  isThinkingLabelVisible: userConfig.isThinkingLabelVisible ?? DEFAULT_CONFIG.IS_THINKING_LABEL_VISIBLE,
-  thinkingMessageColor: userConfig.thinkingMessageColor ?? DEFAULT_CONFIG.THINKING_MESSAGE_COLOR,
-  userPrefix: userConfig.userPrefix ?? DEFAULT_CONFIG.USER_PREFIX,
-  userPrefixColor: userConfig.userPrefixColor ?? DEFAULT_CONFIG.USER_PREFIX_COLOR,
-  isThemeBackgroundVisible: userConfig.isThemeBackgroundVisible ?? DEFAULT_CONFIG.IS_THEME_BACKGROUND_VISIBLE,
-  toolDot: userConfig.toolDot ?? DEFAULT_CONFIG.TOOL_DOT,
-  toolSuccessColor: userConfig.toolSuccessColor ?? DEFAULT_CONFIG.TOOL_SUCCESS_COLOR,
-  toolErrorColor: userConfig.toolErrorColor ?? DEFAULT_CONFIG.TOOL_ERROR_COLOR,
-  toolBranch: userConfig.toolBranch ?? DEFAULT_CONFIG.TOOL_BRANCH,
-  toolBranchColor: userConfig.toolBranchColor ?? DEFAULT_CONFIG.TOOL_BRANCH_COLOR,
-  toolTitleColor: userConfig.toolTitleColor ?? DEFAULT_CONFIG.TOOL_TITLE_COLOR,
-  toolSummaryColor: userConfig.toolSummaryColor ?? DEFAULT_CONFIG.TOOL_SUMMARY_COLOR,
-  toolOutputColor: userConfig.toolOutputColor ?? DEFAULT_CONFIG.TOOL_OUTPUT_COLOR,
-  toolExpandHintColor: userConfig.toolExpandHintColor ?? DEFAULT_CONFIG.TOOL_EXPAND_HINT_COLOR,
+  assistantMessage: {
+    prefix: userConfig.assistantMessage?.prefix ?? DEFAULT_CONFIG.ASSISTANT_MESSAGE.PREFIX,
+    color: userConfig.assistantMessage?.color ?? DEFAULT_CONFIG.ASSISTANT_MESSAGE.COLOR,
+  },
+  userMessage: {
+    prefix: userConfig.userMessage?.prefix ?? DEFAULT_CONFIG.USER_MESSAGE.PREFIX,
+    color: userConfig.userMessage?.color ?? DEFAULT_CONFIG.USER_MESSAGE.COLOR,
+    isThemeBackgroundVisible: userConfig.userMessage?.isThemeBackgroundVisible ?? DEFAULT_CONFIG.USER_MESSAGE.IS_THEME_BACKGROUND_VISIBLE,
+  },
+  thinkingMessage: {
+    prefix: userConfig.thinkingMessage?.prefix ?? DEFAULT_CONFIG.THINKING_MESSAGE.PREFIX,
+    prefixColor: userConfig.thinkingMessage?.prefixColor ?? DEFAULT_CONFIG.THINKING_MESSAGE.PREFIX_COLOR,
+    label: userConfig.thinkingMessage?.label ?? DEFAULT_CONFIG.THINKING_MESSAGE.LABEL,
+    labelColor: userConfig.thinkingMessage?.labelColor ?? DEFAULT_CONFIG.THINKING_MESSAGE.LABEL_COLOR,
+    isLabelVisible: userConfig.thinkingMessage?.isLabelVisible ?? DEFAULT_CONFIG.THINKING_MESSAGE.IS_LABEL_VISIBLE,
+    messageColor: userConfig.thinkingMessage?.messageColor ?? DEFAULT_CONFIG.THINKING_MESSAGE.MESSAGE_COLOR,
+  },
+  toolSpinnerPrefix: {
+    prefixChars: userConfig.toolSpinnerPrefix?.prefixChars ?? DEFAULT_CONFIG.TOOL_SPINNER_PREFIX.PREFIX_CHARS,
+    color: userConfig.toolSpinnerPrefix?.color ?? DEFAULT_CONFIG.TOOL_SPINNER_PREFIX.COLOR,
+  },
+  toolSuccess: {
+    prefix: userConfig.toolSuccess?.prefix ?? DEFAULT_CONFIG.TOOL_SUCCESS.PREFIX,
+    prefixColor: userConfig.toolSuccess?.prefixColor ?? DEFAULT_CONFIG.TOOL_SUCCESS.PREFIX_COLOR,
+    labelColor: userConfig.toolSuccess?.labelColor ?? DEFAULT_CONFIG.TOOL_SUCCESS.LABEL_COLOR,
+  },
+  toolError: {
+    prefix: userConfig.toolError?.prefix ?? DEFAULT_CONFIG.TOOL_ERROR.PREFIX,
+    prefixColor: userConfig.toolError?.prefixColor ?? DEFAULT_CONFIG.TOOL_ERROR.PREFIX_COLOR,
+    labelColor: userConfig.toolError?.labelColor ?? DEFAULT_CONFIG.TOOL_ERROR.LABEL_COLOR,
+  },
+  toolBranch: {
+    prefix: userConfig.toolBranch?.prefix ?? DEFAULT_CONFIG.TOOL_BRANCH.PREFIX,
+    color: userConfig.toolBranch?.color ?? DEFAULT_CONFIG.TOOL_BRANCH.COLOR,
+  },
+  general: {
+    titleColor: userConfig.general?.titleColor ?? DEFAULT_CONFIG.GENERAL.TITLE_COLOR,
+    summaryColor: userConfig.general?.summaryColor ?? DEFAULT_CONFIG.GENERAL.SUMMARY_COLOR,
+    countColor: userConfig.general?.countColor ?? DEFAULT_CONFIG.GENERAL.COUNT_COLOR,
+    expandHintColor: userConfig.general?.expandHintColor ?? DEFAULT_CONFIG.GENERAL.EXPAND_HINT_COLOR,
+    outputColor: userConfig.general?.outputColor ?? DEFAULT_CONFIG.GENERAL.OUTPUT_COLOR,
+  },
 };
