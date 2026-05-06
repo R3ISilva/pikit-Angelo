@@ -1,4 +1,6 @@
 import type { Theme, ThemeColor } from "@mariozechner/pi-coding-agent";
+import { relative } from "node:path";
+import { CONFIG } from "./config.js";
 
 export const PATCH_FLAG = Symbol.for("styled-outputs:patched");
 
@@ -44,4 +46,21 @@ export function applyColor(theme: Theme, color: string, text: string): string {
   } catch {
     return text;
   }
+}
+
+export function toolDot(theme: Theme): string {
+  return `${applyColor(theme, CONFIG.toolTitleColor, CONFIG.toolDot)} `;
+}
+
+export function shortenPath(filePath: string, cwd: string): string {
+  if (!filePath) return "";
+  const home = process.env.HOME ?? "";
+  if (home && filePath.startsWith(home)) {
+    return "~" + filePath.slice(home.length);
+  }
+  const rel = relative(cwd, filePath);
+  if (!rel.startsWith("..") && !rel.startsWith("/")) {
+    return rel || ".";
+  }
+  return filePath;
 }

@@ -8,7 +8,7 @@ export const DEFAULT_CONFIG = {
   ASSISTANT_PREFIX_COLOR: "text",
 
   // User message
-  USER_PREFIX: "\u276F",                  // ❯ unicode prefix character
+  USER_PREFIX: "❯",
   USER_PREFIX_COLOR: "accent",
   IS_THEME_BACKGROUND_VISIBLE: true,
   
@@ -19,6 +19,17 @@ export const DEFAULT_CONFIG = {
   THINKING_LABEL_COLOR: "muted",
   IS_THINKING_LABEL_VISIBLE: false,
   THINKING_MESSAGE_COLOR: "dim",
+
+  // Tool messages
+  TOOL_DOT: "●",
+  TOOL_SUCCESS_COLOR: "success",
+  TOOL_ERROR_COLOR: "error",
+  TOOL_BRANCH: "└─",
+  TOOL_BRANCH_COLOR: "dim",
+  TOOL_TITLE_COLOR: "toolTitle",
+  TOOL_SUMMARY_COLOR: "muted",
+  TOOL_OUTPUT_COLOR: "dim",
+  TOOL_EXPAND_HINT_COLOR: "dim",
 };
 
 interface StyledOutputsUserConfig {
@@ -33,6 +44,15 @@ interface StyledOutputsUserConfig {
   userPrefix?: string;
   userPrefixColor?: string;
   isThemeBackgroundVisible?: boolean;
+  toolDot?: string;
+  toolSuccessColor?: string;
+  toolErrorColor?: string;
+  toolBranch?: string;
+  toolBranchColor?: string;
+  toolTitleColor?: string;
+  toolSummaryColor?: string;
+  toolOutputColor?: string;
+  toolExpandHintColor?: string;
 }
 
 const CONFIG_PATH = join(homedir(), ".pi", "agent", "configs", "styled-outputs.json");
@@ -60,4 +80,13 @@ export const CONFIG = {
   userPrefix: userConfig.userPrefix ?? DEFAULT_CONFIG.USER_PREFIX,
   userPrefixColor: userConfig.userPrefixColor ?? DEFAULT_CONFIG.USER_PREFIX_COLOR,
   isThemeBackgroundVisible: userConfig.isThemeBackgroundVisible ?? DEFAULT_CONFIG.IS_THEME_BACKGROUND_VISIBLE,
+  toolDot: userConfig.toolDot ?? DEFAULT_CONFIG.TOOL_DOT,
+  toolSuccessColor: userConfig.toolSuccessColor ?? DEFAULT_CONFIG.TOOL_SUCCESS_COLOR,
+  toolErrorColor: userConfig.toolErrorColor ?? DEFAULT_CONFIG.TOOL_ERROR_COLOR,
+  toolBranch: userConfig.toolBranch ?? DEFAULT_CONFIG.TOOL_BRANCH,
+  toolBranchColor: userConfig.toolBranchColor ?? DEFAULT_CONFIG.TOOL_BRANCH_COLOR,
+  toolTitleColor: userConfig.toolTitleColor ?? DEFAULT_CONFIG.TOOL_TITLE_COLOR,
+  toolSummaryColor: userConfig.toolSummaryColor ?? DEFAULT_CONFIG.TOOL_SUMMARY_COLOR,
+  toolOutputColor: userConfig.toolOutputColor ?? DEFAULT_CONFIG.TOOL_OUTPUT_COLOR,
+  toolExpandHintColor: userConfig.toolExpandHintColor ?? DEFAULT_CONFIG.TOOL_EXPAND_HINT_COLOR,
 };
