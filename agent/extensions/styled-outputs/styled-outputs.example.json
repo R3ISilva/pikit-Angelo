@@ -17,29 +17,31 @@
     "isLabelVisible": false,
     "messageColor": "dim"
   },
-  "toolSpinnerPrefix": {
-    "prefixChars": ["·", "✢", "✳", "✶", "✻", "✽"],
-    "color": "muted"
-  },
-  "toolSuccess": {
-    "prefix": "●",
-    "prefixColor": "success",
-    "labelColor": "success"
-  },
-  "toolError": {
-    "prefix": "●",
-    "prefixColor": "error",
-    "labelColor": "error"
-  },
-  "toolBranch": {
-    "prefix": "└─",
-    "color": "dim"
-  },
-  "general": {
-    "titleColor": "toolTitle",
-    "summaryColor": "dim",
-    "countColor": "muted",
-    "expandHintColor": "dim",
-    "outputColor": "dim"
+  "tools": {
+    "toolSpinnerPrefix": {
+      "prefixChars": ["·", "✢", "✳", "✶", "✻", "✽"],
+      "color": "muted"
+    },
+    "toolSuccess": {
+      "prefix": "●",
+      "prefixColor": "success",
+      "labelColor": "success"
+    },
+    "toolError": {
+      "prefix": "●",
+      "prefixColor": "error",
+      "labelColor": "error"
+    },
+    "toolBranch": {
+      "prefix": "└─",
+      "color": "dim"
+    },
+    "general": {
+      "titleColor": "toolTitle",
+      "summaryColor": "dim",
+      "countColor": "muted",
+      "expandHintColor": "dim",
+      "outputColor": "dim"
+    }
   }
 }

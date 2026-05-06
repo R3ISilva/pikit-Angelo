@@ -49,7 +49,7 @@ export function applyColor(theme: Theme, color: string, text: string): string {
 }
 
 export function toolPrefix(theme: Theme): string {
-  return `${applyColor(theme, CONFIG.toolSuccess.prefixColor, CONFIG.toolSuccess.prefix)} `;
+  return `${applyColor(theme, CONFIG.tools.toolSuccess.prefixColor, CONFIG.tools.toolSuccess.prefix)} `;
 }
 
 export function shortenPath(filePath: string, cwd: string): string {

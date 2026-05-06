@@ -26,31 +26,32 @@ export const DEFAULT_CONFIG = {
     MESSAGE_COLOR: "dim",
   },
 
-  // Tools
-  TOOL_SPINNER_PREFIX: {
-    PREFIX_CHARS: ["·", "✢", "✳", "✶", "✻", "✽"],   // tool loading spinner characters
-    COLOR: "muted",                                 // color for the spinner prefix
-  },
-  TOOL_SUCCESS: {
-    PREFIX: "●",                                    // icon for successful tool execution
-    PREFIX_COLOR: "success",                        // color for the success prefix
-    LABEL_COLOR: "success",                        // color for the success label (DONE on the 2nd line, the status line)
-  },
-  TOOL_ERROR: {
-    PREFIX: "●",                                    // icon for error tool execution
-    PREFIX_COLOR: "error",                          // color for the error prefix
-    LABEL_COLOR: "error",                           // color for the error label (ERROR on the 2nd line, the status line)
-  },
-  TOOL_BRANCH: {
-    PREFIX: "└─",                                   // icon use right before the status line
-    COLOR: "dim",                                   // color for the branch icon
-  },
-  GENERAL: {
-    TITLE_COLOR: "toolTitle",                      // color for tool titles (bash, ls, read, write, etc.)
-    SUMMARY_COLOR: "dim",                          // color for tool summary (1st line, right after the title)
-    COUNT_COLOR: "muted",                          // color for tool counts (e.g., "Tool 1 of 3")
-    EXPAND_HINT_COLOR: "dim",                      // color for hints about expanding tool outputs
-    OUTPUT_COLOR: "dim",                           // color for tool outputs
+  TOOLS: {
+    TOOL_SPINNER_PREFIX: {
+      PREFIX_CHARS: ["·", "✢", "✳", "✶", "✻", "✽"],   // tool loading spinner characters
+      COLOR: "muted",                                 // color for the spinner prefix
+    },
+    TOOL_SUCCESS: {
+      PREFIX: "●",                                    // icon for successful tool execution
+      PREFIX_COLOR: "success",                        // color for the success prefix
+      LABEL_COLOR: "success",                        // color for the success label (DONE on the 2nd line, the status line)
+    },
+    TOOL_ERROR: {
+      PREFIX: "●",                                    // icon for error tool execution
+      PREFIX_COLOR: "error",                          // color for the error prefix
+      LABEL_COLOR: "error",                           // color for the error label (ERROR on the 2nd line, the status line)
+    },
+    TOOL_BRANCH: {
+      PREFIX: "└─",                                   // icon use right before the status line
+      COLOR: "dim",                                   // color for the branch icon
+    },
+    GENERAL: {
+      TITLE_COLOR: "toolTitle",                      // color for tool titles (bash, ls, read, write, etc.)
+      SUMMARY_COLOR: "dim",                          // color for tool summary (1st line, right after the title)
+      COUNT_COLOR: "muted",                          // color for tool counts (e.g., "Tool 1 of 3")
+      EXPAND_HINT_COLOR: "dim",                      // color for hints about expanding tool outputs
+      OUTPUT_COLOR: "dim",                           // color for tool outputs
+    },
   },
 };
 
@@ -74,30 +75,32 @@ interface StyledOutputsUserConfig {
     isLabelVisible?: boolean;
     messageColor?: string;
   };
-  toolSpinnerPrefix?: {
-    prefixChars?: string[];
-    color?: string;
-  };
-  toolSuccess?: {
-    prefix?: string;
-    prefixColor?: string;
-    labelColor?: string;
-  };
-  toolError?: {
-    prefix?: string;
-    prefixColor?: string;
-    labelColor?: string;
-  };
-  toolBranch?: {
-    prefix?: string;
-    color?: string;
-  };
-  general?: {
-    titleColor?: string;
-    summaryColor?: string;
-    countColor?: string;
-    expandHintColor?: string;
-    outputColor?: string;
+  tools?: {
+    toolSpinnerPrefix?: {
+      prefixChars?: string[];
+      color?: string;
+    };
+    toolSuccess?: {
+      prefix?: string;
+      prefixColor?: string;
+      labelColor?: string;
+    };
+    toolError?: {
+      prefix?: string;
+      prefixColor?: string;
+      labelColor?: string;
+    };
+    toolBranch?: {
+      prefix?: string;
+      color?: string;
+    };
+    general?: {
+      titleColor?: string;
+      summaryColor?: string;
+      countColor?: string;
+      expandHintColor?: string;
+      outputColor?: string;
+    };
   };
 }
 
@@ -132,29 +135,31 @@ export const CONFIG = {
     isLabelVisible: userConfig.thinkingMessage?.isLabelVisible ?? DEFAULT_CONFIG.THINKING_MESSAGE.IS_LABEL_VISIBLE,
     messageColor: userConfig.thinkingMessage?.messageColor ?? DEFAULT_CONFIG.THINKING_MESSAGE.MESSAGE_COLOR,
   },
-  toolSpinnerPrefix: {
-    prefixChars: userConfig.toolSpinnerPrefix?.prefixChars ?? DEFAULT_CONFIG.TOOL_SPINNER_PREFIX.PREFIX_CHARS,
-    color: userConfig.toolSpinnerPrefix?.color ?? DEFAULT_CONFIG.TOOL_SPINNER_PREFIX.COLOR,
-  },
-  toolSuccess: {
-    prefix: userConfig.toolSuccess?.prefix ?? DEFAULT_CONFIG.TOOL_SUCCESS.PREFIX,
-    prefixColor: userConfig.toolSuccess?.prefixColor ?? DEFAULT_CONFIG.TOOL_SUCCESS.PREFIX_COLOR,
-    labelColor: userConfig.toolSuccess?.labelColor ?? DEFAULT_CONFIG.TOOL_SUCCESS.LABEL_COLOR,
-  },
-  toolError: {
-    prefix: userConfig.toolError?.prefix ?? DEFAULT_CONFIG.TOOL_ERROR.PREFIX,
-    prefixColor: userConfig.toolError?.prefixColor ?? DEFAULT_CONFIG.TOOL_ERROR.PREFIX_COLOR,
-    labelColor: userConfig.toolError?.labelColor ?? DEFAULT_CONFIG.TOOL_ERROR.LABEL_COLOR,
-  },
-  toolBranch: {
-    prefix: userConfig.toolBranch?.prefix ?? DEFAULT_CONFIG.TOOL_BRANCH.PREFIX,
-    color: userConfig.toolBranch?.color ?? DEFAULT_CONFIG.TOOL_BRANCH.COLOR,
-  },
-  general: {
-    titleColor: userConfig.general?.titleColor ?? DEFAULT_CONFIG.GENERAL.TITLE_COLOR,
-    summaryColor: userConfig.general?.summaryColor ?? DEFAULT_CONFIG.GENERAL.SUMMARY_COLOR,
-    countColor: userConfig.general?.countColor ?? DEFAULT_CONFIG.GENERAL.COUNT_COLOR,
-    expandHintColor: userConfig.general?.expandHintColor ?? DEFAULT_CONFIG.GENERAL.EXPAND_HINT_COLOR,
-    outputColor: userConfig.general?.outputColor ?? DEFAULT_CONFIG.GENERAL.OUTPUT_COLOR,
+  tools: {
+    toolSpinnerPrefix: {
+      prefixChars: userConfig.tools?.toolSpinnerPrefix?.prefixChars ?? DEFAULT_CONFIG.TOOLS.TOOL_SPINNER_PREFIX.PREFIX_CHARS,
+      color: userConfig.tools?.toolSpinnerPrefix?.color ?? DEFAULT_CONFIG.TOOLS.TOOL_SPINNER_PREFIX.COLOR,
+    },
+    toolSuccess: {
+      prefix: userConfig.tools?.toolSuccess?.prefix ?? DEFAULT_CONFIG.TOOLS.TOOL_SUCCESS.PREFIX,
+      prefixColor: userConfig.tools?.toolSuccess?.prefixColor ?? DEFAULT_CONFIG.TOOLS.TOOL_SUCCESS.PREFIX_COLOR,
+      labelColor: userConfig.tools?.toolSuccess?.labelColor ?? DEFAULT_CONFIG.TOOLS.TOOL_SUCCESS.LABEL_COLOR,
+    },
+    toolError: {
+      prefix: userConfig.tools?.toolError?.prefix ?? DEFAULT_CONFIG.TOOLS.TOOL_ERROR.PREFIX,
+      prefixColor: userConfig.tools?.toolError?.prefixColor ?? DEFAULT_CONFIG.TOOLS.TOOL_ERROR.PREFIX_COLOR,
+      labelColor: userConfig.tools?.toolError?.labelColor ?? DEFAULT_CONFIG.TOOLS.TOOL_ERROR.LABEL_COLOR,
+    },
+    toolBranch: {
+      prefix: userConfig.tools?.toolBranch?.prefix ?? DEFAULT_CONFIG.TOOLS.TOOL_BRANCH.PREFIX,
+      color: userConfig.tools?.toolBranch?.color ?? DEFAULT_CONFIG.TOOLS.TOOL_BRANCH.COLOR,
+    },
+    general: {
+      titleColor: userConfig.tools?.general?.titleColor ?? DEFAULT_CONFIG.TOOLS.GENERAL.TITLE_COLOR,
+      summaryColor: userConfig.tools?.general?.summaryColor ?? DEFAULT_CONFIG.TOOLS.GENERAL.SUMMARY_COLOR,
+      countColor: userConfig.tools?.general?.countColor ?? DEFAULT_CONFIG.TOOLS.GENERAL.COUNT_COLOR,
+      expandHintColor: userConfig.tools?.general?.expandHintColor ?? DEFAULT_CONFIG.TOOLS.GENERAL.EXPAND_HINT_COLOR,
+      outputColor: userConfig.tools?.general?.outputColor ?? DEFAULT_CONFIG.TOOLS.GENERAL.OUTPUT_COLOR,
+    },
   },
 };
