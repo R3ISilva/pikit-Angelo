@@ -52,6 +52,10 @@ export function toolPrefix(theme: Theme): string {
   return `${applyColor(theme, CONFIG.tools.toolSuccess.prefixColor, CONFIG.tools.toolSuccess.prefix)} `;
 }
 
+export function errorPrefix(theme: Theme): string {
+  return `${applyColor(theme, CONFIG.tools.toolError.prefixColor, CONFIG.tools.toolError.prefix)} `;
+}
+
 export function shortenPath(filePath: string, cwd: string): string {
   if (!filePath) return "";
   const home = process.env.HOME ?? "";

@@ -1,7 +1,7 @@
 import { Text, type Component } from "@mariozechner/pi-tui";
 import type { Theme } from "@mariozechner/pi-coding-agent";
 import { CONFIG } from "../config.js";
-import { applyColor, toolPrefix, shortenPath, getVisibleWidth } from "../utils.js";
+import { applyColor, toolPrefix, errorPrefix, shortenPath, getVisibleWidth } from "../utils.js";
 
 // --- Shared helpers ---
 
@@ -36,8 +36,8 @@ function spinnerDot(theme: Theme, frame: number): string {
   return `${applyColor(theme, CONFIG.tools.toolSpinnerPrefix.color, SPINNER_FRAMES[frame % SPINNER_FRAMES.length])} `;
 }
 
-export function toolHeader(label: string, summary: string, theme: Theme, dot?: string): string {
-  const d = dot ?? toolPrefix(theme);
+export function toolHeader(label: string, summary: string, theme: Theme, dot?: string, isError?: boolean): string {
+  const d = dot ?? (isError ? errorPrefix(theme) : toolPrefix(theme));
   const title = applyColor(theme, CONFIG.tools.general.titleColor, theme.bold(label));
   return `${d}${title} ${summary}`;
 }
@@ -67,6 +67,10 @@ export function getFirstTextContent(result: any): string {
   return "";
 }
 
+function errorLabel(theme: Theme): string {
+  return branchLine(applyColor(theme, CONFIG.tools.toolError.labelColor, "Error"), theme);
+}
+
 function renderPartial(theme: Theme): string {
   return branchLine(applyColor(theme, CONFIG.tools.general.outputColor, "Running..."), theme);
 }
@@ -89,14 +93,22 @@ export function renderReadCall(args: any, theme: Theme, ctx: any): Component {
     return makeText(ctx.lastComponent, toolHeader("Read", summary, theme, spinnerDot(theme, frame)) + "\n" + renderPartial(theme));
   }
   clearSpinner(ctx);
-  return makeText(ctx.lastComponent, toolHeader("Read", summary, theme));
+  return makeText(ctx.lastComponent, toolHeader("Read", summary, theme, undefined, ctx.isError));
 }
 
 export function renderReadResult(result: any, options: { expanded: boolean; isPartial: boolean }, theme: Theme, ctx: any): Component {
   const text = getFirstTextContent(result);
 
   if (ctx.isError) {
-    return makeText(ctx.lastComponent, branchLine(applyColor(theme, CONFIG.tools.toolError.labelColor, text), theme));
+    const lines = outputLines(text).filter((l: string) => l.trim().length > 0);
+    if (!options.expanded) {
+      return makeText(ctx.lastComponent, errorLabel(theme) + expandHint(theme));
+    }
+    let display = errorLabel(theme);
+    for (const line of lines) {
+      display += "\n" + indentLine(applyColor(theme, CONFIG.tools.general.outputColor, line));
+    }
+    return makeText(ctx.lastComponent, display);
   }
 
   const nonEmptyLines = outputLines(text).filter((l: string) => l.trim().length > 0);
@@ -125,7 +137,7 @@ export function renderBashCall(args: any, theme: Theme, ctx: any): Component {
     return makeText(ctx.lastComponent, toolHeader("Bash", summary, theme, spinnerDot(theme, frame)) + "\n" + renderPartial(theme));
   }
   clearSpinner(ctx);
-  return makeText(ctx.lastComponent, toolHeader("Bash", summary, theme));
+  return makeText(ctx.lastComponent, toolHeader("Bash", summary, theme, undefined, ctx.isError));
 }
 
 export function renderBashResult(result: any, options: { expanded: boolean; isPartial: boolean }, theme: Theme, ctx: any): Component {
@@ -176,13 +188,21 @@ export function renderEditCall(args: any, theme: Theme, ctx: any): Component {
     return makeText(ctx.lastComponent, toolHeader("Edit", summary, theme, spinnerDot(theme, frame)) + "\n" + renderPartial(theme));
   }
   clearSpinner(ctx);
-  return makeText(ctx.lastComponent, toolHeader("Edit", summary, theme));
+  return makeText(ctx.lastComponent, toolHeader("Edit", summary, theme, undefined, ctx.isError));
 }
 
 export function renderEditResult(result: any, options: { expanded: boolean; isPartial: boolean }, theme: Theme, ctx: any): Component {
   if (ctx.isError) {
     const text = getFirstTextContent(result);
-    return makeText(ctx.lastComponent, branchLine(applyColor(theme, CONFIG.tools.toolError.labelColor, text), theme));
+    const lines = outputLines(text).filter((l: string) => l.trim().length > 0);
+    if (!options.expanded) {
+      return makeText(ctx.lastComponent, errorLabel(theme) + expandHint(theme));
+    }
+    let display = errorLabel(theme);
+    for (const line of lines) {
+      display += "\n" + indentLine(applyColor(theme, CONFIG.tools.general.outputColor, line));
+    }
+    return makeText(ctx.lastComponent, display);
   }
 
   return makeText(ctx.lastComponent, doneLabel(theme));
@@ -200,13 +220,21 @@ export function renderWriteCall(args: any, theme: Theme, ctx: any): Component {
     return makeText(ctx.lastComponent, toolHeader("Write", summary, theme, spinnerDot(theme, frame)) + "\n" + renderPartial(theme));
   }
   clearSpinner(ctx);
-  return makeText(ctx.lastComponent, toolHeader("Write", summary, theme));
+  return makeText(ctx.lastComponent, toolHeader("Write", summary, theme, undefined, ctx.isError));
 }
 
 export function renderWriteResult(result: any, options: { expanded: boolean; isPartial: boolean }, theme: Theme, ctx: any): Component {
   if (ctx.isError) {
     const text = getFirstTextContent(result);
-    return makeText(ctx.lastComponent, branchLine(applyColor(theme, CONFIG.tools.toolError.labelColor, text), theme));
+    const lines = outputLines(text).filter((l: string) => l.trim().length > 0);
+    if (!options.expanded) {
+      return makeText(ctx.lastComponent, errorLabel(theme) + expandHint(theme));
+    }
+    let display = errorLabel(theme);
+    for (const line of lines) {
+      display += "\n" + indentLine(applyColor(theme, CONFIG.tools.general.outputColor, line));
+    }
+    return makeText(ctx.lastComponent, display);
   }
 
   return makeText(ctx.lastComponent, doneLabel(theme));
@@ -222,7 +250,7 @@ export function renderLsCall(args: any, theme: Theme, ctx: any): Component {
     return makeText(ctx.lastComponent, toolHeader("ls", summary, theme, spinnerDot(theme, frame)) + "\n" + renderPartial(theme));
   }
   clearSpinner(ctx);
-  return makeText(ctx.lastComponent, toolHeader("ls", summary, theme));
+  return makeText(ctx.lastComponent, toolHeader("ls", summary, theme, undefined, ctx.isError));
 }
 
 export function renderLsResult(result: any, options: { expanded: boolean; isPartial: boolean }, theme: Theme, ctx: any): Component {
@@ -230,7 +258,14 @@ export function renderLsResult(result: any, options: { expanded: boolean; isPart
   const items = outputLines(text).filter((l: string) => l.trim().length > 0);
 
   if (ctx.isError) {
-    return makeText(ctx.lastComponent, branchLine(applyColor(theme, CONFIG.tools.toolError.labelColor, text), theme));
+    if (!options.expanded) {
+      return makeText(ctx.lastComponent, errorLabel(theme) + expandHint(theme));
+    }
+    let display = errorLabel(theme);
+    for (const line of items) {
+      display += "\n" + indentLine(applyColor(theme, CONFIG.tools.general.outputColor, line));
+    }
+    return makeText(ctx.lastComponent, display);
   }
 
   const count = { label: "entries", value: items.length };

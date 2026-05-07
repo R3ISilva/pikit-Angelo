@@ -43,7 +43,7 @@ export const DEFAULT_CONFIG = {
     },
     TOOL_BRANCH: {
       PREFIX: "└─",                                   // icon use right before the status line
-      COLOR: "dim",                                   // color for the branch icon
+      COLOR: "separator",                             // color for the branch icon
     },
     GENERAL: {
       TITLE_COLOR: "toolTitle",                      // color for tool titles (bash, ls, read, write, etc.)
