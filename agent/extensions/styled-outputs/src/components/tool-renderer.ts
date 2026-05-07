@@ -133,7 +133,7 @@ export function renderReadResult(result: any, options: { expanded: boolean; isPa
 export function renderGrepCall(args: any, theme: Theme, ctx: any): Component {
   const pattern = args.pattern ?? "";
   const searchPath = shortenPath(args.path ?? ".", ctx.cwd ?? process.cwd());
-  let summary = applyColor(theme, CONFIG.tools.general.summaryColor, `/${pattern}/`) + " in " + applyColor(theme, CONFIG.tools.general.summaryColor, searchPath);
+  let summary = applyColor(theme, CONFIG.tools.general.summaryColor, `${pattern} in ${searchPath}`);
   if (args.glob) summary += applyColor(theme, CONFIG.tools.general.outputColor, ` (${args.glob})`);
   if (ctx.isPartial) {
     const frame = ensureSpinner(ctx);
@@ -176,7 +176,7 @@ export function renderGrepResult(result: any, options: { expanded: boolean; isPa
 export function renderFindCall(args: any, theme: Theme, ctx: any): Component {
   const pattern = args.pattern ?? "";
   const searchPath = shortenPath(args.path ?? ".", ctx.cwd ?? process.cwd());
-  let summary = applyColor(theme, CONFIG.tools.general.summaryColor, pattern) + " in " + applyColor(theme, CONFIG.tools.general.summaryColor, searchPath);
+  let summary = applyColor(theme, CONFIG.tools.general.summaryColor, `${pattern} in ${searchPath}`);
   if (ctx.isPartial) {
     const frame = ensureSpinner(ctx);
     return makeText(ctx.lastComponent, toolHeader("Find", summary, theme, spinnerDot(theme, frame)) + "\n" + renderPartial(theme));
