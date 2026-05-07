@@ -55,7 +55,10 @@ function expandHint(theme: Theme): string {
   return applyColor(theme, CONFIG.tools.general.expandHintColor, " • ctrl+o to expand");
 }
 
+const NO_OUTPUT_PLACEHOLDER = "(no output)";
+
 function outputLines(text: string): string[] {
+  if (text === NO_OUTPUT_PLACEHOLDER) return [];
   return text.split("\n");
 }
 
@@ -112,10 +115,10 @@ export function renderReadResult(result: any, options: { expanded: boolean; isPa
   }
 
   const nonEmptyLines = outputLines(text).filter((l: string) => l.trim().length > 0);
-  const count = { label: "lines", value: nonEmptyLines.length };
+  const count = nonEmptyLines.length > 0 ? { label: "lines", value: nonEmptyLines.length } : undefined;
 
   if (!options.expanded) {
-    return makeText(ctx.lastComponent, doneLabel(theme, count) + expandHint(theme));
+    return makeText(ctx.lastComponent, doneLabel(theme, count) + (nonEmptyLines.length > 0 ? expandHint(theme) : ""));
   }
 
   let display = doneLabel(theme, count);
@@ -162,7 +165,7 @@ export function renderBashResult(result: any, options: { expanded: boolean; isPa
     return makeText(ctx.lastComponent, display);
   }
 
-  const count = { label: "lines", value: nonEmptyLines.length };
+  const count = nonEmptyLines.length > 0 ? { label: "lines", value: nonEmptyLines.length } : undefined;
 
   if (!options.expanded) {
     return makeText(ctx.lastComponent, doneLabel(theme, count) + (nonEmptyLines.length > 0 ? expandHint(theme) : ""));
@@ -180,9 +183,8 @@ export function renderBashResult(result: any, options: { expanded: boolean; isPa
 export function renderEditCall(args: any, theme: Theme, ctx: any): Component {
   const path = shortenPath(args.path ?? "", ctx.cwd ?? process.cwd());
   const operations = args.edits ?? [];
-  const count = operations.length;
-  const opSummary = count > 0 ? ` (${count} edit${count > 1 ? "s" : ""})` : "";
-  const summary = applyColor(theme, CONFIG.tools.general.summaryColor, `${path}${opSummary}`);
+  ctx.state.editCount = operations.length;
+  const summary = applyColor(theme, CONFIG.tools.general.summaryColor, path);
   if (ctx.isPartial) {
     const frame = ensureSpinner(ctx);
     return makeText(ctx.lastComponent, toolHeader("Edit", summary, theme, spinnerDot(theme, frame)) + "\n" + renderPartial(theme));
@@ -205,7 +207,9 @@ export function renderEditResult(result: any, options: { expanded: boolean; isPa
     return makeText(ctx.lastComponent, display);
   }
 
-  return makeText(ctx.lastComponent, doneLabel(theme));
+  const editCount = (ctx.state.editCount as number | undefined) ?? 0;
+  const count = editCount > 0 ? { label: `edit${editCount > 1 ? "s" : ""}`, value: editCount } : undefined;
+  return makeText(ctx.lastComponent, doneLabel(theme, count));
 }
 
 // --- Write tool ---
@@ -213,8 +217,8 @@ export function renderEditResult(result: any, options: { expanded: boolean; isPa
 export function renderWriteCall(args: any, theme: Theme, ctx: any): Component {
   const path = shortenPath(args.path ?? "", ctx.cwd ?? process.cwd());
   const content = args.content ?? "";
-  const lineCount = content.split("\n").length;
-  const summary = applyColor(theme, CONFIG.tools.general.summaryColor, `${path} (${lineCount} lines)`);
+  ctx.state.lineCount = content.split("\n").length;
+  const summary = applyColor(theme, CONFIG.tools.general.summaryColor, path);
   if (ctx.isPartial) {
     const frame = ensureSpinner(ctx);
     return makeText(ctx.lastComponent, toolHeader("Write", summary, theme, spinnerDot(theme, frame)) + "\n" + renderPartial(theme));
@@ -237,7 +241,9 @@ export function renderWriteResult(result: any, options: { expanded: boolean; isP
     return makeText(ctx.lastComponent, display);
   }
 
-  return makeText(ctx.lastComponent, doneLabel(theme));
+  const lineCount = (ctx.state.lineCount as number | undefined) ?? 0;
+  const count = lineCount > 0 ? { label: `line${lineCount > 1 ? "s" : ""}`, value: lineCount } : undefined;
+  return makeText(ctx.lastComponent, doneLabel(theme, count));
 }
 
 // --- Ls tool ---
@@ -268,7 +274,7 @@ export function renderLsResult(result: any, options: { expanded: boolean; isPart
     return makeText(ctx.lastComponent, display);
   }
 
-  const count = { label: "entries", value: items.length };
+  const count = items.length > 0 ? { label: "entries", value: items.length } : undefined;
 
   if (!options.expanded) {
     return makeText(ctx.lastComponent, doneLabel(theme, count) + (items.length > 0 ? expandHint(theme) : ""));
