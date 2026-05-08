@@ -51,12 +51,27 @@ export const DEFAULT_CONFIG = {
       COUNT_COLOR: "muted",                          // color for tool counts (e.g., "Tool 1 of 3")
       EXPAND_HINT_COLOR: "dim",                      // color for hints about expanding tool outputs
       OUTPUT_COLOR: "dim",                           // color for tool outputs
-      IS_THEME_BACKGROUND_VISIBLE: false,           // whether to apply theme background color to tool outputs
+      IS_THEME_BACKGROUND_VISIBLE: false,            // whether to apply theme background color to tool outputs
+    },
+    GROUPS: {
+      BASE: {},                                      // base tools (read, bash, edit, write, ls, grep, find) — falls through to GENERAL
+      MCP: {},                                       // MCP server tools — falls through to GENERAL
+      WEB: {},                                       // web tools (web_search, fetch_content) — falls through to GENERAL
+      CUSTOM: {},                                    // custom user tools — falls through to GENERAL
     },
   },
 };
 
 // --- User config types (camelCase, partial) ---
+
+interface GeneralUserConfig {
+  titleColor?: string;
+  summaryColor?: string;
+  countColor?: string;
+  expandHintColor?: string;
+  outputColor?: string;
+  isThemeBackgroundVisible?: boolean;
+}
 
 interface StyledOutputsUserConfig {
   assistantMessage?: {
@@ -95,13 +110,12 @@ interface StyledOutputsUserConfig {
       prefix?: string;
       color?: string;
     };
-    general?: {
-      titleColor?: string;
-      summaryColor?: string;
-      countColor?: string;
-      expandHintColor?: string;
-      outputColor?: string;
-      isThemeBackgroundVisible?: boolean;
+    general?: GeneralUserConfig;
+    groups?: {
+      base?: GeneralUserConfig;
+      mcp?: GeneralUserConfig;
+      web?: GeneralUserConfig;
+      custom?: GeneralUserConfig;
     };
   };
 }
@@ -163,6 +177,12 @@ export const CONFIG = {
       expandHintColor: userConfig.tools?.general?.expandHintColor ?? DEFAULT_CONFIG.TOOLS.GENERAL.EXPAND_HINT_COLOR,
       outputColor: userConfig.tools?.general?.outputColor ?? DEFAULT_CONFIG.TOOLS.GENERAL.OUTPUT_COLOR,
       isThemeBackgroundVisible: userConfig.tools?.general?.isThemeBackgroundVisible ?? DEFAULT_CONFIG.TOOLS.GENERAL.IS_THEME_BACKGROUND_VISIBLE,
+    },
+    groups: {
+      base: userConfig.tools?.groups?.base ?? DEFAULT_CONFIG.TOOLS.GROUPS.BASE,
+      mcp: userConfig.tools?.groups?.mcp ?? DEFAULT_CONFIG.TOOLS.GROUPS.MCP,
+      web: userConfig.tools?.groups?.web ?? DEFAULT_CONFIG.TOOLS.GROUPS.WEB,
+      custom: userConfig.tools?.groups?.custom ?? DEFAULT_CONFIG.TOOLS.GROUPS.CUSTOM,
     },
   },
 };

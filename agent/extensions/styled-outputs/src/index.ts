@@ -14,7 +14,7 @@ import {
   renderLsCall, renderLsResult,
   renderGrepCall, renderGrepResult,
   renderFindCall, renderFindResult,
-} from "./components/tool-renderer.js";
+} from "./components/base-renderer.js";
 
 export default function styledOutputs(pi: ExtensionAPI) {
   pi.on("session_start", async (_event, ctx) => {

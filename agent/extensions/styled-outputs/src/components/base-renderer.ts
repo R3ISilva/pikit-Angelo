@@ -1,90 +1,14 @@
-import { Text, type Component } from "@mariozechner/pi-tui";
+import type { Component } from "@mariozechner/pi-tui";
 import type { Theme } from "@mariozechner/pi-coding-agent";
 import { CONFIG } from "../config.js";
-import { applyColor, toolPrefix, errorPrefix, shortenPath, getVisibleWidth, getExpandToggleKey } from "../utils.js";
+import { applyColor, shortenPath } from "../utils.js";
+import {
+  makeText, toolHeader, branchLine, indentLine, expandHint,
+  outputLines, getFirstTextContent, errorLabel, renderPartial, doneLabel,
+  ensureSpinner, clearSpinner, spinnerDot, groupTitleColor,
+} from "./tool-shared.js";
 
-// --- Shared helpers ---
-
-export function makeText(lastComponent: Text | undefined, text: string): Text {
-  const comp = lastComponent ?? new Text("", 0, 0);
-  comp.setText(text);
-  return comp;
-}
-
-const SPINNER_CHARS = CONFIG.tools.toolSpinnerPrefix.prefixChars;
-const SPINNER_FRAMES = [...SPINNER_CHARS, ...[...SPINNER_CHARS].reverse()];
-const SPINNER_INTERVAL = 80;
-
-function ensureSpinner(ctx: any): number {
-  if (ctx.state.spinnerInterval) return ctx.state.spinnerFrame ?? 0;
-  ctx.state.spinnerFrame = 0;
-  ctx.state.spinnerInterval = setInterval(() => {
-    ctx.state.spinnerFrame = (ctx.state.spinnerFrame + 1) % SPINNER_FRAMES.length;
-    ctx.invalidate();
-  }, SPINNER_INTERVAL);
-  return 0;
-}
-
-function clearSpinner(ctx: any) {
-  if (ctx.state.spinnerInterval) {
-    clearInterval(ctx.state.spinnerInterval);
-    ctx.state.spinnerInterval = undefined;
-  }
-}
-
-function spinnerDot(theme: Theme, frame: number): string {
-  return `${applyColor(theme, CONFIG.tools.toolSpinnerPrefix.color, SPINNER_FRAMES[frame % SPINNER_FRAMES.length])} `;
-}
-
-export function toolHeader(label: string, summary: string, theme: Theme, dot?: string, isError?: boolean): string {
-  const d = dot ?? (isError ? errorPrefix(theme) : toolPrefix(theme));
-  const title = applyColor(theme, CONFIG.tools.general.titleColor, theme.bold(label));
-  return `${d}${title} ${summary}`;
-}
-
-export function branchLine(text: string, theme: Theme): string {
-  const icon = applyColor(theme, CONFIG.tools.toolBranch.color, CONFIG.tools.toolBranch.prefix);
-  return `${icon} ${text}`;
-}
-
-function indentLine(text: string): string {
-  return `${" ".repeat(getVisibleWidth(CONFIG.tools.toolBranch.prefix) + 1)}${text}`;
-}
-
-function expandHint(theme: Theme): string {
-  return applyColor(theme, CONFIG.tools.general.expandHintColor, ` • ${getExpandToggleKey()} to expand`);
-}
-
-const NO_OUTPUT_PLACEHOLDER = "(no output)";
-
-function outputLines(text: string): string[] {
-  if (text === NO_OUTPUT_PLACEHOLDER) return [];
-  return text.split("\n");
-}
-
-export function getFirstTextContent(result: any): string {
-  if (!result?.content) return "";
-  for (const block of result.content) {
-    if (block?.type === "text" && block.text) return block.text;
-  }
-  return "";
-}
-
-function errorLabel(theme: Theme): string {
-  return branchLine(applyColor(theme, CONFIG.tools.toolError.labelColor, "Error"), theme);
-}
-
-function renderPartial(theme: Theme): string {
-  return branchLine(applyColor(theme, CONFIG.tools.general.outputColor, "Running..."), theme);
-}
-
-function doneLabel(theme: Theme, count?: { label: string; value: number }): string {
-  const done = applyColor(theme, CONFIG.tools.toolSuccess.labelColor, "Done");
-  const text = count
-    ? `${done} ${applyColor(theme, CONFIG.tools.general.countColor, `• ${count.value} ${count.label}`)}`
-    : done;
-  return branchLine(text, theme);
-}
+const BASE_TITLE_COLOR = groupTitleColor("base");
 
 // --- Read tool ---
 
@@ -93,10 +17,10 @@ export function renderReadCall(args: any, theme: Theme, ctx: any): Component {
   const summary = applyColor(theme, CONFIG.tools.general.summaryColor, path);
   if (ctx.isPartial) {
     const frame = ensureSpinner(ctx);
-    return makeText(ctx.lastComponent, toolHeader("Read", summary, theme, spinnerDot(theme, frame)) + "\n" + renderPartial(theme));
+    return makeText(ctx.lastComponent, toolHeader("Read", summary, theme, spinnerDot(theme, frame), undefined, BASE_TITLE_COLOR) + "\n" + renderPartial(theme));
   }
   clearSpinner(ctx);
-  return makeText(ctx.lastComponent, toolHeader("Read", summary, theme, undefined, ctx.isError));
+  return makeText(ctx.lastComponent, toolHeader("Read", summary, theme, undefined, ctx.isError, BASE_TITLE_COLOR));
 }
 
 export function renderReadResult(result: any, options: { expanded: boolean; isPartial: boolean }, theme: Theme, ctx: any): Component {
@@ -137,10 +61,10 @@ export function renderGrepCall(args: any, theme: Theme, ctx: any): Component {
   if (args.glob) summary += applyColor(theme, CONFIG.tools.general.outputColor, ` (${args.glob})`);
   if (ctx.isPartial) {
     const frame = ensureSpinner(ctx);
-    return makeText(ctx.lastComponent, toolHeader("Grep", summary, theme, spinnerDot(theme, frame)) + "\n" + renderPartial(theme));
+    return makeText(ctx.lastComponent, toolHeader("Grep", summary, theme, spinnerDot(theme, frame), undefined, BASE_TITLE_COLOR) + "\n" + renderPartial(theme));
   }
   clearSpinner(ctx);
-  return makeText(ctx.lastComponent, toolHeader("Grep", summary, theme, undefined, ctx.isError));
+  return makeText(ctx.lastComponent, toolHeader("Grep", summary, theme, undefined, ctx.isError, BASE_TITLE_COLOR));
 }
 
 export function renderGrepResult(result: any, options: { expanded: boolean; isPartial: boolean }, theme: Theme, ctx: any): Component {
@@ -179,10 +103,10 @@ export function renderFindCall(args: any, theme: Theme, ctx: any): Component {
   let summary = applyColor(theme, CONFIG.tools.general.summaryColor, `${pattern} in ${searchPath}`);
   if (ctx.isPartial) {
     const frame = ensureSpinner(ctx);
-    return makeText(ctx.lastComponent, toolHeader("Find", summary, theme, spinnerDot(theme, frame)) + "\n" + renderPartial(theme));
+    return makeText(ctx.lastComponent, toolHeader("Find", summary, theme, spinnerDot(theme, frame), undefined, BASE_TITLE_COLOR) + "\n" + renderPartial(theme));
   }
   clearSpinner(ctx);
-  return makeText(ctx.lastComponent, toolHeader("Find", summary, theme, undefined, ctx.isError));
+  return makeText(ctx.lastComponent, toolHeader("Find", summary, theme, undefined, ctx.isError, BASE_TITLE_COLOR));
 }
 
 export function renderFindResult(result: any, options: { expanded: boolean; isPartial: boolean }, theme: Theme, ctx: any): Component {
@@ -226,10 +150,10 @@ export function renderBashCall(args: any, theme: Theme, ctx: any): Component {
   const summary = applyColor(theme, CONFIG.tools.general.summaryColor, preview);
   if (ctx.isPartial) {
     const frame = ensureSpinner(ctx);
-    return makeText(ctx.lastComponent, toolHeader("Bash", summary, theme, spinnerDot(theme, frame)) + "\n" + renderPartial(theme));
+    return makeText(ctx.lastComponent, toolHeader("Bash", summary, theme, spinnerDot(theme, frame), undefined, BASE_TITLE_COLOR) + "\n" + renderPartial(theme));
   }
   clearSpinner(ctx);
-  return makeText(ctx.lastComponent, toolHeader("Bash", summary, theme, undefined, ctx.isError));
+  return makeText(ctx.lastComponent, toolHeader("Bash", summary, theme, undefined, ctx.isError, BASE_TITLE_COLOR));
 }
 
 export function renderBashResult(result: any, options: { expanded: boolean; isPartial: boolean }, theme: Theme, ctx: any): Component {
@@ -276,10 +200,10 @@ export function renderEditCall(args: any, theme: Theme, ctx: any): Component {
   const summary = applyColor(theme, CONFIG.tools.general.summaryColor, path);
   if (ctx.isPartial) {
     const frame = ensureSpinner(ctx);
-    return makeText(ctx.lastComponent, toolHeader("Edit", summary, theme, spinnerDot(theme, frame)) + "\n" + renderPartial(theme));
+    return makeText(ctx.lastComponent, toolHeader("Edit", summary, theme, spinnerDot(theme, frame), undefined, BASE_TITLE_COLOR) + "\n" + renderPartial(theme));
   }
   clearSpinner(ctx);
-  return makeText(ctx.lastComponent, toolHeader("Edit", summary, theme, undefined, ctx.isError));
+  return makeText(ctx.lastComponent, toolHeader("Edit", summary, theme, undefined, ctx.isError, BASE_TITLE_COLOR));
 }
 
 export function renderEditResult(result: any, options: { expanded: boolean; isPartial: boolean }, theme: Theme, ctx: any): Component {
@@ -310,10 +234,10 @@ export function renderWriteCall(args: any, theme: Theme, ctx: any): Component {
   const summary = applyColor(theme, CONFIG.tools.general.summaryColor, path);
   if (ctx.isPartial) {
     const frame = ensureSpinner(ctx);
-    return makeText(ctx.lastComponent, toolHeader("Write", summary, theme, spinnerDot(theme, frame)) + "\n" + renderPartial(theme));
+    return makeText(ctx.lastComponent, toolHeader("Write", summary, theme, spinnerDot(theme, frame), undefined, BASE_TITLE_COLOR) + "\n" + renderPartial(theme));
   }
   clearSpinner(ctx);
-  return makeText(ctx.lastComponent, toolHeader("Write", summary, theme, undefined, ctx.isError));
+  return makeText(ctx.lastComponent, toolHeader("Write", summary, theme, undefined, ctx.isError, BASE_TITLE_COLOR));
 }
 
 export function renderWriteResult(result: any, options: { expanded: boolean; isPartial: boolean }, theme: Theme, ctx: any): Component {
@@ -335,17 +259,17 @@ export function renderWriteResult(result: any, options: { expanded: boolean; isP
   return makeText(ctx.lastComponent, doneLabel(theme, count));
 }
 
-// --- Ls tool (also used by Find for dir styling) ---
+// --- Ls tool ---
 
 export function renderLsCall(args: any, theme: Theme, ctx: any): Component {
   const path = shortenPath(args.path ?? ".", ctx.cwd ?? process.cwd());
   const summary = applyColor(theme, CONFIG.tools.general.summaryColor, path);
   if (ctx.isPartial) {
     const frame = ensureSpinner(ctx);
-    return makeText(ctx.lastComponent, toolHeader("ls", summary, theme, spinnerDot(theme, frame)) + "\n" + renderPartial(theme));
+    return makeText(ctx.lastComponent, toolHeader("ls", summary, theme, spinnerDot(theme, frame), undefined, BASE_TITLE_COLOR) + "\n" + renderPartial(theme));
   }
   clearSpinner(ctx);
-  return makeText(ctx.lastComponent, toolHeader("ls", summary, theme, undefined, ctx.isError));
+  return makeText(ctx.lastComponent, toolHeader("ls", summary, theme, undefined, ctx.isError, BASE_TITLE_COLOR));
 }
 
 export function renderLsResult(result: any, options: { expanded: boolean; isPartial: boolean }, theme: Theme, ctx: any): Component {

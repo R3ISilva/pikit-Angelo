@@ -43,6 +43,12 @@
       "expandHintColor": "dim",
       "outputColor": "dim",
       "isThemeBackgroundVisible": false
+    },
+    "groups": {
+      "base": {},
+      "mcp": {},
+      "web": {},
+      "custom": {}
     }
   }
 }
