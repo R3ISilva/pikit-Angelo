@@ -16,6 +16,13 @@ import {
   renderFindCall, renderFindResult,
 } from "./components/base-renderer.js";
 import { renderMcpCall, renderMcpResult } from "./components/mcp-renderer.js";
+import {
+  renderWebSearchCall, renderWebSearchResult,
+  renderFetchContentCall, renderFetchContentResult,
+  renderGetSearchContentCall, renderGetSearchContentResult,
+} from "./components/web-renderer.js";
+
+const WEB_TOOLS = new Set(["web_search", "fetch_content", "get_search_content"]);
 
 export default function styledOutputs(pi: ExtensionAPI) {
   pi.on("session_start", async (_event, ctx) => {
@@ -111,12 +118,17 @@ export default function styledOutputs(pi: ExtensionAPI) {
       }
     };
 
-    // --- Inject MCP renderer for tools without custom renderers ---
+    // --- Inject web + MCP renderers for tools without custom renderers ---
     const originalGetCallRenderer = toolProto.getCallRenderer;
     toolProto.getCallRenderer = function patchedGetCallRenderer() {
       const renderer = originalGetCallRenderer.call(this);
       if (renderer !== undefined) return renderer;
       const name = this.toolName;
+      if (WEB_TOOLS.has(name)) {
+        if (name === "web_search") return (args: any, theme: any, ctx: any) => renderWebSearchCall(args, theme, ctx);
+        if (name === "fetch_content") return (args: any, theme: any, ctx: any) => renderFetchContentCall(args, theme, ctx);
+        if (name === "get_search_content") return (args: any, theme: any, ctx: any) => renderGetSearchContentCall(args, theme, ctx);
+      }
       return (args: any, theme: any, ctx: any) => renderMcpCall(name, args, theme, ctx);
     };
 
@@ -125,6 +137,11 @@ export default function styledOutputs(pi: ExtensionAPI) {
       const renderer = originalGetResultRenderer.call(this);
       if (renderer !== undefined) return renderer;
       const name = this.toolName;
+      if (WEB_TOOLS.has(name)) {
+        if (name === "web_search") return (result: any, options: any, theme: any, ctx: any) => renderWebSearchResult(result, options, theme, ctx);
+        if (name === "fetch_content") return (result: any, options: any, theme: any, ctx: any) => renderFetchContentResult(result, options, theme, ctx);
+        if (name === "get_search_content") return (result: any, options: any, theme: any, ctx: any) => renderGetSearchContentResult(result, options, theme, ctx);
+      }
       return (result: any, options: any, theme: any, ctx: any) => renderMcpResult(name, result, options, theme, ctx);
     };
 
