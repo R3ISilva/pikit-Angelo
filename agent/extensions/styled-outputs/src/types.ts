@@ -6,6 +6,7 @@ export interface AssistantMessageUserConfig {
 export interface UserMessageUserConfig {
   prefix?: string;
   color?: string;
+  bodyColor?: string;
   isThemeBackgroundVisible?: boolean;
 }
 
@@ -48,6 +49,8 @@ export interface ToolBranchUserConfig {
   prefix?: string;
   color?: string;
 }
+
+export type TrimStrategy = "head" | "tail" | "head-tail";
 
 export interface ToolGeneralUserConfig {
   titleColor?: string;

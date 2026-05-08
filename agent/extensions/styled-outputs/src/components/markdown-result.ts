@@ -3,7 +3,8 @@ import type { Component, MarkdownTheme } from "@mariozechner/pi-tui";
 import type { Theme } from "@mariozechner/pi-coding-agent";
 import { CONFIG } from "../config.js";
 import { getVisibleWidth } from "../utils.js";
-import { formatExpandedLines, indentLine, type TrimStrategy } from "./tool-shared.js";
+import { formatExpandedLines, indentLine } from "./tool-shared.js";
+import type { TrimStrategy } from "../types.js";
 
 const INDENT_WIDTH = getVisibleWidth(CONFIG.tools.toolBranch.prefix) + 1;
 

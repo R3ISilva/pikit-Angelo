@@ -1,6 +1,7 @@
 import { Text } from "@mariozechner/pi-tui";
 import type { Theme } from "@mariozechner/pi-coding-agent";
 import { CONFIG } from "../config.js";
+import type { TrimStrategy } from "../types.js";
 import { applyColor, applyBgColor, toolPrefix, errorPrefix, getVisibleWidth, getExpandToggleKey } from "../utils.js";
 
 // --- Group-aware config resolution ---
@@ -11,11 +12,8 @@ export function groupProp<K extends GeneralConfigKey>(
   group: keyof typeof CONFIG.tools.groups,
   prop: K,
 ): (typeof CONFIG.tools.general)[K] {
-  const groupConfig = CONFIG.tools.groups[group] as Record<string, any> | undefined;
-  if (groupConfig && prop in groupConfig && groupConfig[prop] !== undefined) {
-    return groupConfig[prop] as (typeof CONFIG.tools.general)[K];
-  }
-  return CONFIG.tools.general[prop];
+  const val = (CONFIG.tools.groups[group] as any)?.[prop];
+  return val !== undefined ? val : CONFIG.tools.general[prop];
 }
 
 export function groupTitleColor(group: keyof typeof CONFIG.tools.groups): string {
@@ -111,8 +109,6 @@ export function doneLabel(theme: Theme, count?: { label: string; value: number }
 }
 
 // --- Expanded output trimming ---
-
-export type TrimStrategy = "head" | "tail" | "head-tail";
 
 export function formatExpandedLines(lines: string[], strategy: TrimStrategy, theme: Theme): string {
   const max = CONFIG.tools.general.maxExpandedLines;

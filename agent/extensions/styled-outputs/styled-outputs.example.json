@@ -7,6 +7,7 @@
   "userMessage": {
     "prefix": "❯",
     "color": "accent",
+    "bodyColor": "text",
     "isThemeBackgroundVisible": true
   },
   "thinkingMessage": {

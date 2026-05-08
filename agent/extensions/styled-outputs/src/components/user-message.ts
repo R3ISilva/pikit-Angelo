@@ -14,7 +14,7 @@ export function createUserMessage(text: string, markdownTheme: any): UserMessage
   const md = new Markdown(text, 0, 0, markdownTheme, {
     color: (t: string) => {
       if (!currentTheme) return t;
-      return applyColor(currentTheme, "userMessageText", t);
+      return applyColor(currentTheme, CONFIG.userMessage.bodyColor, t);
     },
   });
   let cachedWidth: number | undefined;

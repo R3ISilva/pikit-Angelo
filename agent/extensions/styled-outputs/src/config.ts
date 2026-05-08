@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import type { StyledOutputsUserConfig, ToolGeneralUserConfig } from "./types.js";
+import type { StyledOutputsUserConfig } from "./types.js";
 
 
 export const DEFAULT_CONFIG = {
@@ -15,6 +15,7 @@ export const DEFAULT_CONFIG = {
   USER_MESSAGE: {
     PREFIX: "❯",
     COLOR: "accent",
+    BODY_COLOR: "text",
     IS_THEME_BACKGROUND_VISIBLE: true,
   },
   
@@ -72,34 +73,10 @@ export const DEFAULT_CONFIG = {
       DIFF_CONTEXT_COLOR: "toolDiffContext",            // color for diff context lines
       MAX_DIFF_FILE_SIZE: "1MB",                        // skip diff for files exceeding this size
     },
-    GROUPS: {
-      BASE: {},                                       // base tools (read, bash, edit, write, ls, grep, find) — falls through to GENERAL
-      MCP: {},                                        // MCP server tools — falls through to GENERAL
-      WEB: {},                                        // web tools (web_search, fetch_content) — falls through to GENERAL
-      CUSTOM: {},                                     // custom user tools — falls through to GENERAL
-    },
   },
 };
 
 
-
-function mapGroupConfig(user?: ToolGeneralUserConfig, defaults: Record<string, any> = {}): ToolGeneralUserConfig {
-  return {
-    titleColor: user?.titleColor ?? defaults.TITLE_COLOR,
-    summaryColor: user?.summaryColor ?? defaults.SUMMARY_COLOR,
-    countColor: user?.countColor ?? defaults.COUNT_COLOR,
-    expandHintColor: user?.expandHintColor ?? defaults.EXPAND_HINT_COLOR,
-    outputColor: user?.outputColor ?? defaults.OUTPUT_COLOR,
-    maxExpandedLines: user?.maxExpandedLines ?? defaults.MAX_EXPANDED_LINES,
-    moreColor: user?.moreColor ?? defaults.MORE_COLOR,
-    moreBgColor: user?.moreBgColor ?? defaults.MORE_BG_COLOR,
-    isThemeBackgroundVisible: user?.isThemeBackgroundVisible ?? defaults.IS_THEME_BACKGROUND_VISIBLE,
-    diffAddedColor: user?.diffAddedColor ?? defaults.DIFF_ADDED_COLOR,
-    diffRemovedColor: user?.diffRemovedColor ?? defaults.DIFF_REMOVED_COLOR,
-    diffContextColor: user?.diffContextColor ?? defaults.DIFF_CONTEXT_COLOR,
-    maxDiffFileSize: user?.maxDiffFileSize ?? defaults.MAX_DIFF_FILE_SIZE,
-  };
-}
 
 const CONFIG_PATH = join(homedir(), ".pi", "agent", "configs", "styled-outputs.json");
 
@@ -130,6 +107,7 @@ export const CONFIG = {
   userMessage: {
     prefix: userConfig.userMessage?.prefix ?? DEFAULT_CONFIG.USER_MESSAGE.PREFIX,
     color: userConfig.userMessage?.color ?? DEFAULT_CONFIG.USER_MESSAGE.COLOR,
+    bodyColor: userConfig.userMessage?.bodyColor ?? DEFAULT_CONFIG.USER_MESSAGE.BODY_COLOR,
     isThemeBackgroundVisible: userConfig.userMessage?.isThemeBackgroundVisible ?? DEFAULT_CONFIG.USER_MESSAGE.IS_THEME_BACKGROUND_VISIBLE,
   },
   thinkingMessage: {
@@ -175,10 +153,10 @@ export const CONFIG = {
       maxDiffFileSize: userConfig.tools?.general?.maxDiffFileSize ?? DEFAULT_CONFIG.TOOLS.GENERAL.MAX_DIFF_FILE_SIZE,
     },
     groups: {
-      base: mapGroupConfig(userConfig.tools?.groups?.base, DEFAULT_CONFIG.TOOLS.GROUPS.BASE),
-      mcp: mapGroupConfig(userConfig.tools?.groups?.mcp, DEFAULT_CONFIG.TOOLS.GROUPS.MCP),
-      web: mapGroupConfig(userConfig.tools?.groups?.web, DEFAULT_CONFIG.TOOLS.GROUPS.WEB),
-      custom: mapGroupConfig(userConfig.tools?.groups?.custom, DEFAULT_CONFIG.TOOLS.GROUPS.CUSTOM),
+      base: userConfig.tools?.groups?.base ?? {},
+      mcp: userConfig.tools?.groups?.mcp ?? {},
+      web: userConfig.tools?.groups?.web ?? {},
+      custom: userConfig.tools?.groups?.custom ?? {},
     },
   },
 };

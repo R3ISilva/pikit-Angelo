@@ -1,11 +1,8 @@
 import type { Component } from "@mariozechner/pi-tui";
 import type { Theme } from "@mariozechner/pi-coding-agent";
 import { renderDiff, getMarkdownTheme } from "@mariozechner/pi-coding-agent";
-import { statSync, readFileSync } from "node:fs";
-import { resolve as resolvePath } from "node:path";
-import { homedir } from "node:os";
 import { CONFIG } from "../config.js";
-import { applyColor, shortenPath, parseFileSize } from "../utils.js";
+import { applyColor, shortenPath } from "../utils.js";
 import {
   makeText, toolHeader, branchLine, expandHint,
   outputLines, getFirstTextContent, errorLabel, renderPartial, doneLabel,
@@ -223,23 +220,6 @@ export function renderWriteCall(args: any, theme: Theme, ctx: any): Component {
   const path = shortenPath(args.path ?? "", ctx.cwd ?? process.cwd());
   const content = args.content ?? "";
   ctx.state.lineCount = content.split("\n").length;
-
-  // Size guard for future diff support: stash previous content only for small files
-  if (!ctx.isPartial) {
-    try {
-      const absPath = args.path?.startsWith("~/")
-        ? resolvePath(homedir(), args.path.slice(2))
-        : resolvePath(ctx.cwd ?? process.cwd(), args.path ?? "");
-      const stat = statSync(absPath, { throwIfNoEntry: false });
-      ctx.state.fileExistedBefore = stat !== undefined;
-      ctx.state.previousContent = (stat !== undefined && stat.size <= parseFileSize(CONFIG.tools.general.maxDiffFileSize))
-        ? readFileSync(absPath, "utf8")
-        : undefined;
-    } catch {
-      ctx.state.fileExistedBefore = false;
-      ctx.state.previousContent = undefined;
-    }
-  }
 
   const summary = applyColor(theme, CONFIG.tools.general.summaryColor, path);
   if (ctx.isPartial) {
