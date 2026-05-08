@@ -3,9 +3,10 @@ import type { Theme } from "@mariozechner/pi-coding-agent";
 import { CONFIG } from "../config.js";
 import { applyColor } from "../utils.js";
 import {
-  makeText, toolHeader, indentLine, expandHint,
+  makeText, toolHeader, expandHint,
   outputLines, getFirstTextContent, errorLabel, renderPartial, doneLabel,
   ensureSpinner, clearSpinner, spinnerDot, groupTitleColor,
+  formatExpandedLines,
 } from "./tool-shared.js";
 
 const WEB_TITLE_COLOR = groupTitleColor("web");
@@ -31,11 +32,8 @@ export function renderWebSearchResult(result: any, options: { expanded: boolean;
     if (!options.expanded) {
       return makeText(ctx.lastComponent, errorLabel(theme) + expandHint(theme));
     }
-    let display = errorLabel(theme);
-    for (const line of lines) {
-      display += "\n" + indentLine(applyColor(theme, CONFIG.tools.general.outputColor, line));
-    }
-    return makeText(ctx.lastComponent, display);
+    const styled = lines.map((l: string) => applyColor(theme, CONFIG.tools.general.outputColor, l));
+    return makeText(ctx.lastComponent, errorLabel(theme) + formatExpandedLines(styled, "tail", theme));
   }
 
   const count = lines.length > 0 ? { label: "lines", value: lines.length } : undefined;
@@ -44,11 +42,8 @@ export function renderWebSearchResult(result: any, options: { expanded: boolean;
     return makeText(ctx.lastComponent, doneLabel(theme, count) + (lines.length > 0 ? expandHint(theme) : ""));
   }
 
-  let display = doneLabel(theme, count);
-  for (const line of lines) {
-    display += "\n" + indentLine(applyColor(theme, CONFIG.tools.general.outputColor, line || " "));
-  }
-  return makeText(ctx.lastComponent, display);
+  const styled = lines.map((l: string) => applyColor(theme, CONFIG.tools.general.outputColor, l || " "));
+  return makeText(ctx.lastComponent, doneLabel(theme, count) + formatExpandedLines(styled, "head", theme));
 }
 
 // --- fetch_content tool ---
@@ -72,11 +67,8 @@ export function renderFetchContentResult(result: any, options: { expanded: boole
     if (!options.expanded) {
       return makeText(ctx.lastComponent, errorLabel(theme) + expandHint(theme));
     }
-    let display = errorLabel(theme);
-    for (const line of lines) {
-      display += "\n" + indentLine(applyColor(theme, CONFIG.tools.general.outputColor, line));
-    }
-    return makeText(ctx.lastComponent, display);
+    const styled = lines.map((l: string) => applyColor(theme, CONFIG.tools.general.outputColor, l));
+    return makeText(ctx.lastComponent, errorLabel(theme) + formatExpandedLines(styled, "tail", theme));
   }
 
   const count = lines.length > 0 ? { label: "lines", value: lines.length } : undefined;
@@ -85,11 +77,8 @@ export function renderFetchContentResult(result: any, options: { expanded: boole
     return makeText(ctx.lastComponent, doneLabel(theme, count) + (lines.length > 0 ? expandHint(theme) : ""));
   }
 
-  let display = doneLabel(theme, count);
-  for (const line of lines) {
-    display += "\n" + indentLine(applyColor(theme, CONFIG.tools.general.outputColor, line || " "));
-  }
-  return makeText(ctx.lastComponent, display);
+  const styled = lines.map((l: string) => applyColor(theme, CONFIG.tools.general.outputColor, l || " "));
+  return makeText(ctx.lastComponent, doneLabel(theme, count) + formatExpandedLines(styled, "head-tail", theme));
 }
 
 // --- get_search_content tool ---
@@ -113,11 +102,8 @@ export function renderGetSearchContentResult(result: any, options: { expanded: b
     if (!options.expanded) {
       return makeText(ctx.lastComponent, errorLabel(theme) + expandHint(theme));
     }
-    let display = errorLabel(theme);
-    for (const line of lines) {
-      display += "\n" + indentLine(applyColor(theme, CONFIG.tools.general.outputColor, line));
-    }
-    return makeText(ctx.lastComponent, display);
+    const styled = lines.map((l: string) => applyColor(theme, CONFIG.tools.general.outputColor, l));
+    return makeText(ctx.lastComponent, errorLabel(theme) + formatExpandedLines(styled, "tail", theme));
   }
 
   const count = lines.length > 0 ? { label: "lines", value: lines.length } : undefined;
@@ -126,9 +112,6 @@ export function renderGetSearchContentResult(result: any, options: { expanded: b
     return makeText(ctx.lastComponent, doneLabel(theme, count) + (lines.length > 0 ? expandHint(theme) : ""));
   }
 
-  let display = doneLabel(theme, count);
-  for (const line of lines) {
-    display += "\n" + indentLine(applyColor(theme, CONFIG.tools.general.outputColor, line || " "));
-  }
-  return makeText(ctx.lastComponent, display);
+  const styled = lines.map((l: string) => applyColor(theme, CONFIG.tools.general.outputColor, l || " "));
+  return makeText(ctx.lastComponent, doneLabel(theme, count) + formatExpandedLines(styled, "head-tail", theme));
 }

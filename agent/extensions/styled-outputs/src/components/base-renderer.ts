@@ -3,9 +3,10 @@ import type { Theme } from "@mariozechner/pi-coding-agent";
 import { CONFIG } from "../config.js";
 import { applyColor, shortenPath } from "../utils.js";
 import {
-  makeText, toolHeader, branchLine, indentLine, expandHint,
+  makeText, toolHeader, branchLine, expandHint,
   outputLines, getFirstTextContent, errorLabel, renderPartial, doneLabel,
   ensureSpinner, clearSpinner, spinnerDot, groupTitleColor,
+  formatExpandedLines,
 } from "./tool-shared.js";
 
 const BASE_TITLE_COLOR = groupTitleColor("base");
@@ -31,11 +32,8 @@ export function renderReadResult(result: any, options: { expanded: boolean; isPa
     if (!options.expanded) {
       return makeText(ctx.lastComponent, errorLabel(theme) + expandHint(theme));
     }
-    let display = errorLabel(theme);
-    for (const line of lines) {
-      display += "\n" + indentLine(applyColor(theme, CONFIG.tools.general.outputColor, line));
-    }
-    return makeText(ctx.lastComponent, display);
+    const styled = lines.map((l: string) => applyColor(theme, CONFIG.tools.general.outputColor, l));
+    return makeText(ctx.lastComponent, errorLabel(theme) + formatExpandedLines(styled, "tail", theme));
   }
 
   const nonEmptyLines = outputLines(text).filter((l: string) => l.trim().length > 0);
@@ -45,11 +43,8 @@ export function renderReadResult(result: any, options: { expanded: boolean; isPa
     return makeText(ctx.lastComponent, doneLabel(theme, count) + (nonEmptyLines.length > 0 ? expandHint(theme) : ""));
   }
 
-  let display = doneLabel(theme, count);
-  for (const line of nonEmptyLines) {
-    display += "\n" + indentLine(applyColor(theme, CONFIG.tools.general.outputColor, line || " "));
-  }
-  return makeText(ctx.lastComponent, display);
+  const styled = nonEmptyLines.map((l: string) => applyColor(theme, CONFIG.tools.general.outputColor, l));
+  return makeText(ctx.lastComponent, doneLabel(theme, count) + formatExpandedLines(styled, "head-tail", theme));
 }
 
 // --- Grep tool ---
@@ -75,11 +70,8 @@ export function renderGrepResult(result: any, options: { expanded: boolean; isPa
     if (!options.expanded) {
       return makeText(ctx.lastComponent, errorLabel(theme) + expandHint(theme));
     }
-    let display = errorLabel(theme);
-    for (const line of lines) {
-      display += "\n" + indentLine(applyColor(theme, CONFIG.tools.general.outputColor, line));
-    }
-    return makeText(ctx.lastComponent, display);
+    const styled = lines.map((l: string) => applyColor(theme, CONFIG.tools.general.outputColor, l));
+    return makeText(ctx.lastComponent, errorLabel(theme) + formatExpandedLines(styled, "tail", theme));
   }
 
   const count = lines.length > 0 ? { label: "matches", value: lines.length } : undefined;
@@ -88,11 +80,8 @@ export function renderGrepResult(result: any, options: { expanded: boolean; isPa
     return makeText(ctx.lastComponent, doneLabel(theme, count) + (lines.length > 0 ? expandHint(theme) : ""));
   }
 
-  let display = doneLabel(theme, count);
-  for (const line of lines) {
-    display += "\n" + indentLine(applyColor(theme, CONFIG.tools.general.outputColor, line));
-  }
-  return makeText(ctx.lastComponent, display);
+  const styled = lines.map((l: string) => applyColor(theme, CONFIG.tools.general.outputColor, l));
+  return makeText(ctx.lastComponent, doneLabel(theme, count) + formatExpandedLines(styled, "head", theme));
 }
 
 // --- Find tool ---
@@ -117,11 +106,8 @@ export function renderFindResult(result: any, options: { expanded: boolean; isPa
     if (!options.expanded) {
       return makeText(ctx.lastComponent, errorLabel(theme) + expandHint(theme));
     }
-    let display = errorLabel(theme);
-    for (const line of items) {
-      display += "\n" + indentLine(applyColor(theme, CONFIG.tools.general.outputColor, line));
-    }
-    return makeText(ctx.lastComponent, display);
+    const styled = items.map((l: string) => applyColor(theme, CONFIG.tools.general.outputColor, l));
+    return makeText(ctx.lastComponent, errorLabel(theme) + formatExpandedLines(styled, "tail", theme));
   }
 
   const count = items.length > 0 ? { label: "files", value: items.length } : undefined;
@@ -130,15 +116,13 @@ export function renderFindResult(result: any, options: { expanded: boolean; isPa
     return makeText(ctx.lastComponent, doneLabel(theme, count) + (items.length > 0 ? expandHint(theme) : ""));
   }
 
-  let display = doneLabel(theme, count);
-  for (const item of items) {
+  const styled = items.map((item: string) => {
     const isDir = item.endsWith("/");
-    const styled = isDir
+    return isDir
       ? applyColor(theme, "accent", theme.bold(item))
       : applyColor(theme, CONFIG.tools.general.outputColor, item);
-    display += "\n" + indentLine(styled);
-  }
-  return makeText(ctx.lastComponent, display);
+  });
+  return makeText(ctx.lastComponent, doneLabel(theme, count) + formatExpandedLines(styled, "head", theme));
 }
 
 // --- Bash tool ---
@@ -167,15 +151,12 @@ export function renderBashResult(result: any, options: { expanded: boolean; isPa
     const statusText = exitCode !== null
       ? `Exit ${exitCode}`
       : isAborted ? "Aborted" : "Failed";
-    let display = branchLine(applyColor(theme, CONFIG.tools.toolError.labelColor, statusText), theme);
-    if (options.expanded) {
-      for (const line of nonEmptyLines) {
-        display += "\n" + indentLine(applyColor(theme, CONFIG.tools.general.outputColor, line));
-      }
-    } else {
-      display += expandHint(theme);
+    const display = branchLine(applyColor(theme, CONFIG.tools.toolError.labelColor, statusText), theme);
+    if (!options.expanded) {
+      return makeText(ctx.lastComponent, display + expandHint(theme));
     }
-    return makeText(ctx.lastComponent, display);
+    const styled = nonEmptyLines.map((l: string) => applyColor(theme, CONFIG.tools.general.outputColor, l));
+    return makeText(ctx.lastComponent, display + formatExpandedLines(styled, "tail", theme));
   }
 
   const count = nonEmptyLines.length > 0 ? { label: "lines", value: nonEmptyLines.length } : undefined;
@@ -184,11 +165,8 @@ export function renderBashResult(result: any, options: { expanded: boolean; isPa
     return makeText(ctx.lastComponent, doneLabel(theme, count) + (nonEmptyLines.length > 0 ? expandHint(theme) : ""));
   }
 
-  let display = doneLabel(theme, count);
-  for (const line of nonEmptyLines) {
-    display += "\n" + indentLine(applyColor(theme, CONFIG.tools.general.outputColor, line));
-  }
-  return makeText(ctx.lastComponent, display);
+  const styled = nonEmptyLines.map((l: string) => applyColor(theme, CONFIG.tools.general.outputColor, l));
+  return makeText(ctx.lastComponent, doneLabel(theme, count) + formatExpandedLines(styled, "tail", theme));
 }
 
 // --- Edit tool ---
@@ -213,11 +191,8 @@ export function renderEditResult(result: any, options: { expanded: boolean; isPa
     if (!options.expanded) {
       return makeText(ctx.lastComponent, errorLabel(theme) + expandHint(theme));
     }
-    let display = errorLabel(theme);
-    for (const line of lines) {
-      display += "\n" + indentLine(applyColor(theme, CONFIG.tools.general.outputColor, line));
-    }
-    return makeText(ctx.lastComponent, display);
+    const styled = lines.map((l: string) => applyColor(theme, CONFIG.tools.general.outputColor, l));
+    return makeText(ctx.lastComponent, errorLabel(theme) + formatExpandedLines(styled, "tail", theme));
   }
 
   const editCount = (ctx.state.editCount as number | undefined) ?? 0;
@@ -247,11 +222,8 @@ export function renderWriteResult(result: any, options: { expanded: boolean; isP
     if (!options.expanded) {
       return makeText(ctx.lastComponent, errorLabel(theme) + expandHint(theme));
     }
-    let display = errorLabel(theme);
-    for (const line of lines) {
-      display += "\n" + indentLine(applyColor(theme, CONFIG.tools.general.outputColor, line));
-    }
-    return makeText(ctx.lastComponent, display);
+    const styled = lines.map((l: string) => applyColor(theme, CONFIG.tools.general.outputColor, l));
+    return makeText(ctx.lastComponent, errorLabel(theme) + formatExpandedLines(styled, "tail", theme));
   }
 
   const lineCount = (ctx.state.lineCount as number | undefined) ?? 0;
@@ -280,11 +252,8 @@ export function renderLsResult(result: any, options: { expanded: boolean; isPart
     if (!options.expanded) {
       return makeText(ctx.lastComponent, errorLabel(theme) + expandHint(theme));
     }
-    let display = errorLabel(theme);
-    for (const line of items) {
-      display += "\n" + indentLine(applyColor(theme, CONFIG.tools.general.outputColor, line));
-    }
-    return makeText(ctx.lastComponent, display);
+    const styled = items.map((l: string) => applyColor(theme, CONFIG.tools.general.outputColor, l));
+    return makeText(ctx.lastComponent, errorLabel(theme) + formatExpandedLines(styled, "tail", theme));
   }
 
   const count = items.length > 0 ? { label: "entries", value: items.length } : undefined;
@@ -293,13 +262,11 @@ export function renderLsResult(result: any, options: { expanded: boolean; isPart
     return makeText(ctx.lastComponent, doneLabel(theme, count) + (items.length > 0 ? expandHint(theme) : ""));
   }
 
-  let display = doneLabel(theme, count);
-  for (const item of items) {
+  const styled = items.map((item: string) => {
     const isDir = item.endsWith("/");
-    const styled = isDir
+    return isDir
       ? applyColor(theme, "accent", theme.bold(item))
       : applyColor(theme, CONFIG.tools.general.outputColor, item);
-    display += "\n" + indentLine(styled);
-  }
-  return makeText(ctx.lastComponent, display);
+  });
+  return makeText(ctx.lastComponent, doneLabel(theme, count) + formatExpandedLines(styled, "head", theme));
 }

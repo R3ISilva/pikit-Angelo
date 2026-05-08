@@ -3,9 +3,10 @@ import type { Theme } from "@mariozechner/pi-coding-agent";
 import { CONFIG } from "../config.js";
 import { applyColor } from "../utils.js";
 import {
-  makeText, toolHeader, indentLine, expandHint,
+  makeText, toolHeader, expandHint,
   outputLines, getFirstTextContent, errorLabel, renderPartial, doneLabel,
   ensureSpinner, clearSpinner, spinnerDot, groupTitleColor,
+  formatExpandedLines,
 } from "./tool-shared.js";
 
 const MCP_TITLE_COLOR = groupTitleColor("mcp");
@@ -43,11 +44,8 @@ export function renderMcpResult(toolName: string, result: any, options: { expand
     if (!options.expanded) {
       return makeText(ctx.lastComponent, errorLabel(theme) + expandHint(theme));
     }
-    let display = errorLabel(theme);
-    for (const line of lines) {
-      display += "\n" + indentLine(applyColor(theme, CONFIG.tools.general.outputColor, line));
-    }
-    return makeText(ctx.lastComponent, display);
+    const styled = lines.map((l: string) => applyColor(theme, CONFIG.tools.general.outputColor, l));
+    return makeText(ctx.lastComponent, errorLabel(theme) + formatExpandedLines(styled, "tail", theme));
   }
 
   const count = lines.length > 0 ? { label: "lines", value: lines.length } : undefined;
@@ -56,9 +54,6 @@ export function renderMcpResult(toolName: string, result: any, options: { expand
     return makeText(ctx.lastComponent, doneLabel(theme, count) + (lines.length > 0 ? expandHint(theme) : ""));
   }
 
-  let display = doneLabel(theme, count);
-  for (const line of lines) {
-    display += "\n" + indentLine(applyColor(theme, CONFIG.tools.general.outputColor, line || " "));
-  }
-  return makeText(ctx.lastComponent, display);
+  const styled = lines.map((l: string) => applyColor(theme, CONFIG.tools.general.outputColor, l || " "));
+  return makeText(ctx.lastComponent, doneLabel(theme, count) + formatExpandedLines(styled, "tail", theme));
 }

@@ -109,3 +109,38 @@ export function doneLabel(theme: Theme, count?: { label: string; value: number }
     : done;
   return branchLine(text, theme);
 }
+
+// --- Expanded output trimming ---
+
+export type TrimStrategy = "head" | "tail" | "head-tail";
+
+export function formatExpandedLines(lines: string[], strategy: TrimStrategy, theme: Theme): string {
+  const max = CONFIG.tools.general.maxExpandedLines;
+
+  if (max < 1 || lines.length <= max) {
+    return lines.map(l => "\n" + indentLine(l)).join("");
+  }
+
+  const more = (count: number, label: string) =>
+    indentLine(applyColor(theme, CONFIG.tools.general.moreColor, `─── ${count} ${label} ───`));
+  const half = Math.floor(max / 2);
+
+  switch (strategy) {
+    case "head":
+      return lines.slice(0, max).map(l => "\n" + indentLine(l)).join("")
+        + "\n" + more(lines.length - max, "more lines");
+
+    case "tail": {
+      const hidden = lines.length - max;
+      return "\n" + more(hidden, "lines above")
+        + lines.slice(-max).map(l => "\n" + indentLine(l)).join("");
+    }
+
+    case "head-tail": {
+      const hidden = lines.length - max;
+      return lines.slice(0, half).map(l => "\n" + indentLine(l)).join("")
+        + "\n" + more(hidden, "more lines")
+        + lines.slice(-half).map(l => "\n" + indentLine(l)).join("");
+    }
+  }
+}

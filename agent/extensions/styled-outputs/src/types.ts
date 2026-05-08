@@ -56,6 +56,8 @@ export interface ToolGeneralUserConfig {
   expandHintColor?: string;
   outputColor?: string;
   isThemeBackgroundVisible?: boolean;
+  maxExpandedLines?: number;
+  moreColor?: string;
 }
 
 export interface ToolGroupsUserConfig {
