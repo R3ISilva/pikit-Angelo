@@ -1,6 +1,6 @@
 import type { Component } from "@mariozechner/pi-tui";
 import type { Theme } from "@mariozechner/pi-coding-agent";
-import { renderDiff } from "@mariozechner/pi-coding-agent";
+import { renderDiff, getMarkdownTheme } from "@mariozechner/pi-coding-agent";
 import { statSync, readFileSync } from "node:fs";
 import { resolve as resolvePath } from "node:path";
 import { homedir } from "node:os";
@@ -12,6 +12,7 @@ import {
   ensureSpinner, clearSpinner, spinnerDot, groupTitleColor,
   formatExpandedLines,
 } from "./tool-shared.js";
+import { createMarkdownResult } from "./markdown-result.js";
 
 const MAX_DIFF_FILE_SIZE = 1_048_576; // 1MB — skip diff for files exceeding this size
 
@@ -47,6 +48,12 @@ export function renderReadResult(result: any, options: { expanded: boolean; isPa
 
   if (!options.expanded) {
     return makeText(ctx.lastComponent, doneLabel(theme, count) + (nonEmptyLines.length > 0 ? expandHint(theme) : ""));
+  }
+
+  // Use MarkdownResult for .md files
+  const filePath = ctx.args?.file_path ?? ctx.args?.path ?? "";
+  if (filePath.endsWith(".md")) {
+    return createMarkdownResult(doneLabel(theme, count), text, getMarkdownTheme(), "head-tail", theme, true);
   }
 
   const styled = nonEmptyLines.map((l: string) => applyColor(theme, CONFIG.tools.general.outputColor, l));

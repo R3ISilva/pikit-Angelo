@@ -25,7 +25,7 @@ export function groupTitleColor(group: keyof typeof CONFIG.tools.groups): string
 // --- Text component helper ---
 
 export function makeText(lastComponent: Text | undefined, text: string): Text {
-  const comp = lastComponent ?? new Text("", 0, 0);
+  const comp = (lastComponent instanceof Text) ? lastComponent : new Text("", 0, 0);
   comp.setText(text);
   return comp;
 }

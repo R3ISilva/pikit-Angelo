@@ -1,5 +1,6 @@
 import type { Component } from "@mariozechner/pi-tui";
 import type { Theme } from "@mariozechner/pi-coding-agent";
+import { getMarkdownTheme } from "@mariozechner/pi-coding-agent";
 import { CONFIG } from "../config.js";
 import { applyColor } from "../utils.js";
 import {
@@ -8,6 +9,7 @@ import {
   ensureSpinner, clearSpinner, spinnerDot, groupTitleColor,
   formatExpandedLines,
 } from "./tool-shared.js";
+import { createMarkdownResult } from "./markdown-result.js";
 
 const WEB_TITLE_COLOR = groupTitleColor("web");
 
@@ -42,8 +44,7 @@ export function renderWebSearchResult(result: any, options: { expanded: boolean;
     return makeText(ctx.lastComponent, doneLabel(theme, count) + (lines.length > 0 ? expandHint(theme) : ""));
   }
 
-  const styled = lines.map((l: string) => applyColor(theme, CONFIG.tools.general.outputColor, l || " "));
-  return makeText(ctx.lastComponent, doneLabel(theme, count) + formatExpandedLines(styled, "head", theme));
+  return createMarkdownResult(doneLabel(theme, count), text, getMarkdownTheme(), "head", theme);
 }
 
 // --- fetch_content tool ---
@@ -77,8 +78,7 @@ export function renderFetchContentResult(result: any, options: { expanded: boole
     return makeText(ctx.lastComponent, doneLabel(theme, count) + (lines.length > 0 ? expandHint(theme) : ""));
   }
 
-  const styled = lines.map((l: string) => applyColor(theme, CONFIG.tools.general.outputColor, l || " "));
-  return makeText(ctx.lastComponent, doneLabel(theme, count) + formatExpandedLines(styled, "head-tail", theme));
+  return createMarkdownResult(doneLabel(theme, count), text, getMarkdownTheme(), "head-tail", theme);
 }
 
 // --- get_search_content tool ---
@@ -112,6 +112,5 @@ export function renderGetSearchContentResult(result: any, options: { expanded: b
     return makeText(ctx.lastComponent, doneLabel(theme, count) + (lines.length > 0 ? expandHint(theme) : ""));
   }
 
-  const styled = lines.map((l: string) => applyColor(theme, CONFIG.tools.general.outputColor, l || " "));
-  return makeText(ctx.lastComponent, doneLabel(theme, count) + formatExpandedLines(styled, "head-tail", theme));
+  return createMarkdownResult(doneLabel(theme, count), text, getMarkdownTheme(), "head-tail", theme);
 }
