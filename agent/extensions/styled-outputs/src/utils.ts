@@ -33,6 +33,15 @@ function hexToAnsi(hex: string): string {
   return `\x1b[38;2;${r};${g};${b}m`;
 }
 
+function hexToBgAnsi(hex: string): string {
+  const h = hex.replace("#", "");
+  if (!/^[0-9a-fA-F]{6}$/.test(h)) return "";
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  return `\x1b[48;2;${r};${g};${b}m`;
+}
+
 export function isHexColor(color: string): boolean {
   return typeof color === "string" && color.startsWith("#");
 }
@@ -47,6 +56,31 @@ export function applyColor(theme: Theme, color: string, text: string): string {
     return theme.fg(color as ThemeColor, text);
   } catch {
     return text;
+  }
+}
+
+export function applyBgColor(theme: Theme, color: string | undefined, text: string): string {
+  if (!color) return text;
+  if (isHexColor(color)) {
+    const ansi = hexToBgAnsi(color);
+    if (!ansi) return text;
+    return `${ansi}${text}\x1b[49m`;
+  }
+  try {
+    const fgAnsi = theme.getFgAnsi(color as ThemeColor);
+    // Convert fg escape (38) to bg escape (48)
+    // truecolor: \x1b[38;2;R;G;Bm → \x1b[48;2;R;G;Bm
+    // 256color: \x1b[38;5;Nm → \x1b[48;5;Nm
+    const bgAnsi = fgAnsi.replace(/\x1b\[38;/, "\x1b[48;");
+    if (!bgAnsi || bgAnsi === fgAnsi) return text;
+    return `${bgAnsi}${text}\x1b[49m`;
+  } catch {
+    // Also try ThemeBg keys directly
+    try {
+      return theme.bg(color as any, text);
+    } catch {
+      return text;
+    }
   }
 }
 

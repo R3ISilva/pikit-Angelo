@@ -50,8 +50,9 @@
       "countColor": "muted",
       "expandHintColor": "dim",
       "outputColor": "dim",
-      "maxExpandedLines": 40,
+      "maxExpandedLines": 20,
       "moreColor": "muted",
+      "moreBgColor": "separator",
       "isThemeBackgroundVisible": false
     },
     "groups": {

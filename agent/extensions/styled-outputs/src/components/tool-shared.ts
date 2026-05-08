@@ -1,7 +1,7 @@
 import { Text } from "@mariozechner/pi-tui";
 import type { Theme } from "@mariozechner/pi-coding-agent";
 import { CONFIG } from "../config.js";
-import { applyColor, toolPrefix, errorPrefix, getVisibleWidth, getExpandToggleKey } from "../utils.js";
+import { applyColor, applyBgColor, toolPrefix, errorPrefix, getVisibleWidth, getExpandToggleKey } from "../utils.js";
 
 // --- Group-aware config resolution ---
 
@@ -121,8 +121,11 @@ export function formatExpandedLines(lines: string[], strategy: TrimStrategy, the
     return lines.map(l => "\n" + indentLine(l)).join("");
   }
 
-  const more = (count: number, label: string) =>
-    indentLine(applyColor(theme, CONFIG.tools.general.moreColor, `─── ${count} ${label} ───`));
+  const more = (count: number, label: string) => {
+    const text = applyColor(theme, CONFIG.tools.general.moreColor, `─── ${count} ${label} ───`);
+    const withBg = applyBgColor(theme, CONFIG.tools.general.moreBgColor || undefined, text);
+    return indentLine(withBg);
+  };
   const half = Math.floor(max / 2);
 
   switch (strategy) {

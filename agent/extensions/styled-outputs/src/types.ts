@@ -58,6 +58,7 @@ export interface ToolGeneralUserConfig {
   isThemeBackgroundVisible?: boolean;
   maxExpandedLines?: number;
   moreColor?: string;
+  moreBgColor?: string;
 }
 
 export interface ToolGroupsUserConfig {

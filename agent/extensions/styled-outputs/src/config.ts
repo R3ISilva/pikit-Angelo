@@ -62,8 +62,9 @@ export const DEFAULT_CONFIG = {
       COUNT_COLOR: "muted",                           // color for tool counts (e.g., "Tool 1 of 3")
       EXPAND_HINT_COLOR: "dim",                       // color for hints about expanding tool outputs
       OUTPUT_COLOR: "dim",                            // color for tool outputs
-      MAX_EXPANDED_LINES: 40,                         // max lines shown when a tool result is expanded
+      MAX_EXPANDED_LINES: 20,                         // max lines shown when a tool result is expanded
       MORE_COLOR: "muted",                            // color for the separator text
+      MORE_BG_COLOR: "separator",                              // background color for the separator line (empty = no bg)
       IS_THEME_BACKGROUND_VISIBLE: false,             // whether to apply theme background color to tool outputs
     },
     GROUPS: {
@@ -86,6 +87,7 @@ function mapGroupConfig(user?: ToolGeneralUserConfig, defaults: Record<string, a
     outputColor: user?.outputColor ?? defaults.OUTPUT_COLOR,
     maxExpandedLines: user?.maxExpandedLines ?? defaults.MAX_EXPANDED_LINES,
     moreColor: user?.moreColor ?? defaults.MORE_COLOR,
+    moreBgColor: user?.moreBgColor ?? defaults.MORE_BG_COLOR,
     isThemeBackgroundVisible: user?.isThemeBackgroundVisible ?? defaults.IS_THEME_BACKGROUND_VISIBLE,
   };
 }
@@ -156,6 +158,7 @@ export const CONFIG = {
       outputColor: userConfig.tools?.general?.outputColor ?? DEFAULT_CONFIG.TOOLS.GENERAL.OUTPUT_COLOR,
       maxExpandedLines: userConfig.tools?.general?.maxExpandedLines ?? DEFAULT_CONFIG.TOOLS.GENERAL.MAX_EXPANDED_LINES,
       moreColor: userConfig.tools?.general?.moreColor ?? DEFAULT_CONFIG.TOOLS.GENERAL.MORE_COLOR,
+      moreBgColor: userConfig.tools?.general?.moreBgColor ?? DEFAULT_CONFIG.TOOLS.GENERAL.MORE_BG_COLOR,
       isThemeBackgroundVisible: userConfig.tools?.general?.isThemeBackgroundVisible ?? DEFAULT_CONFIG.TOOLS.GENERAL.IS_THEME_BACKGROUND_VISIBLE,
     },
     groups: {
