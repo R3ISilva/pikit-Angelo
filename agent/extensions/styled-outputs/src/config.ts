@@ -55,9 +55,7 @@ export const DEFAULT_CONFIG = {
     },
     GROUPS: {
       BASE: {},                                      // base tools (read, bash, edit, write, ls, grep, find) — falls through to GENERAL
-      MCP: {
-        TITLE_COLOR: "mcpToolTitle",                 // color for MCP tool titles (e.g., mcp_call, mcp_tool_response, etc.)
-      },                                             // MCP server tools — falls through to GENERAL
+      MCP: {},                                       // MCP server tools — falls through to GENERAL
       WEB: {},                                       // web tools (web_search, fetch_content) — falls through to GENERAL
       CUSTOM: {},                                    // custom user tools — falls through to GENERAL
     },
