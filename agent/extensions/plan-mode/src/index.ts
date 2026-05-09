@@ -347,7 +347,7 @@ export default function planMode(pi: ExtensionAPI) {
       const input = new Input();
       input.onSubmit = (value) => done(value);
 
-      const border = new DynamicBorder((s: string) => theme.fg("border", s));
+      const border = new DynamicBorder((s: string) => theme.fg("accent", s));
       const label = new Text(theme.fg("accent", "Plan name ") + theme.fg("dim", "(optional, leave empty for timestamp)"), 1, 0);
       const indent = 1;
 
