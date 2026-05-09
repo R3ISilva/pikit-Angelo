@@ -72,7 +72,12 @@ Plan:
 ...
 \`\`\`
 
-Each step must be a short 2-4 word verb-object phrase, like a git commit subject — e.g. "Create skills directory", "Write frontmatter", "Validate integration". No markdown formatting, no details, no colons or dashes. After listing all steps, stop and wait for the user to choose:
+Each step must be a short verb-object phrase — specific enough to act on without this conversation's context, but concise (aim for 4-8 words). Write each step as if the executor has no memory of this conversation: include enough context that it can be carried out with only the plan file and the codebase. Assume the executor will read the relevant files fresh — do not rely on findings you discovered during planning.
+
+Good: "Add auth middleware to routes/index.ts"
+Bad: "Add it to the file we looked at"
+
+After listing all steps, stop and wait for the user to choose:
 - "Execute plan" — switches to execute mode where you carry out each step
 - "Refine" — revise the plan based on feedback
 - Continue exploring if you need more information before planning
@@ -83,12 +88,17 @@ Do NOT attempt to make any file changes, run destructive commands, or modify any
 export function buildExecutePrompt(incompleteSteps: Array<{ step: number; text: string }>): string {
   const steps = incompleteSteps.map((s) => `${s.step}. ${s.text}`).join("\n");
   return `\
-You are in EXECUTE MODE. Execute the remaining plan steps. Mark each completed step with [DONE:n] when finished.
+You are in EXECUTE MODE. You MUST follow this strict sequence for EACH step:
+1. Do the work for step N
+2. Call step_done({ step: N }) immediately after completing that step
+3. Only then proceed to step N+1
+
+Do NOT batch multiple steps' work and then call step_done for all of them. Do NOT call step_done for a step you already marked complete.
 
 Remaining steps:
 ${steps}
 
-After completing a step, mark it: [DONE:n] on its own line. Do not add any other text on that line.
+After completing each step, call step_done with { step: <step_number> }.
 When all steps are complete, report "All steps complete." and you will exit execute mode.`;
 }
 
@@ -101,7 +111,7 @@ You are in PLAN MODE (refining). The user wants to revise the current plan based
 Current plan:
 ${steps}
 
-Each step must be a short 2-4 word verb-object phrase, like a git commit subject — e.g. "Create skills directory", "Write frontmatter". No markdown, no details.
+Each step must be a short verb-object phrase — specific enough to act on without this conversation's context, but concise (aim for 4-8 words). Write as if the executor has no memory of this conversation: include enough context to carry out the step with only the plan file and the codebase.
 
 Revise the plan and output the full updated plan under a "Plan:" header:
 

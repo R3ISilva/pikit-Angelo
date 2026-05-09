@@ -23,6 +23,7 @@
       "./src/index.ts"
     ]
   },
+  "dependencies": {},
   "author": "Adrian Apan",
   "license": "MIT"
 }

@@ -1,4 +1,4 @@
-/** Plan Mode — toggle via /plan or Ctrl+Alt+P. PLAN: read-only. EXECUTE: tools restored + [DONE:n] tracking. Plan files stored in .pi/plans/. */
+/** Plan Mode — toggle via /plan or Ctrl+Alt+P. PLAN: read-only. EXECUTE: tools restored + step_done tracking. Plan files stored in .pi/plans/. */
 
 import type {
   ExtensionAPI,
@@ -7,16 +7,15 @@ import type {
   BeforeAgentStartEventResult,
   ToolCallEvent,
   ToolCallEventResult,
+  ToolResultEvent,
   AgentEndEvent,
-  TurnEndEvent,
-  MessageEndEvent,
 } from "@mariozechner/pi-coding-agent";
 import { DynamicBorder } from "@mariozechner/pi-coding-agent";
+
 import { PLAN_MODE_TOOLS, PLAN_MODE_PROMPT, PLAN_FILE_PREFIX, PLAN_DIR, buildExecutePrompt, buildRefinePrompt } from "./config.js";
 import {
   isSafeCommand,
   extractPlanSteps,
-  markCompletedSteps,
   ensurePlanDir,
   parsePlanFile,
   serializePlanFile,
@@ -24,7 +23,6 @@ import {
   titleFromFilename,
   listPlanFiles,
   sanitizePlanName,
-  stripDoneMarkers,
   stripMarkdownFormatting,
   renderMarkdownStep,
 } from "./utils.js";
@@ -162,14 +160,6 @@ export default function planMode(pi: ExtensionAPI) {
 
     if (getMode() === "plan") {
       saveAndSetActiveTools(PLAN_MODE_TOOLS);
-    } else if (getMode() === "execute") {
-      // Re-scan messages for [DONE:n] markers to rebuild completion state
-      for (const entry of branch) {
-        if (entry.type === "message") {
-          const text = extractTextFromMessage(entry.message as Record<string, unknown>);
-          if (text) markCompletedSteps(text, todosCache);
-        }
-      }
     }
 
     updateStatus(ctx);
@@ -225,56 +215,48 @@ export default function planMode(pi: ExtensionAPI) {
     };
   });
 
-  // ─── Event: message_end (strip [DONE:n] from assistant messages before display) ──
+  // ─── Tool: step_done ────────────────────────────────────────────────────────
 
-  pi.on("message_end", (event: MessageEndEvent): { message: Record<string, unknown> } | void => {
-    if (getMode() !== "execute") return;
-    if (event.message.role !== "assistant") return;
-
-    const text = extractTextFromMessage(event.message as Record<string, unknown>);
-    if (!text || !/\[done:\d+\]/i.test(text)) return;
-
-    // Track completed steps before stripping
-    markCompletedSteps(text, todosCache);
-
-    // Return stripped message so [DONE:n] never appears in chat
-    const content = event.message.content;
-    if (typeof content === "string") {
-      return { message: { ...event.message, content: stripDoneMarkers(content) } };
-    } else if (Array.isArray(content)) {
-      const newContent = content.map((block: { type: string; text?: string }) => {
-        if (block.type === "text" && typeof block.text === "string") {
-          return { ...block, text: stripDoneMarkers(block.text) };
-        }
-        return block;
-      });
-      return { message: { ...event.message, content: newContent } };
-    }
-    return;
+  pi.registerTool({
+    name: "step_done",
+    label: "Step Done",
+    description: "Mark a plan step as complete. Call this with the step number after finishing a step.",
+    parameters: {
+      type: "object",
+      properties: {
+        step: { type: "number", description: "The step number that was completed" },
+      },
+      required: ["step"],
+    },
+    async execute(_toolCallId, params) {
+      const allDone = todosCache.length > 0 && todosCache.every((t) => t.completed);
+      if (allDone) {
+        return { content: [{ type: "text", text: "All plan steps are already complete. No further step_done calls needed." }] };
+      }
+      const alreadyDone = todosCache.find((t) => t.step === params.step);
+      if (alreadyDone?.completed) {
+        return { content: [{ type: "text", text: `Step ${params.step} is already marked complete. Do not call step_done for this step again. Move on to the next incomplete step.` }] };
+      }
+      return { content: [{ type: "text", text: JSON.stringify({ status: "ok", step: params.step }) }], details: { step: params.step } };
+    },
   });
 
-  // ─── Event: turn_end (write completed steps to file + update UI) ────────────
+  // ─── Event: tool_result (process step_done results) ────────────────────────
 
-  pi.on("turn_end", async (event, ctx) => {
+  pi.on("tool_result", (event: ToolResultEvent, ctx: ExtensionContext): void => {
+    if (event.toolName !== "step_done") return;
     if (getMode() !== "execute") return;
 
-    const previouslyCompleted = new Set(todosCache.filter((t) => t.completed).map((t) => t.step));
+    const step = event.input?.step;
+    if (typeof step !== "number") return;
 
-    // Fallback: scan text in case message_end didn't catch markers
-    const text = extractTextFromMessage(event.message);
-    if (text) markCompletedSteps(text, todosCache);
+    const item = todosCache.find((t) => t.step === step);
+    if (!item || item.completed) return;
 
-    const newlyDone = todosCache.filter((t) => t.completed && !previouslyCompleted.has(t.step));
-
-    if (newlyDone.length > 0) {
-      const filePath = getPlanFilePath();
-      if (filePath) {
-        for (const item of newlyDone) {
-          markStepInFile(filePath, item.step);
-        }
-      }
-      updateStatus(ctx);
-    }
+    item.completed = true;
+    const filePath = getPlanFilePath();
+    if (filePath) markStepInFile(filePath, step);
+    updateStatus(ctx);
 
     // Check if all done
     if (todosCache.length > 0 && todosCache.every((t) => t.completed)) {
@@ -321,7 +303,7 @@ export default function planMode(pi: ExtensionAPI) {
     updateStatus(ctx);
 
     const choice = await ctx.ui.select(
-      "Plan extracted. What next?",
+      "Plan is ready. How'd you like to proceed?",
       ["Execute plan", "Refine"],
     );
 
@@ -334,6 +316,8 @@ export default function planMode(pi: ExtensionAPI) {
     }
     // "Stay in plan mode" or undefined (cancelled) — do nothing
   });
+
+
 
   // ─── Event: session_tree ──────────────────────────────────────────────────
 

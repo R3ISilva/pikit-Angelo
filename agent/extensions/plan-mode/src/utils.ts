@@ -1,4 +1,4 @@
-/** Pure utilities: isSafeCommand, extractPlanSteps, markCompletedSteps, plan file I/O */
+/** Pure utilities: isSafeCommand, extractPlanSteps, plan file I/O */
 
 import { SAFE_COMMAND_PATTERNS, DESTRUCTIVE_PATTERNS, PLAN_DIR, PLAN_FILE_PREFIX } from "./config.js";
 import { existsSync, readFileSync, writeFileSync, readdirSync, mkdirSync } from "node:fs";
@@ -54,11 +54,6 @@ export function extractPlanSteps(message: string): TodoItem[] {
   return steps;
 }
 
-/** Strip [DONE:n] markers from text (case-insensitive). Removes all occurrences. */
-export function stripDoneMarkers(text: string): string {
-  return text.replace(/\[done:\d+\]/gi, "");
-}
-
 /** Strip markdown bold/italic/code for plan file storage (keeps markers readable). */
 export function stripMarkdownFormatting(text: string): string {
   return text
@@ -75,24 +70,6 @@ export function renderMarkdownStep(text: string, theme: { bold: (s: string) => s
   result = result.replace(/\*\*([^*]+)\*\*/g, (_, content) => theme.bold(content));
   result = result.replace(/\*([^*]+)\*/g, (_, content) => theme.italic(content));
   return result;
-}
-
-/** Mark steps complete where [DONE:n] appears in text. Returns count of newly completed. */
-export function markCompletedSteps(text: string, items: TodoItem[]): number {
-  const doneRegex = /\[done:(\d+)\]/gi;
-  let match: RegExpExecArray | null;
-  let newlyCompleted = 0;
-
-  while ((match = doneRegex.exec(text)) !== null) {
-    const step = parseInt(match[1], 10);
-    const item = items.find((i) => i.step === step);
-    if (item && !item.completed) {
-      item.completed = true;
-      newlyCompleted++;
-    }
-  }
-
-  return newlyCompleted;
 }
 
 // ─── Plan File I/O ────────────────────────────────────────────────────────────

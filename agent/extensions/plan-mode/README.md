@@ -6,7 +6,7 @@ Toggle plan mode via `/plan` command or `Ctrl+Alt+P`.
 
 - **OFF** — Normal operation, all tools available
 - **PLAN** — Read-only exploration. LLM produces a numbered plan under a `Plan:` header
-- **EXECUTE** — Full tools restored. LLM executes steps and marks `[DONE:n]` on completion
+- **EXECUTE** — Full tools restored. LLM executes steps and calls `step_done(step)` to mark completion
 
 ## Commands
 
@@ -41,7 +41,7 @@ Plans are stored as markdown files in `.pi/plans/` with checkbox syntax:
 
 - `- [ ]` = incomplete, `- [x]` = complete
 - Plan files are created automatically when the LLM produces a plan
-- Steps are marked `[x]` as `[DONE:n]` markers appear in EXECUTE mode
+- Steps are marked `[x]` when `step_done` is called in execute mode
 
 ## How It Works
 
@@ -49,10 +49,20 @@ Plans are stored as markdown files in `.pi/plans/` with checkbox syntax:
 2. "Create new plan" → optional name input (leave empty for timestamp) → enter PLAN mode
 3. LLM explores and produces a numbered plan under a `Plan:` header
 4. After LLM response, a menu offers: Execute / Refine
-5. Execute mode → all tools restored, LLM executes steps marking `[DONE:n]`
-6. All steps complete → automatically returns to OFF mode
+5. Execute mode → all tools restored, LLM calls `step_done(n)` after completing each step
+6. Checklist updates in real time as steps complete
+7. All steps complete → automatically returns to OFF mode
 - `/plan <name>` with existing plan → load directly into execute mode
 - `/plan <name>` with new name → enter plan mode with that name
+
+## `step_done` Tool
+
+A custom tool registered by this extension. The LLM calls `step_done({ step: n })` after completing step n.
+
+- The tool returns `{ status: "ok", step: n }`
+- The extension marks the corresponding step complete in the checklist and plan file
+- Tool calls and results are stripped from LLM context (zero context cost)
+- Tool calls and results are suppressed from chat display
 
 ## State Persistence
 
