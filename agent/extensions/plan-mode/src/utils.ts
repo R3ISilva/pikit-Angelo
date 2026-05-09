@@ -1,6 +1,8 @@
-/** Pure utilities: isSafeCommand, extractPlanSteps, markCompletedSteps */
+/** Pure utilities: isSafeCommand, extractPlanSteps, markCompletedSteps, plan file I/O */
 
-import { SAFE_COMMAND_PATTERNS, DESTRUCTIVE_PATTERNS } from "./config.js";
+import { SAFE_COMMAND_PATTERNS, DESTRUCTIVE_PATTERNS, PLAN_DIR, PLAN_FILE_PREFIX } from "./config.js";
+import { existsSync, readFileSync, writeFileSync, readdirSync, mkdirSync } from "node:fs";
+import { join } from "node:path";
 
 export interface TodoItem {
   step: number;
@@ -52,6 +54,16 @@ export function extractPlanSteps(message: string): TodoItem[] {
   return steps;
 }
 
+/** Strip [DONE:n] markers from text (case-insensitive). Removes all occurrences. */
+export function stripDoneMarkers(text: string): string {
+  return text.replace(/\[done:\d+\]/gi, "");
+}
+
+/** Strip markdown bold/italic from step text for display. */
+export function stripMarkdownFormatting(text: string): string {
+  return text.replace(/\*\*/g, "").replace(/\*/g, "");
+}
+
 /** Mark steps complete where [DONE:n] appears in text. Returns count of newly completed. */
 export function markCompletedSteps(text: string, items: TodoItem[]): number {
   const doneRegex = /\[done:(\d+)\]/gi;
@@ -68,4 +80,95 @@ export function markCompletedSteps(text: string, items: TodoItem[]): number {
   }
 
   return newlyCompleted;
+}
+
+// ─── Plan File I/O ────────────────────────────────────────────────────────────
+
+/** Ensure .pi/plans/ exists, return its absolute path. */
+export function ensurePlanDir(): string {
+  const dir = join(process.cwd(), PLAN_DIR);
+  mkdirSync(dir, { recursive: true });
+  return dir;
+}
+
+/** Parse plan file markdown content → TodoItem[].
+ *  Reads lines matching `- [x] N. Text` or `- [ ] N. Text`. */
+export function parsePlanFile(content: string): TodoItem[] {
+  const items: TodoItem[] = [];
+  const regex = /^- \[([ x])\] (\d+)\. (.+)$/gm;
+  let match: RegExpExecArray | null;
+  while ((match = regex.exec(content)) !== null) {
+    items.push({
+      completed: match[1] === "x",
+      step: parseInt(match[2], 10),
+      text: match[3],
+    });
+  }
+  return items;
+}
+
+/** Serialize TodoItem[] → plan file markdown content. */
+export function serializePlanFile(title: string, items: TodoItem[]): string {
+  const lines = [`# Plan: ${title}`];
+  for (const item of items) {
+    const check = item.completed ? "x" : " ";
+    lines.push(`- [${check}] ${item.step}. ${item.text}`);
+  }
+  return lines.join("\n") + "\n";
+}
+
+/** Write [x] checkbox for a step in the plan file on disk. No-op if already checked or not found. */
+export function markStepInFile(filePath: string, step: number): void {
+  if (!existsSync(filePath)) return;
+  const content = readFileSync(filePath, "utf-8");
+  const regex = new RegExp(`^- \\[ \\] ${step}\\. `, "m");
+  if (!regex.test(content)) return;
+  const updated = content.replace(regex, `- [x] ${step}. `);
+  writeFileSync(filePath, updated, "utf-8");
+}
+
+/** Derive display title from filename: strip prefix & extension, hyphens → spaces, title-case. */
+export function titleFromFilename(filename: string): string {
+  return filename
+    .replace(/^plan-/, "")
+    .replace(/\.md$/, "")
+    .replace(/-/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+interface PlanFileSummary {
+  name: string;
+  display: string;
+  done: number;
+  total: number;
+}
+
+/** Sanitize a plan name — reject path traversal and invalid characters. Returns null if invalid. */
+export function sanitizePlanName(name: string): string | null {
+  const trimmed = name.trim();
+  if (!trimmed) return null;
+  if (trimmed.includes("/") || trimmed.includes("\\") || trimmed.includes("..")) return null;
+  if (!/^[\w\s.-]+$/.test(trimmed)) return null;
+  return trimmed.replace(/\s+/g, "-");
+}
+
+/** List available plan files in .pi/plans/ with completion counts. */
+export function listPlanFiles(): PlanFileSummary[] {
+  const dir = join(process.cwd(), PLAN_DIR);
+  if (!existsSync(dir)) return [];
+
+  const files = readdirSync(dir)
+    .filter((f) => f.startsWith(PLAN_FILE_PREFIX) && f.endsWith(".md"))
+    .sort();
+
+  return files.map((filename) => {
+    const content = readFileSync(join(dir, filename), "utf-8");
+    const items = parsePlanFile(content);
+    return {
+      name: filename,
+      display: titleFromFilename(filename),
+      done: items.filter((i) => i.completed).length,
+      total: items.length,
+    };
+  });
 }

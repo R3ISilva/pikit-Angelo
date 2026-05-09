@@ -1,4 +1,12 @@
-/** Config: tool allowlists, bash patterns, prompt templates. */
+/** Config: tool allowlists, bash patterns, prompt templates, plan file constants. */
+
+// ─── Plan File Constants ────────────────────────────────────────────────────
+
+/** Directory for plan files, relative to project root. */
+export const PLAN_DIR = ".pi/plans";
+
+/** File prefix for plan files. */
+export const PLAN_FILE_PREFIX = "plan-";
 
 // ─── Tool Lists ─────────────────────────────────────────────────────────────
 
@@ -64,7 +72,7 @@ Plan:
 ...
 \`\`\`
 
-Each step should be concrete and actionable. After listing all steps, stop and wait for the user to choose:
+Each step must be a short 2-4 word verb-object phrase, like a git commit subject — e.g. "Create skills directory", "Write frontmatter", "Validate integration". No markdown formatting, no details, no colons or dashes. After listing all steps, stop and wait for the user to choose:
 - "Execute plan" — switches to execute mode where you carry out each step
 - "Refine" — revise the plan based on feedback
 - Continue exploring if you need more information before planning
@@ -80,7 +88,7 @@ You are in EXECUTE MODE. Execute the remaining plan steps. Mark each completed s
 Remaining steps:
 ${steps}
 
-After completing a step, mark it: [DONE:n]
+After completing a step, mark it: [DONE:n] on its own line. Do not add any other text on that line.
 When all steps are complete, report "All steps complete." and you will exit execute mode.`;
 }
 
@@ -92,6 +100,8 @@ You are in PLAN MODE (refining). The user wants to revise the current plan based
 
 Current plan:
 ${steps}
+
+Each step must be a short 2-4 word verb-object phrase, like a git commit subject — e.g. "Create skills directory", "Write frontmatter". No markdown, no details.
 
 Revise the plan and output the full updated plan under a "Plan:" header:
 

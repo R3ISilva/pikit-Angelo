@@ -1,61 +1,70 @@
-/** OFF/PLAN/EXECUTE state machine with session persistence. */
+/** OFF/PLAN/EXECUTE state machine with session persistence via appendEntry blob. */
 
 import { ENTRY_TYPE } from "./config.js";
-import type { TodoItem } from "./utils.js";
 
 export type PlanMode = "off" | "plan" | "execute";
 
-export interface PlanModeState {
+/** Persisted blob — plan file is the source of truth for steps. */
+interface PlanModeBlob {
   mode: PlanMode;
-  todos: TodoItem[];
-  refining: boolean;
+  activePlanFile: string | null;
 }
 
 /** Mutable state — shared within the extension module. */
-const state: PlanModeState = {
+const state: {
+  mode: PlanMode;
+  activePlanFile: string | null;
+  refining: boolean;
+} = {
   mode: "off",
-  todos: [],
+  activePlanFile: null,
   refining: false,
 };
 
-/** Get current mode (read-only reference). */
+/** Get current mode. */
 export function getMode(): PlanMode {
   return state.mode;
 }
 
-/** Get current todos (mutable reference for in-place updates). */
-export function getTodos(): TodoItem[] {
-  return state.todos;
+/** Get active plan file (filename only, relative to .pi/plans/). */
+export function getActivePlanFile(): string | null {
+  return state.activePlanFile;
 }
 
-/** Set mode, reset refining, and persist. Clears todos when entering plan mode. */
+/** Set active plan file and persist. */
+export function setActivePlanFile(file: string | null, pi: { appendEntry: (type: string, data?: unknown) => void }): void {
+  state.activePlanFile = file;
+  persist(pi);
+}
+
+/** Get refining flag (ephemeral, in-memory only). */
+export function getRefining(): boolean {
+  return state.refining;
+}
+
+/** Set refining flag (ephemeral — no persist). */
+export function setRefining(value: boolean): void {
+  state.refining = value;
+}
+
+/** Transition to plan mode with a specific active plan file. Single persist — avoids double appendEntry. */
+export function enterPlanWithFile(file: string | null, pi: { appendEntry: (type: string, data?: unknown) => void }): void {
+  state.mode = "plan";
+  state.activePlanFile = file;
+  state.refining = false;
+  persist(pi);
+}
+
+/** Set mode, reset refining, and persist. */
 export function transition(
   newMode: PlanMode,
   pi: { appendEntry: (type: string, data?: unknown) => void },
 ): void {
   if (newMode === "plan") {
-    state.todos = [];
+    state.activePlanFile = null;
   }
   state.mode = newMode;
   state.refining = false;
-  persist(pi);
-}
-
-/** Update todos in-place and persist. */
-export function setTodos(
-  todos: TodoItem[],
-  pi: { appendEntry: (type: string, data?: unknown) => void },
-): void {
-  state.todos = todos;
-  persist(pi);
-}
-
-export function getRefining(): boolean {
-  return state.refining;
-}
-
-export function setRefining(value: boolean, pi: { appendEntry: (type: string, data?: unknown) => void }): void {
-  state.refining = value;
   persist(pi);
 }
 
@@ -63,23 +72,20 @@ export function setRefining(value: boolean, pi: { appendEntry: (type: string, da
 function persist(pi: { appendEntry: (type: string, data?: unknown) => void }): void {
   pi.appendEntry(ENTRY_TYPE, {
     mode: state.mode,
-    todos: state.todos,
-    refining: state.refining,
+    activePlanFile: state.activePlanFile,
   });
 }
 
-/** Restore state from the last plan-mode session entry on the current branch.
- *  Scans branch entries backwards (most recent first) for the latest plan-mode entry.
- *  Returns true if state was restored, false if no plan-mode entry found. */
+/** Restore state from the last plan-mode session entry on the current branch. */
 export function restore(entries: Array<{ type: string; customType?: string; data?: unknown }>): boolean {
   for (let i = entries.length - 1; i >= 0; i--) {
     const entry = entries[i];
     if (entry.type === "custom" && entry.customType === ENTRY_TYPE) {
-      const data = entry.data as PlanModeState | undefined;
+      const data = entry.data as PlanModeBlob | undefined;
       if (data?.mode) {
         state.mode = data.mode;
-        state.todos = data.todos ?? [];
-        state.refining = data.refining ?? false;
+        state.activePlanFile = data.activePlanFile ?? null;
+        state.refining = false;
         return true;
       }
     }
@@ -87,9 +93,9 @@ export function restore(entries: Array<{ type: string; customType?: string; data
   return false;
 }
 
-/** Reset state to off — used when navigating to a branch with no plan-mode entry. */
+/** Reset state to off. */
 export function resetState(): void {
   state.mode = "off";
-  state.todos = [];
+  state.activePlanFile = null;
   state.refining = false;
 }
