@@ -11,6 +11,7 @@ import type {
   TurnEndEvent,
   MessageEndEvent,
 } from "@mariozechner/pi-coding-agent";
+import { DynamicBorder } from "@mariozechner/pi-coding-agent";
 import { PLAN_MODE_TOOLS, PLAN_MODE_PROMPT, PLAN_FILE_PREFIX, PLAN_DIR, buildExecutePrompt, buildRefinePrompt } from "./config.js";
 import {
   isSafeCommand,
@@ -27,7 +28,7 @@ import {
   stripMarkdownFormatting,
   renderMarkdownStep,
 } from "./utils.js";
-import { Text } from "@earendil-works/pi-tui";
+import { Container, Input, Text, Spacer, matchesKey, Key, type Component } from "@earendil-works/pi-tui";
 import type { TodoItem } from "./utils.js";
 import { getMode, getRefining, setRefining, getActivePlanFile, setActivePlanFile, transition, enterPlanWithFile, restore, resetState } from "./state.js";
 import { join } from "node:path";
@@ -342,7 +343,42 @@ export default function planMode(pi: ExtensionAPI) {
 
   /** Prompt user for optional plan name, then enter plan mode. Uses timestamp if no name given. Returns false if cancelled or invalid. */
   async function promptNameAndEnterPlanMode(ctx: ExtensionContext): Promise<boolean> {
-    const nameInput = await ctx.ui.input("Plan name (optional, leave empty for timestamp):");
+    const nameInput = await ctx.ui.custom<string | undefined>((tui, theme, _kb, done) => {
+      const input = new Input();
+      input.onSubmit = (value) => done(value);
+
+      const border = new DynamicBorder((s: string) => theme.fg("border", s));
+      const label = new Text(theme.fg("accent", "Plan name ") + theme.fg("dim", "(optional, leave empty for timestamp)"), 1, 0);
+      const indent = 1;
+
+      const container = new Container();
+      container.addChild(border);
+      container.addChild(new Spacer());
+      container.addChild(label);
+      container.addChild(new Spacer());
+      const indentedInput: Component = {
+        render: (w: number) => input.render(w - indent).map(line => " ".repeat(indent) + line),
+        invalidate: () => input.invalidate(),
+      };
+      container.addChild(indentedInput);
+      container.addChild(new Spacer());
+      container.addChild(new Text(theme.fg("dim", "enter") + theme.fg("muted", " to submit") + theme.fg("dim", " • ") + theme.fg("dim", "esc") + theme.fg("muted", " to cancel"), 1, 0));
+      container.addChild(new Spacer());
+      container.addChild(border);
+
+      input.focused = true;
+
+      return {
+        render(width: number) { return container.render(width); },
+        invalidate() { container.invalidate(); },
+        handleInput(data: string) {
+          if (matchesKey(data, Key.escape)) { done(undefined); return; }
+          input.handleInput(data);
+          tui.requestRender();
+        },
+      };
+    });
+
     if (nameInput === undefined) return false; // cancelled
     const trimmed = nameInput.trim();
     if (trimmed) {
