@@ -45,11 +45,14 @@ export function createCustomMessage(
     // Line 1: " ● Custom tool  custom-type-name"
     const dot = applyColor(t, CONFIG.customMessages.prefixColor, CONFIG.customMessages.prefix);
     const label = applyColor(t, CONFIG.customMessages.titleColor, t.bold("Custom tool"));
-    const name = applyColor(t, CONFIG.customMessages.nameColor, customType);
+    const displayName = (details && typeof details === 'object' && 'title' in details && typeof (details as any).title === 'string')
+      ? (details as any).title
+      : customType;
+    const name = applyColor(t, CONFIG.customMessages.nameColor, displayName);
     const header = ` ${dot} ${label}  ${name}`;
 
     // Line 2: branch + status
-    const loaded = applyColor(t, CONFIG.customMessages.labelColor, "Loaded");
+    const loaded = applyColor(t, CONFIG.customMessages.labelColor, "Done");
 
     if (!expanded) {
       cachedWidth = width;

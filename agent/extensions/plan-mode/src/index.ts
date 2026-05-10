@@ -384,12 +384,12 @@ export default function planMode(pi: ExtensionAPI) {
         return;
       } else if (choice === "discard") {
         const confirmOptions: SelectItem[] = [
-          { value: "yes", label: "Yes, discard" },
+          { value: "yes", label: "Yes, I am sure" },
           { value: "cancel", label: "Cancel" },
         ];
         const confirmed = await ctx.ui.custom<string | null>((tui, theme, kb, done) => {
           const border = new DynamicBorder((s: string) => theme.fg("accent", s));
-          const title = new Text(theme.fg("accent", theme.bold("Are you sure?")), 1, 0);
+          const title = new Text(theme.fg("accent", "Are you sure?") + theme.fg("dim", " (this will delete the plan file)"), 1, 0);
 
           const selectList = new SelectList(confirmOptions, Math.min(confirmOptions.length, 10), {
             selectedPrefix: (t) => theme.fg("accent", t),
@@ -452,6 +452,7 @@ export default function planMode(pi: ExtensionAPI) {
         customType: "plan-mode",
         content: planContent,
         display: true,
+        details: { title: `Loaded plan: ${displayName}` },
       });
     }
   }
