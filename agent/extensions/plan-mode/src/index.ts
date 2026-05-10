@@ -53,6 +53,19 @@ export default function planMode(pi: ExtensionAPI) {
     return join(process.cwd(), PLAN_DIR, file);
   }
 
+  /** Get a display title for the active plan.
+   *  Tries # Plan: heading from file, falls back to titleFromFilename. */
+  function getPlanDisplayTitle(): string | null {
+    const file = getActivePlanFile();
+    if (!file) return null;
+    const filePath = getPlanFilePath();
+    if (filePath && existsSync(filePath)) {
+      const heading = readFileSync(filePath, "utf-8").match(/^# Plan:\s*(.+)$/m);
+      if (heading) return heading[1].trim();
+    }
+    return titleFromFilename(file);
+  }
+
   // ─── UI helpers ────────────────────────────────────────────────────────────
 
   function updateStatus(ctx: ExtensionContext): void {
@@ -60,11 +73,16 @@ export default function planMode(pi: ExtensionAPI) {
     const mode = getMode();
 
     if (mode === "plan") {
-      ctx.ui.setStatus("plan-mode", "⏸ PLAN");
+      const title = getPlanDisplayTitle();
+      ctx.ui.setStatus("plan-mode", title ? `Plan: ${title}` : "Plan");
+      ctx.ui.setWidget("plan-mode", title ? [`⏸ Plan: ${title}`] : ["⏸ Plan Mode"]);
     } else if (mode === "execute") {
-      ctx.ui.setStatus("plan-mode", "📋 EXECUTING");
+      const title = getPlanDisplayTitle();
+      ctx.ui.setStatus("plan-mode", title ? `Executing: ${title}` : "Executing");
+      ctx.ui.setWidget("plan-mode", title ? [`📋 Executing: ${title}`] : ["📋 Executing plan"]);
     } else {
       ctx.ui.setStatus("plan-mode", undefined);
+      ctx.ui.setWidget("plan-mode", undefined);
     }
 
     pi.events.emit("plan-mode:state", { mode });
@@ -76,20 +94,22 @@ export default function planMode(pi: ExtensionAPI) {
     transition("plan", pi);
     saveAndSetActiveTools(PLAN_MODE_TOOLS);
     updateStatus(ctx);
-    if (ctx.hasUI) ctx.ui.notify("Plan mode ON — read-only, explore and plan", "info");
+    if (ctx.hasUI) ctx.ui.notify("Plan mode ON", "info");
   }
 
   function enterExecuteMode(ctx: ExtensionContext): void {
     transition("execute", pi);
     restoreAllTools();
     updateStatus(ctx);
+    const title = getPlanDisplayTitle();
+    if (ctx.hasUI) ctx.ui.notify(title ? `Executing: ${title}` : "Executing plan", "info");
   }
 
-  function enterOffMode(ctx: ExtensionContext): void {
+  function enterOffMode(ctx: ExtensionContext, message?: string): void {
     transition("off", pi);
     restoreAllTools();
     updateStatus(ctx);
-    if (ctx.hasUI) ctx.ui.notify("Plan mode OFF", "info");
+    if (ctx.hasUI) ctx.ui.notify(message ?? "Plan mode OFF", "info");
   }
 
   // ─── Re-derive state from entries on the current branch ──────────────────────
@@ -197,8 +217,7 @@ export default function planMode(pi: ExtensionAPI) {
   pi.on("tool_result", (event: ToolResultEvent, ctx: ExtensionContext): void => {
     if (event.toolName !== "plan_complete") return;
     if (getMode() !== "execute") return;
-    if (ctx.hasUI) ctx.ui.notify("All plan steps complete!", "success");
-    enterOffMode(ctx);
+    enterOffMode(ctx, "Plan implemented. Plan mode OFF.");
   });
 
   // ─── Event: agent_end (extract plan text in PLAN mode) ────────────────────
@@ -307,7 +326,8 @@ export default function planMode(pi: ExtensionAPI) {
       enterPlanWithFile(filename, pi);
       saveAndSetActiveTools(PLAN_MODE_TOOLS);
       updateStatus(ctx);
-      if (ctx.hasUI) ctx.ui.notify(`Plan mode ON — creating plan "${sanitized}"`, "info");
+      const createTitle = titleFromFilename(filename);
+      if (ctx.hasUI) ctx.ui.notify(`Plan mode ON — creating ${createTitle}`, "info");
     } else {
       enterPlanMode(ctx);
     }
@@ -320,7 +340,7 @@ export default function planMode(pi: ExtensionAPI) {
     transition("execute", pi);
     restoreAllTools();
     updateStatus(ctx);
-    ctx.ui.notify(`Loaded plan "${displayName}"`, "info");
+    ctx.ui.notify(`Executing: ${displayName}`, "info");
     pi.sendUserMessage("Execute the plan steps now.");
     return true;
   }
@@ -328,7 +348,7 @@ export default function planMode(pi: ExtensionAPI) {
   // ─── Command: /plan [off|status|list|<name>] ──────────────────────────────────
 
   pi.registerCommand("plan", {
-    description: "Plan mode: /plan (toggle) · /plan <name> (load existing or create new) · /plan off · /plan status · /plan list",
+    description: "Plan mode: /plan (toggle) · /plan <name> (load existing or create new) · /plan off",
     handler: async (args: string, ctx) => {
       const input = args.trim();
 
@@ -362,24 +382,6 @@ export default function planMode(pi: ExtensionAPI) {
           return;
         }
         enterOffMode(ctx);
-      } else if (input.toLowerCase() === "status") {
-        const mode = getMode();
-        if (mode === "off") {
-          ctx.ui.notify("Plan mode is OFF", "info");
-        } else if (mode === "plan") {
-          const file = getActivePlanFile();
-          ctx.ui.notify(file ? `Plan mode ON — ${file}` : "Plan mode ON — no plan yet", "info");
-        } else {
-          ctx.ui.notify("Execute mode — running plan", "info");
-        }
-      } else if (input.toLowerCase() === "list") {
-        const files = listPlanFiles();
-        if (files.length === 0) {
-          ctx.ui.notify("No plan files found in .pi/plans/", "info");
-          return;
-        }
-        const lines = files.map((f) => `  ${f.title}`);
-        ctx.ui.notify(`Plan files:\n${lines.join("\n")}`, "info");
       } else {
         // Treat input as plan name: load existing → execute, or create new → plan mode
         const sanitized = sanitizePlanName(input);
@@ -402,7 +404,7 @@ export default function planMode(pi: ExtensionAPI) {
           enterPlanWithFile(filename, pi);
           saveAndSetActiveTools(PLAN_MODE_TOOLS);
           updateStatus(ctx);
-          if (ctx.hasUI) ctx.ui.notify(`Plan mode ON — creating plan "${sanitized}"`, "info");
+          if (ctx.hasUI) ctx.ui.notify(`Plan mode ON — creating ${titleFromFilename(filename)}`, "info");
         }
       }
     },

@@ -27,13 +27,23 @@ export function ensurePlanDir(): string {
   return dir;
 }
 
-/** Derive display title from filename: strip prefix & extension, hyphens → spaces, title-case. */
+/** Derive display title from filename.
+ *  For named plans (e.g. plan-add-auth.md) → "Add Auth".
+ *  For timestamp plans (e.g. plan-2026-05-10-14-30.md) → "May 10, 2026 14:30". */
 export function titleFromFilename(filename: string): string {
-  return filename
-    .replace(/^plan-/, "")
-    .replace(/\.md$/, "")
-    .replace(/-/g, " ")
-    .replace(/\b\w/g, (c) => c.toUpperCase());
+  const stem = filename.replace(/^plan-/ , "").replace(/\.md$/, "");
+
+  // Detect timestamp pattern: YYYY-MM-DD-HH-MM
+  const tsMatch = stem.match(/^(\d{4})-(\d{2})-(\d{2})-(\d{2})-(\d{2})$/);
+  if (tsMatch) {
+    const [, y, m, d, h, min] = tsMatch;
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const month = months[parseInt(m, 10) - 1] ?? m;
+    return `${month} ${parseInt(d, 10)}, ${y} ${h}:${min}`;
+  }
+
+  // Named plan: hyphens → spaces, title-case
+  return stem.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 interface PlanFileSummary {
