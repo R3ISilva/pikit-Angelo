@@ -26,6 +26,15 @@
     "labelColor": "success",
     "expandHintColor": "dim"
   },
+  "customMessages": {
+    "prefix": "●",
+    "prefixColor": "accent",
+    "titleColor": "customMessageLabel",
+    "nameColor": "customMessageText",
+    "labelColor": "success",
+    "expandHintColor": "dim",
+    "outputColor": "dim"
+  },
   "tools": {
     "toolSpinnerPrefix": {
       "prefixChars": ["·", "✢", "✳", "✶", "✻", "✽"],

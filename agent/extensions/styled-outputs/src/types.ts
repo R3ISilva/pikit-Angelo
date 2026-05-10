@@ -84,10 +84,21 @@ export interface ToolsUserConfig {
   groups?: ToolGroupsUserConfig;
 }
 
+export interface CustomMessagesUserConfig {
+  prefix?: string;
+  prefixColor?: string;
+  titleColor?: string;
+  nameColor?: string;
+  labelColor?: string;
+  expandHintColor?: string;
+  outputColor?: string;
+}
+
 export interface StyledOutputsUserConfig {
   assistantMessage?: AssistantMessageUserConfig;
   userMessage?: UserMessageUserConfig;
   skills?: SkillsUserConfig;
   thinkingMessage?: ThinkingMessageUserConfig;
+  customMessages?: CustomMessagesUserConfig;
   tools?: ToolsUserConfig;
 }

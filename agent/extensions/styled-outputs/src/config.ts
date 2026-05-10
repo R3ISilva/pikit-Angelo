@@ -29,6 +29,17 @@ export const DEFAULT_CONFIG = {
     EXPAND_HINT_COLOR: "dim",
   },
 
+  // Custom message
+  CUSTOM_MESSAGES: {
+    PREFIX: "●",
+    PREFIX_COLOR: "accent",
+    TITLE_COLOR: "toolTitle",
+    NAME_COLOR: "text",
+    LABEL_COLOR: "success",
+    EXPAND_HINT_COLOR: "dim",
+    OUTPUT_COLOR: "dim",
+  },
+
   // Thinking message
   THINKING_MESSAGE: {
     PREFIX: "✽",
@@ -66,12 +77,12 @@ export const DEFAULT_CONFIG = {
       OUTPUT_COLOR: "dim",                            // color for tool outputs
       MAX_EXPANDED_LINES: 40,                         // max lines shown when a tool result is expanded
       MORE_COLOR: "muted",                            // color for the separator text
-      MORE_BG_COLOR: "separator",                              // background color for the separator line (empty = no bg)
+      MORE_BG_COLOR: "separator",                     // background color for the separator line (empty = no bg)
       IS_THEME_BACKGROUND_VISIBLE: false,             // whether to apply theme background color to tool outputs
-      DIFF_ADDED_COLOR: "toolDiffAdded",                // color for diff added lines
-      DIFF_REMOVED_COLOR: "toolDiffRemoved",            // color for diff removed lines
-      DIFF_CONTEXT_COLOR: "toolDiffContext",            // color for diff context lines
-      MAX_DIFF_FILE_SIZE: "1MB",                        // skip diff for files exceeding this size
+      DIFF_ADDED_COLOR: "toolDiffAdded",              // color for diff added lines
+      DIFF_REMOVED_COLOR: "toolDiffRemoved",          // color for diff removed lines
+      DIFF_CONTEXT_COLOR: "toolDiffContext",          // color for diff context lines
+      MAX_DIFF_FILE_SIZE: "1MB",                      // skip diff for files exceeding this size
     },
   },
 };
@@ -109,6 +120,15 @@ export const CONFIG = {
     color: userConfig.userMessage?.color ?? DEFAULT_CONFIG.USER_MESSAGE.COLOR,
     bodyColor: userConfig.userMessage?.bodyColor ?? DEFAULT_CONFIG.USER_MESSAGE.BODY_COLOR,
     isThemeBackgroundVisible: userConfig.userMessage?.isThemeBackgroundVisible ?? DEFAULT_CONFIG.USER_MESSAGE.IS_THEME_BACKGROUND_VISIBLE,
+  },
+  customMessages: {
+    prefix: userConfig.customMessages?.prefix ?? DEFAULT_CONFIG.CUSTOM_MESSAGES.PREFIX,
+    prefixColor: userConfig.customMessages?.prefixColor ?? DEFAULT_CONFIG.CUSTOM_MESSAGES.PREFIX_COLOR,
+    titleColor: userConfig.customMessages?.titleColor ?? DEFAULT_CONFIG.CUSTOM_MESSAGES.TITLE_COLOR,
+    nameColor: userConfig.customMessages?.nameColor ?? DEFAULT_CONFIG.CUSTOM_MESSAGES.NAME_COLOR,
+    labelColor: userConfig.customMessages?.labelColor ?? DEFAULT_CONFIG.CUSTOM_MESSAGES.LABEL_COLOR,
+    expandHintColor: userConfig.customMessages?.expandHintColor ?? DEFAULT_CONFIG.CUSTOM_MESSAGES.EXPAND_HINT_COLOR,
+    outputColor: userConfig.customMessages?.outputColor ?? DEFAULT_CONFIG.CUSTOM_MESSAGES.OUTPUT_COLOR,
   },
   thinkingMessage: {
     prefix: userConfig.thinkingMessage?.prefix ?? DEFAULT_CONFIG.THINKING_MESSAGE.PREFIX,

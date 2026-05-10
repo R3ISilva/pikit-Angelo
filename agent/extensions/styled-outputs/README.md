@@ -10,6 +10,7 @@ Custom styled rendering for every message type in pi — assistant messages, use
 - **Tool executions** — Custom call/result renderers for `read`, `bash`, `edit`, `write`, `grep`, `find`, `ls`, web tools, and MCP tools
 - **Diff viewer** — Side-by-side-style diff highlighting for `edit` and `write` with added/removed/context colours; skips oversized files (configurable threshold)
 - **Skill invocations** — Expandable skill blocks with prefix icon, title, and content
+- **Custom messages** — Expandable custom messages with prefix icon, type name, and content; all custom messages get styled output regardless of registered renderers
 - **Tool spinner** — Animated character spinner while tools are running
 - **Group-aware config** — Override any general tool setting per group (`base`, `mcp`, `web`, `custom`); unset properties fall through to `general`
 - **Theme-aware colours** — All colour fields accept pi theme tokens (`"accent"`, `"dim"`, etc.) or hex values (`"#ff6347"`)
@@ -75,6 +76,20 @@ All fields are optional — omit any field to keep its default.
 | `skills.nameColor` | `string` | `"text"` | Colour for the skill name in the title |
 | `skills.labelColor` | `string` | `"success"` | Colour for status labels (e.g. "DONE") |
 | `skills.expandHintColor` | `string` | `"dim"` | Colour for the expand/collapse hint |
+
+### Custom message
+
+Styled rendering for all custom messages. Custom messages registered via `pi.registerMessageRenderer()` are also styled by this extension — the registered renderer is ignored in favor of consistent styled output.
+
+| Key | Type | Default | Description |
+|-----|------|---------|-------------|
+| `customMessages.prefix` | `string` | `"●"` | Prefix icon |
+| `customMessages.prefixColor` | `string` | `"accent"` | Colour for the prefix |
+| `customMessages.titleColor` | `string` | `"customMessageLabel"` | Colour for the "Custom tool" label |
+| `customMessages.nameColor` | `string` | `"customMessageText"` | Colour for the custom type name |
+| `customMessages.labelColor` | `string` | `"success"` | Colour for status labels (e.g. "Loaded") |
+| `customMessages.expandHintColor` | `string` | `"dim"` | Colour for the expand/collapse hint |
+| `customMessages.outputColor` | `string` | `"dim"` | Colour for expanded content |
 
 ### Tool execution
 
@@ -148,7 +163,7 @@ Theme tokens adapt to your active theme automatically.
 
 ## How it works
 
-The extension patches pi's built-in message components (`AssistantMessage`, `UserMessage`, `ToolExecution`, `SkillInvocationMessage`) at prototype level. A `Symbol.for` patch flag prevents double-patching on reload.
+The extension patches pi's built-in message components (`AssistantMessage`, `UserMessage`, `ToolExecution`, `SkillInvocationMessage`, `CustomMessage`) at prototype level. A `Symbol.for` patch flag prevents double-patching on reload.
 
 Tool renderers are registered via `pi.registerTool()` for built-in tools (`read`, `bash`, `edit`, `write`, `grep`, `find`, `ls`) — each with custom call and result renderers. For web tools and MCP tools, the extension patches `getCallRenderer` / `getResultRenderer` to provide specialised renderers when no built-in renderer exists.
 
@@ -170,6 +185,7 @@ styled-outputs/
         ├── thinking-message.ts # Thinking block renderer
         ├── user-message.ts     # User message renderer
         ├── skill-message.ts    # Skill invocation renderer
+        ├── custom-message.ts   # Custom message renderer
         ├── base-renderer.ts    # Built-in tool call/result renderers
         ├── mcp-renderer.ts     # MCP tool call/result renderers
         ├── web-renderer.ts     # Web tool call/result renderers

@@ -1,5 +1,5 @@
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
-import { AssistantMessageComponent, UserMessageComponent, ToolExecutionComponent, SkillInvocationMessageComponent, createReadTool, createBashTool, createEditTool, createWriteTool, createLsTool, createGrepTool, createFindTool } from "@mariozechner/pi-coding-agent";
+import { AssistantMessageComponent, UserMessageComponent, ToolExecutionComponent, SkillInvocationMessageComponent, CustomMessageComponent, createReadTool, createBashTool, createEditTool, createWriteTool, createLsTool, createGrepTool, createFindTool } from "@mariozechner/pi-coding-agent";
 import { Markdown } from "@mariozechner/pi-tui";
 import { PATCH_FLAG, setCurrentTheme, currentTheme } from "./utils.js";
 import { CONFIG } from "./config.js";
@@ -22,6 +22,7 @@ import {
   renderGetSearchContentCall, renderGetSearchContentResult,
 } from "./components/web-renderer.js";
 import { createSkillInvocationMessage } from "./components/skill-message.js";
+import { createCustomMessage } from "./components/custom-message.js";
 
 const WEB_TOOLS = new Set(["web_search", "fetch_content", "get_search_content"]);
 
@@ -173,6 +174,50 @@ export default function styledOutputs(pi: ExtensionAPI) {
     };
 
     skillProto[PATCH_FLAG] = true;
+  }
+
+  // --- Patch CustomMessageComponent ---
+  const customProto = CustomMessageComponent.prototype as any;
+  if (!customProto[PATCH_FLAG]) {
+    customProto.rebuild = function patchedCustomRebuild() {
+      // Extract text content from message
+      let textContent: string;
+      if (typeof this.message.content === "string") {
+        textContent = this.message.content;
+      } else {
+        textContent = this.message.content
+          .filter((c: any) => c.type === "text")
+          .map((c: any) => c.text)
+          .join("\n");
+      }
+
+      // Create styled custom message component
+      this._styledCustomComponent = createCustomMessage(
+        this.message.customType,
+        textContent,
+        this.message.details,
+        this.markdownTheme,
+      );
+
+      // Strip Box padding + background — our component handles its own layout
+      this.paddingX = 0;
+      this.paddingY = 0;
+      this.bgFn = undefined;
+
+      this._styledCustomComponent.setExpanded(this._expanded);
+      this.clear();
+      this.addChild(this._styledCustomComponent);
+    };
+
+    const originalSetExpanded = customProto.setExpanded;
+    customProto.setExpanded = function patchedCustomSetExpanded(expanded: boolean) {
+      if (this._styledCustomComponent) {
+        this._styledCustomComponent.setExpanded(expanded);
+      }
+      return originalSetExpanded.call(this, expanded);
+    };
+
+    customProto[PATCH_FLAG] = true;
   }
 
   // --- Register styled tool renderers ---
