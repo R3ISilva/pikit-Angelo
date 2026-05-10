@@ -78,8 +78,8 @@ export default function planMode(pi: ExtensionAPI) {
       ctx.ui.setWidget("plan-mode", title ? [`⏸ Plan: ${title}`] : ["⏸ Plan Mode"]);
     } else if (mode === "execute") {
       const title = getPlanDisplayTitle();
-      ctx.ui.setStatus("plan-mode", title ? `Executing: ${title}` : "Executing");
-      ctx.ui.setWidget("plan-mode", title ? [`📋 Executing: ${title}`] : ["📋 Executing plan"]);
+      ctx.ui.setStatus("plan-mode", title ? `Executing plan: ${title}` : "Executing plan");
+      ctx.ui.setWidget("plan-mode", title ? [`📋 Executing plan: ${title}`] : ["📋 Executing plan"]);
     } else {
       ctx.ui.setStatus("plan-mode", undefined);
       ctx.ui.setWidget("plan-mode", undefined);
@@ -102,7 +102,7 @@ export default function planMode(pi: ExtensionAPI) {
     restoreAllTools();
     updateStatus(ctx);
     const title = getPlanDisplayTitle();
-    if (ctx.hasUI) ctx.ui.notify(title ? `Executing: ${title}` : "Executing plan", "info");
+    if (ctx.hasUI) ctx.ui.notify(title ? `Executing plan: ${title}` : "Executing plan", "info");
   }
 
   function enterOffMode(ctx: ExtensionContext, message?: string): void {
@@ -353,7 +353,7 @@ export default function planMode(pi: ExtensionAPI) {
     transition("execute", pi);
     restoreAllTools();
     updateStatus(ctx);
-    ctx.ui.notify(`Executing: ${displayName}`, "info");
+    ctx.ui.notify(`Executing plan: ${displayName}`, "info");
     pi.sendUserMessage("Execute the plan steps now.");
     return true;
   }
@@ -374,7 +374,7 @@ export default function planMode(pi: ExtensionAPI) {
             await promptNameAndEnterPlanMode(ctx);
           } else {
             const options = ["Create new plan", ...files.map((f) => f.title)];
-            const choice = await ctx.ui.select("Select a plan or create new:", options);
+            const choice = await ctx.ui.select("Select and execute a plan or create a new one:", options);
             if (choice === undefined) return; // cancelled
             if (choice === "Create new plan") {
               await promptNameAndEnterPlanMode(ctx);
