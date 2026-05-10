@@ -256,32 +256,7 @@ export default function planMode(pi: ExtensionAPI) {
       updateStatus(ctx);
     }
 
-    const choice = await ctx.ui.select(
-      "Plan is ready. How'd you like to proceed?",
-      ["Execute", "Refine", "Save & Exit", "Discard & Exit"],
-    );
-
-    if (choice === "Execute") {
-      enterExecuteMode(ctx);
-      pi.sendUserMessage("Execute the plan steps now.");
-    } else if (choice === "Refine") {
-      setRefining(true);
-      updateStatus(ctx);
-    } else if (choice === "Save & Exit") {
-      enterOffMode(ctx, "Plan saved. Plan mode OFF.");
-    } else if (choice === "Discard & Exit") {
-      const confirmed = await ctx.ui.select(
-        "Are you sure?",
-        ["Yes, discard", "Cancel"],
-      );
-      if (confirmed === "Yes, discard") {
-        const filePath = getPlanFilePath();
-        if (filePath && existsSync(filePath)) unlinkSync(filePath);
-        setActivePlanFile(null, pi);
-        enterOffMode(ctx, "Plan discarded. Plan mode OFF.");
-      }
-      // Cancel — stay in plan mode, menu dismissed
-    }
+    await showPlanMenu(ctx)
   });
 
   // ─── Event: session_tree ──────────────────────────────────────────────────
@@ -348,16 +323,66 @@ export default function planMode(pi: ExtensionAPI) {
     return true;
   }
 
-  /** Load an existing plan file and enter execute mode. */
-  function loadPlanAndExecute(ctx: ExtensionContext, filename: string, displayName: string): boolean {
-    setActivePlanFile(filename, pi);
-    transition("execute", pi);
-    restoreAllTools();
-    updateStatus(ctx);
-    ctx.ui.notify(`Executing plan: ${displayName}`, "info");
-    pi.sendUserMessage("Execute the plan steps now.");
-    return true;
+  /** Show the plan action menu: Execute, Refine, Save & Exit, Discard & Exit. */
+  async function showPlanMenu(ctx: ExtensionContext): Promise<void> {
+    const choice = await ctx.ui.select(
+      "Plan is ready. How'd you like to proceed?",
+      ["Execute", "Refine", "Save & Exit", "Discard & Exit"],
+    );
+
+    if (choice === "Execute") {
+      enterExecuteMode(ctx);
+      pi.sendUserMessage("Execute the plan steps now.");
+    } else if (choice === "Refine") {
+      setRefining(true);
+      updateStatus(ctx);
+    } else if (choice === "Save & Exit") {
+      enterOffMode(ctx, "Plan saved. Plan mode OFF.");
+    } else if (choice === "Discard & Exit") {
+      const confirmed = await ctx.ui.select(
+        "Are you sure?",
+        ["Yes, discard", "Cancel"],
+      );
+      if (confirmed === "Yes, discard") {
+        const filePath = getPlanFilePath();
+        if (filePath && existsSync(filePath)) unlinkSync(filePath);
+        setActivePlanFile(null, pi);
+        enterOffMode(ctx, "Plan discarded. Plan mode OFF.");
+      }
+      // Cancel — stay in plan mode, menu dismissed
+    }
   }
+
+  /** Load an existing plan file and show the action menu. */
+  function loadPlanAndShowMenu(ctx: ExtensionContext, filename: string, displayName: string): void {
+    enterPlanWithFile(filename, pi);
+    saveAndSetActiveTools(PLAN_MODE_TOOLS);
+    updateStatus(ctx);
+    ctx.ui.notify(`Loaded plan: ${displayName}`, "info");
+
+    const filePath = join(process.cwd(), PLAN_DIR, filename);
+    if (existsSync(filePath)) {
+      const planContent = readFileSync(filePath, "utf-8");
+      pi.sendMessage({
+        customType: "plan-mode",
+        content: planContent,
+        display: true,
+      });
+    }
+  }
+
+  // ─── Message renderer for plan-mode ────────────────────────────────────────
+
+  pi.registerMessageRenderer("plan-mode", (message, _options, theme) => {
+    const box = new DynamicBorder((s: string) => theme.fg("accent", s));
+    box.addChild(new Text(theme.fg("accent", "📄 " + (message.content as string).split("\n")[0])));
+    const body = (message.content as string).split("\n").slice(1).join("\n");
+    if (body) {
+      box.addChild(new Spacer());
+      box.addChild(new Text(body));
+    }
+    return box;
+  });
 
   // ─── Command: /plan [off|<name>] ──────────────────────────────────────────
 
@@ -375,7 +400,7 @@ export default function planMode(pi: ExtensionAPI) {
             await promptNameAndEnterPlanMode(ctx);
           } else {
             const options = ["Create new plan", ...files.map((f) => f.title)];
-            const choice = await ctx.ui.select("Select and execute a plan or create a new one:", options);
+            const choice = await ctx.ui.select("Select a plan or create a new one:", options);
             if (choice === undefined) return; // cancelled
             if (choice === "Create new plan") {
               await promptNameAndEnterPlanMode(ctx);
@@ -383,7 +408,8 @@ export default function planMode(pi: ExtensionAPI) {
               const idx = options.indexOf(choice) - 1; // offset for "Create new" option
               if (idx >= 0 && idx < files.length) {
                 const file = files[idx];
-                loadPlanAndExecute(ctx, file.name, file.title);
+                loadPlanAndShowMenu(ctx, file.name, file.title);
+                await showPlanMenu(ctx);
               }
             }
           }
@@ -407,8 +433,9 @@ export default function planMode(pi: ExtensionAPI) {
         const filePath = join(process.cwd(), PLAN_DIR, filename);
 
         if (existsSync(filePath)) {
-          // Load existing plan → execute mode
-          loadPlanAndExecute(ctx, filename, titleFromFilename(filename));
+          // Load existing plan → show action menu
+          loadPlanAndShowMenu(ctx, filename, titleFromFilename(filename));
+          await showPlanMenu(ctx);
         } else {
           // New plan → plan mode
           if (getMode() === "plan") {
