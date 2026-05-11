@@ -65,6 +65,7 @@
       "moreColor": "muted",
       "moreBgColor": "separator",
       "isThemeBackgroundVisible": false,
+      "verticalPadding": 0,
       "diffAddedColor": "toolDiffAdded",
       "diffRemovedColor": "toolDiffRemoved",
       "diffContextColor": "toolDiffContext",
