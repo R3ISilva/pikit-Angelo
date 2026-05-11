@@ -1,4 +1,4 @@
-/** Plan Mode — toggle via /plan or Shift+Tab. PLAN: read-only. EXECUTE: tools restored + plan_complete signal. Plan files stored in .pi/plans/. */
+/** Plan Mode — toggle via /plan command or configurable shortcut. PLAN: read-only. EXECUTE: tools restored + plan_complete signal. Plan files stored in .pi/plans/. */
 
 import type {
   ExtensionAPI,
@@ -12,7 +12,7 @@ import type {
 } from "@mariozechner/pi-coding-agent";
 import { DynamicBorder } from "@mariozechner/pi-coding-agent";
 
-import { PLAN_MODE_TOOLS, PLAN_MODE_PROMPT, PLAN_FILE_PREFIX, PLAN_DIR, buildExecutePrompt, buildRefinePrompt } from "./config.js";
+import { PLAN_MODE_TOOLS, PLAN_MODE_PROMPT, PLAN_FILE_PREFIX, PLAN_DIR, buildExecutePrompt, buildRefinePrompt, USER_CONFIG } from "./config.js";
 import {
   isSafeCommand,
   extractPlanText,
@@ -21,6 +21,7 @@ import {
   listPlanFiles,
   sanitizePlanName,
   extractTextFromMessage,
+  applyLabelColor,
 } from "./utils.js";
 import { Container, Input, Text, Spacer, SelectList, matchesKey, Key, type Component, type SelectItem } from "@earendil-works/pi-tui";
 import { getMode, getRefining, setRefining, getActivePlanFile, setActivePlanFile, transition, enterPlanWithFile, restore, resetState } from "./state.js";
@@ -75,14 +76,17 @@ export default function planMode(pi: ExtensionAPI) {
 
     if (mode === "plan") {
       const title = getPlanDisplayTitle();
-      ctx.ui.setStatus("plan-mode", title ? `Plan: ${title}` : "Plan");
-      ctx.ui.setWidget("plan-mode", title ? [`⏸ Plan: ${title}`] : ["⏸ Plan Mode"]);
+      const widgetText = title
+        ? USER_CONFIG.labels.plan.widgetWithTitle.replace("{title}", title)
+        : USER_CONFIG.labels.plan.widget;
+      ctx.ui.setWidget("plan-mode", USER_CONFIG.ui.hideWidget ? undefined : [applyLabelColor(ctx.ui.theme, USER_CONFIG.labels.plan.widgetColor, widgetText)]);
     } else if (mode === "execute") {
       const title = getPlanDisplayTitle();
-      ctx.ui.setStatus("plan-mode", title ? `Executing plan: ${title}` : "Executing plan");
-      ctx.ui.setWidget("plan-mode", title ? [`📋 Executing plan: ${title}`] : ["📋 Executing plan"]);
+      const widgetText = title
+        ? USER_CONFIG.labels.execute.widgetWithTitle.replace("{title}", title)
+        : USER_CONFIG.labels.execute.widget;
+      ctx.ui.setWidget("plan-mode", USER_CONFIG.ui.hideWidget ? undefined : [applyLabelColor(ctx.ui.theme, USER_CONFIG.labels.execute.widgetColor, widgetText)]);
     } else {
-      ctx.ui.setStatus("plan-mode", undefined);
       ctx.ui.setWidget("plan-mode", undefined);
     }
 
@@ -95,7 +99,7 @@ export default function planMode(pi: ExtensionAPI) {
     transition("plan", pi);
     saveAndSetActiveTools(PLAN_MODE_TOOLS);
     updateStatus(ctx);
-    if (ctx.hasUI) ctx.ui.notify("Plan mode ON", "info");
+    if (ctx.hasUI && !USER_CONFIG.ui.hideNotify) ctx.ui.notify(USER_CONFIG.labels.plan.notify, USER_CONFIG.labels.plan.notifyType as "info" | "warning" | "error" | "success");
   }
 
   function enterExecuteMode(ctx: ExtensionContext): void {
@@ -103,14 +107,28 @@ export default function planMode(pi: ExtensionAPI) {
     restoreAllTools();
     updateStatus(ctx);
     const title = getPlanDisplayTitle();
-    if (ctx.hasUI) ctx.ui.notify(title ? `Executing plan: ${title}` : "Executing plan", "info");
+    const notifyText = title
+      ? USER_CONFIG.labels.execute.notifyWithTitle.replace("{title}", title)
+      : USER_CONFIG.labels.execute.notify;
+    if (ctx.hasUI && !USER_CONFIG.ui.hideNotify) ctx.ui.notify(notifyText, USER_CONFIG.labels.execute.notifyType as "info" | "warning" | "error" | "success");
   }
 
   function enterOffMode(ctx: ExtensionContext, message?: string): void {
     transition("off", pi);
     restoreAllTools();
     updateStatus(ctx);
-    if (ctx.hasUI) ctx.ui.notify(message ?? "Plan mode OFF", "info");
+    if (ctx.hasUI && !USER_CONFIG.ui.hideNotify) ctx.ui.notify(
+      message ?? USER_CONFIG.labels.off.notify,
+      message ? "info" : (USER_CONFIG.labels.off.notifyType as "info" | "warning" | "error" | "success")
+    );
+  }
+
+  /** Cleanup plan file when transitioning off via plan_complete, if configured. */
+  function cleanupPlanFile(): void {
+    if (!USER_CONFIG.cleanup.cleanupOnComplete) return;
+    const filePath = getPlanFilePath();
+    if (filePath && existsSync(filePath)) unlinkSync(filePath);
+    setActivePlanFile(null, pi);
   }
 
   // ─── Re-derive state from entries on the current branch ──────────────────────
@@ -218,6 +236,7 @@ export default function planMode(pi: ExtensionAPI) {
   pi.on("tool_result", (event: ToolResultEvent, ctx: ExtensionContext): void => {
     if (event.toolName !== "plan_complete") return;
     if (getMode() !== "execute") return;
+    cleanupPlanFile();
     enterOffMode(ctx, "Plan implemented. Plan mode OFF.");
   });
 
@@ -271,8 +290,8 @@ export default function planMode(pi: ExtensionAPI) {
       const input = new Input();
       input.onSubmit = (value) => done(value);
 
-      const border = new DynamicBorder((s: string) => theme.fg("accent", s));
-      const label = new Text(theme.fg("accent", "Plan name ") + theme.fg("dim", "(optional, leave empty for timestamp)"), 1, 0);
+      const border = new DynamicBorder((s: string) => theme.fg("border", s));
+      const label = new Text(theme.fg("text", "Plan name ") + theme.fg("dim", "(optional, leave empty for timestamp)"), 1, 0);
       const indent = 1;
 
       const container = new Container();
@@ -317,7 +336,7 @@ export default function planMode(pi: ExtensionAPI) {
       saveAndSetActiveTools(PLAN_MODE_TOOLS);
       updateStatus(ctx);
       const createTitle = titleFromFilename(filename);
-      if (ctx.hasUI) ctx.ui.notify(`Plan mode ON — creating plan "${createTitle}"`, "info");
+      if (ctx.hasUI && !USER_CONFIG.ui.hideNotify) ctx.ui.notify(USER_CONFIG.labels.plan.notifyWithTitle.replace("{title}", createTitle), USER_CONFIG.labels.plan.notifyType as "info" | "warning" | "error" | "success");
     } else {
       enterPlanMode(ctx);
     }
@@ -335,8 +354,8 @@ export default function planMode(pi: ExtensionAPI) {
 
     while (true) {
       const choice = await ctx.ui.custom<string | null>((tui, theme, kb, done) => {
-        const border = new DynamicBorder((s: string) => theme.fg("accent", s));
-        const title = new Text(theme.fg("accent", theme.bold("Plan is ready. How'd you like to proceed?")), 1, 0);
+        const border = new DynamicBorder((s: string) => theme.fg("border", s));
+        const title = new Text(theme.fg("text", theme.bold("Plan is ready. How'd you like to proceed?")), 1, 0);
 
         const selectList = new SelectList(options, Math.min(options.length, 10), {
           selectedPrefix: (t) => theme.fg("accent", t),
@@ -388,8 +407,8 @@ export default function planMode(pi: ExtensionAPI) {
           { value: "cancel", label: "Cancel" },
         ];
         const confirmed = await ctx.ui.custom<string | null>((tui, theme, kb, done) => {
-          const border = new DynamicBorder((s: string) => theme.fg("accent", s));
-          const title = new Text(theme.fg("accent", "Are you sure?") + theme.fg("dim", " (this will delete the plan file)"), 1, 0);
+          const border = new DynamicBorder((s: string) => theme.fg("border", s));
+          const title = new Text(theme.fg("text", "Are you sure?") + theme.fg("dim", " (this will delete the plan file)"), 1, 0);
 
           const selectList = new SelectList(confirmOptions, Math.min(confirmOptions.length, 10), {
             selectedPrefix: (t) => theme.fg("accent", t),
@@ -443,7 +462,7 @@ export default function planMode(pi: ExtensionAPI) {
     enterPlanWithFile(filename, pi);
     saveAndSetActiveTools(PLAN_MODE_TOOLS);
     updateStatus(ctx);
-    ctx.ui.notify(`Loaded plan: ${displayName}`, "info");
+    if (!USER_CONFIG.ui.hideNotify) ctx.ui.notify(USER_CONFIG.labels.plan.notifyLoaded.replace("{title}", displayName), "info");
 
     const filePath = join(process.cwd(), PLAN_DIR, filename);
     if (existsSync(filePath)) {
@@ -452,7 +471,7 @@ export default function planMode(pi: ExtensionAPI) {
         customType: "plan-mode",
         content: planContent,
         display: true,
-        details: { title: `Loaded plan: ${displayName}` },
+        details: { title: displayName },
       });
     }
   }
@@ -460,8 +479,8 @@ export default function planMode(pi: ExtensionAPI) {
   // ─── Message renderer for plan-mode ────────────────────────────────────────
 
   pi.registerMessageRenderer("plan-mode", (message, _options, theme) => {
-    const box = new DynamicBorder((s: string) => theme.fg("accent", s));
-    box.addChild(new Text(theme.fg("accent", "📄 " + (message.content as string).split("\n")[0])));
+    const box = new DynamicBorder((s: string) => theme.fg("border", s));
+    box.addChild(new Text(theme.fg("text", "📄 " + (message.content as string).split("\n")[0])));
     const body = (message.content as string).split("\n").slice(1).join("\n");
     if (body) {
       box.addChild(new Spacer());
@@ -490,8 +509,8 @@ export default function planMode(pi: ExtensionAPI) {
             ...files.map((f) => ({ value: f.name, label: f.title })),
           ];
           const choice = await ctx.ui.custom<string | null>((tui, theme, kb, done) => {
-            const border = new DynamicBorder((s: string) => theme.fg("accent", s));
-            const title = new Text(theme.fg("accent", theme.bold("Select a plan or create a new one:")), 1, 0);
+            const border = new DynamicBorder((s: string) => theme.fg("border", s));
+            const title = new Text(theme.fg("text", theme.bold("Select a plan or create a new one:")), 1, 0);
 
             const selectList = new SelectList(selectItems, Math.min(selectItems.length, 10), {
               selectedPrefix: (t) => theme.fg("accent", t),
@@ -568,15 +587,15 @@ export default function planMode(pi: ExtensionAPI) {
           enterPlanWithFile(filename, pi);
           saveAndSetActiveTools(PLAN_MODE_TOOLS);
           updateStatus(ctx);
-          if (ctx.hasUI) ctx.ui.notify(`Plan mode ON — creating plan "${titleFromFilename(filename)}"`, "info");
+          if (ctx.hasUI && !USER_CONFIG.ui.hideNotify) ctx.ui.notify(USER_CONFIG.labels.plan.notifyWithTitle.replace("{title}", titleFromFilename(filename)), USER_CONFIG.labels.plan.notifyType as "info" | "warning" | "error" | "success");
         }
       }
     },
   });
 
-  // ─── Shortcut: Shift+Tab ─────────────────────────────────────────────────
+  // ─── Shortcut: toggle plan mode ─────────────────────────────────────────────
 
-  pi.registerShortcut("shift+tab", {
+  pi.registerShortcut(USER_CONFIG.shortcuts.toggleMode, {
     description: "Toggle plan mode",
     handler: async (ctx) => {
       const current = getMode();

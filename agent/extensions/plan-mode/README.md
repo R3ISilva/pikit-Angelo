@@ -1,6 +1,6 @@
 # Plan Mode Extension
 
-Toggle plan mode via `/plan` command or `Shift+Tab`.
+Toggle plan mode via `/plan` command or configurable keyboard shortcut.
 
 ## Modes
 
@@ -18,7 +18,7 @@ Toggle plan mode via `/plan` command or `Shift+Tab`.
 
 ## Keyboard Shortcuts
 
-- `Shift+Tab` — Toggle plan mode on/off
+- Default: `Shift+Tab` — Toggle plan mode on/off (configurable via `shortcuts.toggleMode`)
 
 ## CLI Flag
 
@@ -73,3 +73,47 @@ A custom tool registered by this extension. The LLM calls `plan_complete()` afte
 ## State Persistence
 
 Mode and active plan file are stored in the session via `pi.appendEntry`. Plan content is persisted in the plan file on disk. Forking or resuming a session restores state and re-reads the plan file.
+
+## Configuration
+
+Create `~/.pi/agent/configs/plan-mode.json` to customize behavior. An example file is at the extension root (`plan-mode.example.json`).
+
+| Option | Type | Default | Description |
+|---|---|---|---|
+| `cleanup.cleanupOnComplete` | boolean | `false` | Delete the plan file after successful execution (via `plan_complete`) |
+| `ui.hideNotify` | boolean | `false` | Suppress toast notifications on mode transitions |
+| `ui.hideWidget` | boolean | `true` | Hide the widget when in plan/execute mode |
+| `shortcuts.toggleMode` | string | `"shift+tab"` | Keybinding action for toggling plan mode on/off |
+| `labels.plan.notify` | string | `"✓ Plan mode ON"` | Notify text when entering plan mode |
+| `labels.plan.notifyType` | string | `"info"` | Notify type: `"info"`, `"warning"`, `"error"`, `"success"` |
+| `labels.plan.notifyWithTitle` | string | `"✓ Active plan {title}"` | Notify text with `{title}` placeholder (creating named plan) |
+| `labels.plan.notifyLoaded` | string | `"✓ Active plan: {title}"` | Notify text when loading an existing plan (with `{title}` placeholder) |
+| `labels.plan.widget` | string | `"✓ Plan mode active"` | Widget text when no title |
+| `labels.plan.widgetWithTitle` | string | `"✓ Active plan: {title}"` | Widget text with `{title}` placeholder |
+| `labels.plan.widgetColor` | string | `"accent"` | Color for plan widget text (theme token or hex) |
+| `labels.execute.notify` | string | `"✓ Executing plan"` | Notify text when entering execute mode (no title) |
+| `labels.execute.notifyWithTitle` | string | `"✓ Executing plan: {title}"` | Notify text with `{title}` placeholder |
+| `labels.execute.notifyType` | string | `"info"` | Notify type: `"info"`, `"warning"`, `"error"`, `"success"` |
+| `labels.execute.widget` | string | `"✓ Executing plan"` | Widget text when no title |
+| `labels.execute.widgetWithTitle` | string | `"✓ Executing plan: {title}"` | Widget text with `{title}` placeholder |
+| `labels.execute.widgetColor` | string | `"muted"` | Color for execute widget text (theme token or hex) |
+| `labels.off.notify` | string | `"✓ Plan mode OFF"` | Notify text when turning off (fallback — contextual messages override this) |
+| `labels.off.notifyType` | string | `"info"` | Notify type: `"info"`, `"warning"`, `"error"`, `"success"` |
+
+### Color values
+
+Color fields accept both **pi theme tokens** and **hex values**:
+- Theme tokens: `"text"`, `"accent"`, `"success"`, `"error"`, `"muted"`, `"dim"`, `"separator"`, `"toolTitle"`, etc.
+- Hex values: `"#ff6600"`, `"#00ff88"`, etc. — converted to ANSI truecolor at render time
+
+### Label templates
+
+Fields ending in `WithTitle` support the `{title}` placeholder, which is replaced with the plan's display title at runtime. When no title is available, the plain `widget` field is used instead.
+
+### Notify types
+
+`notifyType` fields accept one of: `"info"`, `"warning"`, `"error"`, `"success"`. The type determines the visual treatment (color, icon) of the toast notification.
+
+### `cleanup.cleanupOnComplete`
+
+When `true`, the plan file is automatically deleted when the LLM calls `plan_complete()` and the mode transitions from execute back to off. When `false` (default), the plan file is preserved after execution.

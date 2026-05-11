@@ -1,4 +1,9 @@
-/** Config: tool allowlists, bash patterns, prompt templates, plan file constants. */
+/** Config: tool allowlists, bash patterns, prompt templates, plan file constants, user config. */
+
+import { readFileSync } from "node:fs";
+import { homedir } from "node:os";
+import { join } from "node:path";
+import type { PlanModeUserConfig } from "./types.js";
 
 // ─── Plan File Constants ────────────────────────────────────────────────────
 
@@ -120,3 +125,90 @@ Do NOT make any changes. Only produce a revised plan.`;
 
 /** customType value stored in session entries. */
 export const ENTRY_TYPE = "plan-mode";
+
+// ─── User Config ────────────────────────────────────────────────────────────
+
+const DEFAULT_CONFIG = {
+  CLEANUP: {
+    CLEANUP_ON_COMPLETE: false
+  },
+  UI: {
+    HIDE_NOTIFY: false,
+    HIDE_WIDGET: true
+  },
+  SHORTCUTS: {
+    TOGGLE_MODE: "shift+tab"
+  },
+  LABELS: {
+    PLAN: {
+      NOTIFY: "✓ Plan mode ON",
+      NOTIFY_TYPE: "info",
+      NOTIFY_WITH_TITLE: "✓ Active plan {title}",
+      NOTIFY_LOADED: "✓ Active plan: {title}",
+      WIDGET: "✓ Plan mode active",
+      WIDGET_WITH_TITLE: "✓ Active plan: {title}",
+      WIDGET_COLOR: "accent",
+    },
+    EXECUTE: {
+      NOTIFY: "✓ Executing plan",
+      NOTIFY_WITH_TITLE: "✓ Executing plan: {title}",
+      NOTIFY_TYPE: "info",
+      WIDGET: "✓ Executing plan",
+      WIDGET_WITH_TITLE: "✓ Executing plan: {title}",
+      WIDGET_COLOR: "muted",
+    },
+    OFF: {
+      NOTIFY: "✓ Plan mode OFF",
+      NOTIFY_TYPE: "info",
+    },
+  },
+};
+
+const CONFIG_PATH = join(homedir(), ".pi", "agent", "configs", "plan-mode.json");
+
+function loadUserConfig(): PlanModeUserConfig {
+  try {
+    const raw = readFileSync(CONFIG_PATH, "utf8");
+    return JSON.parse(raw);
+  } catch {
+    return {};
+  }
+}
+
+const userConfig = loadUserConfig();
+
+export const USER_CONFIG = {
+  cleanup: {
+    cleanupOnComplete: userConfig.cleanup?.cleanupOnComplete ?? DEFAULT_CONFIG.CLEANUP.CLEANUP_ON_COMPLETE,
+  },
+  ui: {
+    hideNotify: userConfig.ui?.hideNotify ?? DEFAULT_CONFIG.UI.HIDE_NOTIFY,
+    hideWidget: userConfig.ui?.hideWidget ?? DEFAULT_CONFIG.UI.HIDE_WIDGET,
+  },
+  shortcuts: {
+    toggleMode: userConfig.shortcuts?.toggleMode ?? DEFAULT_CONFIG.SHORTCUTS.TOGGLE_MODE,
+  },
+  labels: {
+    plan: {
+      notify: userConfig.labels?.plan?.notify ?? DEFAULT_CONFIG.LABELS.PLAN.NOTIFY,
+      notifyType: userConfig.labels?.plan?.notifyType ?? DEFAULT_CONFIG.LABELS.PLAN.NOTIFY_TYPE,
+      notifyWithTitle: userConfig.labels?.plan?.notifyWithTitle ?? DEFAULT_CONFIG.LABELS.PLAN.NOTIFY_WITH_TITLE,
+      notifyLoaded: userConfig.labels?.plan?.notifyLoaded ?? DEFAULT_CONFIG.LABELS.PLAN.NOTIFY_LOADED,
+      widget: userConfig.labels?.plan?.widget ?? DEFAULT_CONFIG.LABELS.PLAN.WIDGET,
+      widgetWithTitle: userConfig.labels?.plan?.widgetWithTitle ?? DEFAULT_CONFIG.LABELS.PLAN.WIDGET_WITH_TITLE,
+      widgetColor: userConfig.labels?.plan?.widgetColor ?? DEFAULT_CONFIG.LABELS.PLAN.WIDGET_COLOR,
+    },
+    execute: {
+      notify: userConfig.labels?.execute?.notify ?? DEFAULT_CONFIG.LABELS.EXECUTE.NOTIFY,
+      notifyWithTitle: userConfig.labels?.execute?.notifyWithTitle ?? DEFAULT_CONFIG.LABELS.EXECUTE.NOTIFY_WITH_TITLE,
+      notifyType: userConfig.labels?.execute?.notifyType ?? DEFAULT_CONFIG.LABELS.EXECUTE.NOTIFY_TYPE,
+      widget: userConfig.labels?.execute?.widget ?? DEFAULT_CONFIG.LABELS.EXECUTE.WIDGET,
+      widgetWithTitle: userConfig.labels?.execute?.widgetWithTitle ?? DEFAULT_CONFIG.LABELS.EXECUTE.WIDGET_WITH_TITLE,
+      widgetColor: userConfig.labels?.execute?.widgetColor ?? DEFAULT_CONFIG.LABELS.EXECUTE.WIDGET_COLOR,
+    },
+    off: {
+      notify: userConfig.labels?.off?.notify ?? DEFAULT_CONFIG.LABELS.OFF.NOTIFY,
+      notifyType: userConfig.labels?.off?.notifyType ?? DEFAULT_CONFIG.LABELS.OFF.NOTIFY_TYPE,
+    },
+  },
+};
