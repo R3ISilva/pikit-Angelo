@@ -116,11 +116,39 @@ export default function(pi) {
 }
 ```
 
+**8. Keybindings** — Matching keystrokes or displaying key labels:
+
+`ctx.ui.custom()` receives `(tui, theme, keybindings, done)` where `keybindings` is a `KeybindingsManager`. Use this — never read `keybindings.json` manually.
+
+**For input handling** inside `handleInput(data)`:
+```typescript
+if (this.keybindings.matches(data, "app.tools.expand")) {
+  // toggle expansion
+  return true; // consumed
+}
+```
+
+**For displaying key labels** (headers, tips, help text):
+```typescript
+import { KeybindingsManager } from "@mariozechler/pi-coding-agent";
+const keybindings = KeybindingsManager.create(); // reads config, merges defaults
+
+// Returns lowercase KeyId: "ctrl+p", "shift+tab"
+const key = keybindings.getKeys("app.model.cycleForward")[0];
+```
+
+`KeyId` values are always lowercase — use them as-is, no title-casing needed.
+
+**Common action IDs:** `app.model.cycleForward`, `app.model.cycleBackward`, `app.thinking.cycle`, `app.tools.expand`, `app.interrupt`, `app.clear`, `app.exit`, `app.editor.external`. Full list: `AppKeybinding` type export.
+
+**API:**
+- `matches(data, action)` → keystroke matches action? (respects user overrides)
+- `getKeys(action)` → KeyId[] for that action (respects user overrides)
+
 ### Don't over-engineer
 
 - Register only tools/commands/events explicitly asked for
 - No config abstraction unless extension already has one
-- No helper files unless logic genuinely can't fit in `index.ts`
 - In doubt: mirror simplest existing extension (`spinners`, `env-loader`)
 
 ### Documentation
