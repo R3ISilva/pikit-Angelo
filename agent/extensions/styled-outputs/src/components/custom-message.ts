@@ -58,7 +58,7 @@ export function createCustomMessage(
       cachedWidth = width;
       cachedExpanded = expanded;
       const hint = applyColor(t, CONFIG.customMessages.expandHintColor, ` • ${getExpandToggleKey()} to expand`);
-      cachedLines = [header, branchLine(loaded, t) + hint];
+      cachedLines = ["", header, branchLine(loaded, t) + hint];
       return cachedLines;
     }
 
