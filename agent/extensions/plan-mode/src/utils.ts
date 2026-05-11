@@ -13,7 +13,7 @@ export function isSafeCommand(command: string): boolean {
 
 /** Extract the raw text under the "Plan:" header from a message. Returns null if no plan found. */
 export function extractPlanText(message: string): string | null {
-  const planMatch = message.match(/^\s*(?:#{1,6}\s*)?(?:\*{1,2})?Plan:(?:\*{1,2})?\s*$/im);
+  const planMatch = message.match(/^\s*(?:#{1,6}\s*)?(?:\*{1,2})?Plan:(?:\*{1,2})?[^\n]*$/im);
   if (!planMatch) return null;
   const afterPlan = message.slice(planMatch.index! + planMatch[0].length);
   return afterPlan.trim();

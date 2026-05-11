@@ -251,7 +251,7 @@ export default function planMode(pi: ExtensionAPI) {
       }
       const filePath = join(planDir, filename);
       const title = titleFromFilename(filename);
-      const content = `# Plan: ${title}\n\n${planText}\n`;
+      const content = `# Plan: ${title}\n\n${planText.replace(/^\s*#{1,6}\s*Plan:[^\n]*\n?/, '').trimStart()}\n`;
       writeFileSync(filePath, content, "utf-8");
       updateStatus(ctx);
     }
