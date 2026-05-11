@@ -355,7 +355,7 @@ export default function planMode(pi: ExtensionAPI) {
     while (true) {
       const choice = await ctx.ui.custom<string | null>((tui, theme, kb, done) => {
         const border = new DynamicBorder((s: string) => theme.fg("border", s));
-        const title = new Text(theme.fg("text", theme.bold("Plan is ready. How'd you like to proceed?")), 1, 0);
+        const title = new Text(theme.fg("text", theme.bold("How'd you like to proceed?")), 1, 0);
 
         const selectList = new SelectList(options, Math.min(options.length, 10), {
           selectedPrefix: (t) => theme.fg("accent", t),
