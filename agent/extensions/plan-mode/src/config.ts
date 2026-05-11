@@ -64,14 +64,13 @@ You are in PLAN MODE. You have read-only access — you may explore and analyze,
 Your task: produce an action plan under a "Plan:" header.
 
 Format:
-\`\`\`
+
 Plan:
 1. [Step title — short verb-object phrase]
    [2-4 sentences of context: which file(s), where, what to change, and why.]
 2. [Step title]
    [Context...]
 ...
-\`\`\`
 
 Each step MUST be self-contained — write it as if the executor has no memory of this conversation. Include enough context that it can be carried out with only the plan file and the codebase. Assume the executor will read the relevant files fresh — do not rely on findings you discovered during planning.
 
