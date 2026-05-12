@@ -4,6 +4,9 @@ import { getVisibleWidth, currentTheme, applyColor, getExpandToggleKey } from ".
 import { branchLine, indentLine } from "./tool-shared.js";
 
 const CUSTOM_PREFIX_WIDTH = getVisibleWidth(CONFIG.customMessages.prefix) + 2;
+const HPAD = () => CONFIG.tools.general.horizontalPadding;
+const VPAD = () => CONFIG.tools.general.verticalPadding;
+const HPAD_STR = () => " ".repeat(HPAD());
 
 export interface CustomMessageRenderable {
   setExpanded(value: boolean): void;
@@ -37,10 +40,22 @@ export function createCustomMessage(
     md.invalidate();
   }
 
+  function addPadding(lines: string[]): string[] {
+    const hpad = HPAD();
+    const vpad = VPAD();
+    if (hpad === 0 && vpad === 0) return lines;
+    const pad = HPAD_STR();
+    const padded = hpad > 0 ? lines.map(l => pad + l) : lines;
+    const top = vpad > 0 ? Array(vpad).fill("") : [];
+    const bot = vpad > 0 ? Array(vpad).fill("") : [];
+    return [...top, ...padded, ...bot];
+  }
+
   function render(width: number): string[] {
     if (cachedLines && cachedWidth === width && cachedExpanded === expanded) return cachedLines;
 
     const t = currentTheme!;
+    const contentWidth = width - 2 * HPAD();
 
     // Line 1: " ● Custom tool  custom-type-name"
     const dot = applyColor(t, CONFIG.customMessages.prefixColor, CONFIG.customMessages.prefix);
@@ -49,7 +64,7 @@ export function createCustomMessage(
       ? (details as any).title
       : customType;
     const name = applyColor(t, CONFIG.customMessages.nameColor, displayName);
-    const header = ` ${dot} ${label}  ${name}`;
+    const header = `${dot} ${label} ${name}`;
 
     // Line 2: branch + status
     const loaded = applyColor(t, CONFIG.customMessages.labelColor, "Done");
@@ -58,15 +73,15 @@ export function createCustomMessage(
       cachedWidth = width;
       cachedExpanded = expanded;
       const hint = applyColor(t, CONFIG.customMessages.expandHintColor, ` • ${getExpandToggleKey()} to expand`);
-      cachedLines = ["", header, branchLine(loaded, t) + hint];
+      cachedLines = addPadding(["", header, branchLine(loaded, t) + hint]);
       return cachedLines;
     }
 
     // Expanded: header + branch + indented markdown content
-    const lines: string[] = [header, branchLine(loaded, t)];
+    const lines: string[] = ["", header, branchLine(loaded, t)];
 
-    if (width > CUSTOM_PREFIX_WIDTH) {
-      const mdLines = md.render(width - CUSTOM_PREFIX_WIDTH);
+    if (contentWidth > CUSTOM_PREFIX_WIDTH) {
+      const mdLines = md.render(contentWidth - CUSTOM_PREFIX_WIDTH);
       for (const line of mdLines) {
         lines.push(indentLine(applyColor(t, CONFIG.customMessages.outputColor, line)));
       }
@@ -86,7 +101,7 @@ export function createCustomMessage(
 
     cachedWidth = width;
     cachedExpanded = expanded;
-    cachedLines = lines;
+    cachedLines = addPadding(lines);
     return cachedLines;
   }
 
