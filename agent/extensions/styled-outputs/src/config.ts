@@ -21,7 +21,7 @@ export const DEFAULT_CONFIG = {
   
   // Skill invocation
   SKILLS: {
-    PREFIX: "●",
+    PREFIX: "✓",
     PREFIX_COLOR: "accent",
     TITLE_COLOR: "toolTitle",
     NAME_COLOR: "text",
@@ -32,7 +32,7 @@ export const DEFAULT_CONFIG = {
 
   // Custom message
   CUSTOM_MESSAGES: {
-    PREFIX: "●",
+    PREFIX: "✓",
     PREFIX_COLOR: "accent",
     TITLE_COLOR: "toolTitle",
     NAME_COLOR: "text",
@@ -57,12 +57,12 @@ export const DEFAULT_CONFIG = {
       COLOR: "muted",                                 // color for the spinner prefix
     },
     TOOL_SUCCESS: {
-      PREFIX: "●",                                    // icon for successful tool execution
+      PREFIX: "✓",                                    // icon for successful tool execution
       PREFIX_COLOR: "success",                        // color for the success prefix
       LABEL_COLOR: "success",                         // color for the success label (DONE on the 2nd line, the status line)
     },
     TOOL_ERROR: {
-      PREFIX: "●",                                    // icon for error tool execution
+      PREFIX: "✗",                                    // icon for error tool execution
       PREFIX_COLOR: "error",                          // color for the error prefix
       LABEL_COLOR: "error",                           // color for the error label (ERROR on the 2nd line, the status line)
     },

@@ -70,7 +70,7 @@ All fields are optional — omit any field to keep its default.
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
-| `skills.prefix` | `string` | `"●"` | Prefix icon |
+| `skills.prefix` | `string` | `"✓"` | Prefix icon |
 | `skills.prefixColor` | `string` | `"accent"` | Colour for the prefix |
 | `skills.titleColor` | `string` | `"toolTitle"` | Colour for the skill title |
 | `skills.nameColor` | `string` | `"text"` | Colour for the skill name in the title |
@@ -84,7 +84,7 @@ Styled rendering for all custom messages. Custom messages registered via `pi.reg
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
-| `customMessages.prefix` | `string` | `"●"` | Prefix icon |
+| `customMessages.prefix` | `string` | `"✓"` | Prefix icon |
 | `customMessages.prefixColor` | `string` | `"accent"` | Colour for the prefix |
 | `customMessages.titleColor` | `string` | `"customMessageLabel"` | Colour for the "Custom tool" label |
 | `customMessages.nameColor` | `string` | `"customMessageText"` | Colour for the custom type name |
@@ -98,10 +98,10 @@ Styled rendering for all custom messages. Custom messages registered via `pi.reg
 |-----|------|---------|-------------|
 | `tools.toolSpinnerPrefix.prefixChars` | `string[]` | `["·","✢","✳","✶","✻","✽"]` | Characters cycling in the loading spinner |
 | `tools.toolSpinnerPrefix.color` | `string` | `"muted"` | Colour for the spinner |
-| `tools.toolSuccess.prefix` | `string` | `"●"` | Icon for successful tool runs |
+| `tools.toolSuccess.prefix` | `string` | `"✓"` | Icon for successful tool runs |
 | `tools.toolSuccess.prefixColor` | `string` | `"success"` | Colour for the success icon |
 | `tools.toolSuccess.labelColor` | `string` | `"success"` | Colour for the success label (status line) |
-| `tools.toolError.prefix` | `string` | `"●"` | Icon for failed tool runs |
+| `tools.toolError.prefix` | `string` | `"✗"` | Icon for failed tool runs |
 | `tools.toolError.prefixColor` | `string` | `"error"` | Colour for the error icon |
 | `tools.toolError.labelColor` | `string` | `"error"` | Colour for the error label (status line) |
 | `tools.toolBranch.prefix` | `string` | `"└─"` | Icon before the status line |

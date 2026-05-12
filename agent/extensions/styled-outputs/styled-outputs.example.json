@@ -19,7 +19,7 @@
     "messageColor": "dim"
   },
   "skills": {
-    "prefix": "●",
+    "prefix": "✓",
     "prefixColor": "accent",
     "titleColor": "toolTitle",
     "nameColor": "text",
@@ -28,7 +28,7 @@
     "outputColor": "dim"
   },
   "customMessages": {
-    "prefix": "●",
+    "prefix": "✓",
     "prefixColor": "accent",
     "titleColor": "customMessageLabel",
     "nameColor": "customMessageText",
@@ -42,12 +42,12 @@
       "color": "muted"
     },
     "toolSuccess": {
-      "prefix": "●",
+      "prefix": "✓",
       "prefixColor": "success",
       "labelColor": "success"
     },
     "toolError": {
-      "prefix": "●",
+      "prefix": "✗",
       "prefixColor": "error",
       "labelColor": "error"
     },
