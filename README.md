@@ -121,6 +121,9 @@ A warm, earthy palette with terracotta primary (`#d67858`) and warm-white text (
 
 ## First-run setup
 
+> [!TIP]
+> For the best experience, I'd recommend using [Ghostty](https://ghostty.org/) as your terminal. It's a fast, feature-rich, and cross-platform terminal emulator that uses platform-native UI and GPU acceleration
+
 ### 1. Install pi
 
 ```bash
