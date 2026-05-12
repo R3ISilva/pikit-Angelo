@@ -166,9 +166,14 @@ export default function styledOutputs(pi: ExtensionAPI) {
           this.skillBlock.content,
           this.markdownTheme,
         );
-        // Strip Box padding + background — our component handles its own layout
-        this.paddingX = 0;
-        this.paddingY = 0;
+      }
+
+      // Strip Box padding — our component handles its own layout
+      this.paddingX = 0;
+      this.paddingY = 0;
+      if (CONFIG.tools.general.isThemeBackgroundVisible) {
+        this.bgFn = (text: string) => currentTheme!.bg("customMessageBg", text);
+      } else {
         this.bgFn = undefined;
       }
 
@@ -203,10 +208,14 @@ export default function styledOutputs(pi: ExtensionAPI) {
         this.markdownTheme,
       );
 
-      // Strip Box padding + background — our component handles its own layout
+      // Strip Box padding — our component handles its own layout
       this.paddingX = 0;
       this.paddingY = 0;
-      this.bgFn = undefined;
+      if (CONFIG.tools.general.isThemeBackgroundVisible) {
+        this.bgFn = (text: string) => currentTheme!.bg("customMessageBg", text);
+      } else {
+        this.bgFn = undefined;
+      }
 
       this._styledCustomComponent.setExpanded(this._expanded);
       this.clear();
