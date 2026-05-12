@@ -22,7 +22,7 @@
     "prefix": "✓",
     "prefixColor": "accent",
     "titleColor": "toolTitle",
-    "nameColor": "text",
+    "nameColor": "dim",
     "labelColor": "success",
     "expandHintColor": "dim",
     "outputColor": "dim"
@@ -30,8 +30,8 @@
   "customMessages": {
     "prefix": "✓",
     "prefixColor": "accent",
-    "titleColor": "customMessageLabel",
-    "nameColor": "customMessageText",
+    "titleColor": "toolTitle",
+    "nameColor": "dim",
     "labelColor": "success",
     "expandHintColor": "dim",
     "outputColor": "dim"

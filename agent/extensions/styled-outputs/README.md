@@ -73,7 +73,7 @@ All fields are optional — omit any field to keep its default.
 | `skills.prefix` | `string` | `"✓"` | Prefix icon |
 | `skills.prefixColor` | `string` | `"accent"` | Colour for the prefix |
 | `skills.titleColor` | `string` | `"toolTitle"` | Colour for the skill title |
-| `skills.nameColor` | `string` | `"text"` | Colour for the skill name in the title |
+| `skills.nameColor` | `string` | `"dim"` | Colour for the skill name in the title |
 | `skills.labelColor` | `string` | `"success"` | Colour for status labels (e.g. "DONE") |
 | `skills.expandHintColor` | `string` | `"dim"` | Colour for the expand/collapse hint |
 | `skills.outputColor` | `string` | `"dim"` | Colour for expanded content |
@@ -86,8 +86,8 @@ Styled rendering for all custom messages. Custom messages registered via `pi.reg
 |-----|------|---------|-------------|
 | `customMessages.prefix` | `string` | `"✓"` | Prefix icon |
 | `customMessages.prefixColor` | `string` | `"accent"` | Colour for the prefix |
-| `customMessages.titleColor` | `string` | `"customMessageLabel"` | Colour for the "Custom tool" label |
-| `customMessages.nameColor` | `string` | `"customMessageText"` | Colour for the custom type name |
+| `customMessages.titleColor` | `string` | `"toolTitle"` | Colour for the "Custom tool" label |
+| `customMessages.nameColor` | `string` | `"dim"` | Colour for the custom type name |
 | `customMessages.labelColor` | `string` | `"success"` | Colour for status labels (e.g. "Loaded") |
 | `customMessages.expandHintColor` | `string` | `"dim"` | Colour for the expand/collapse hint |
 | `customMessages.outputColor` | `string` | `"dim"` | Colour for expanded content |
