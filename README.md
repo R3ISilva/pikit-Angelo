@@ -27,7 +27,8 @@ agent/
 ├── APPEND_SYSTEM.md             # Coding guidelines appended to the system prompt every session
 ├── skills/
 │   ├── pi-extension-builder/    # Guidelines for building and modifying extensions in this repo
-│   └── add-ollama-cloud-model/  # Guidelines for adding an Ollama Cloud model to models.json
+│   ├── add-ollama-cloud-model/  # Guidelines for adding an Ollama Cloud model to models.json
+│   └── gh/                        # Read-only GitHub CLI access via enforced wrapper
 ├── themes/
 │   └── slop.json     # Custom warm color theme
 └── extensions/
@@ -103,6 +104,10 @@ Loaded when you ask pi to build or modify an extension in this repo. Covers file
 ### add-ollama-cloud-model
 
 Loaded when you ask pi to add an Ollama Cloud model. Fetches the model page, extracts capabilities, and writes the correct entry to `models.json`. Invoke explicitly with `/skill:add-ollama-cloud-model`.
+
+### gh
+
+Read-only GitHub CLI access via an enforced wrapper. Lists issues, PRs, repos, runs, releases, and more — but blocks all write, delete, and modify commands. Load when working with GitHub resources. Invoke explicitly with `/skill:gh`.
 
 ---
 

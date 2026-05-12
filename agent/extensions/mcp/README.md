@@ -2,6 +2,9 @@
 
 MCP bridge extension for pi. Connects to configured MCP servers on-demand and exposes their tools via a single proxy tool — keeping context window usage minimal — with optional per-server direct tool registration. Supports both **stdio** (local process) and **HTTP** (Streamable HTTP, MCP spec 2025-03-26) transports.
 
+> [!TIP]
+> Prefer native CLI commands wrapped in skills over MCP where possible. A well-documented script in a skill uses far fewer context tokens than an MCP server's full tool schema, and is composable, modifiable, and transparent — no protocol overhead required.
+
 ## How it works
 
 Instead of registering every MCP tool individually at startup (which burns the entire tool schema list into the context window whether or not they're used), mcp registers a single `mcp` proxy tool (~200 tokens). The LLM calls `mcp({ search: "keyword" })` to discover what's available, `mcp({ describe: "tool_name" })` to inspect schemas, and `mcp({ tool: "tool_name", args: '{"k":"v"}' })` to call tools. Servers connect lazily — only when a tool is actually needed.
