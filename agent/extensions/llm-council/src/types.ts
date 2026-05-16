@@ -1,3 +1,5 @@
+// ── Shared (rendering/display) ────────────────────────────────────────────
+
 export interface SpinnerUserConfig {
   prefixChars?: string[];
   interval?: number;
@@ -7,16 +9,6 @@ export interface SpinnerUserConfig {
 export interface PrefixUserConfig {
   prefix?: string;
   color?: string;
-}
-
-export interface ChairmanDisplayUserConfig {
-  icon?: string;
-  modelColor?: string;
-}
-
-export interface MemberUserConfig {
-  labelColor?: string;
-  modelColor?: string;
 }
 
 export interface StatusUserConfig {
@@ -49,24 +41,64 @@ export interface QuestionPreviewUserConfig {
   maxLength?: number;
 }
 
-export interface SystemPromptsUserConfig {
-  member?: string;
-  chairman?: string;
-}
-
-export interface LlmCouncilUserConfig {
-  members?: string[];
-  chairman?: string;
-  labels?: string[];
+export interface SharedUserConfig {
   spinner?: SpinnerUserConfig;
   successPrefix?: PrefixUserConfig;
   errorPrefix?: PrefixUserConfig;
   branch?: PrefixUserConfig;
-  chairmanDisplay?: ChairmanDisplayUserConfig;
-  member?: MemberUserConfig;
   status?: StatusUserConfig;
   toolHeader?: ToolHeaderUserConfig;
   expandHint?: ExpandHintUserConfig;
   questionPreview?: QuestionPreviewUserConfig;
-  systemPrompts?: SystemPromptsUserConfig;
+}
+
+// ── Member ────────────────────────────────────────────────────────────────
+
+export interface MemberDisplayUserConfig {
+  labelColor?: string;
+  modelColor?: string;
+}
+
+export interface ChairmanDisplayUserConfig {
+  icon?: string;
+  modelColor?: string;
+}
+
+export interface CouncilMemberUserConfig {
+  model: string;
+  label?: string;
+  systemPrompt?: string;
+}
+
+export interface MemberUserConfig {
+  council?: CouncilMemberUserConfig[];
+  defaultSystemPrompt?: string;
+  display?: MemberDisplayUserConfig;
+  tools?: string[] | null;
+  thinking?: string | null;
+  extensions?: string[] | null;
+  skills?: string[] | null;
+  contextFiles?: boolean;
+}
+
+// ── Chairman ───────────────────────────────────────────────────────────────
+
+export interface ChairmanUserConfig {
+  model?: string;
+  systemPrompt?: string;
+  exposePersonas?: boolean;
+  display?: ChairmanDisplayUserConfig;
+  tools?: string[] | null;
+  thinking?: string | null;
+  extensions?: string[] | null;
+  skills?: string[] | null;
+  contextFiles?: boolean;
+}
+
+// ── Top-level ──────────────────────────────────────────────────────────────
+
+export interface LlmCouncilUserConfig {
+  shared?: SharedUserConfig;
+  member?: MemberUserConfig;
+  chairman?: ChairmanUserConfig;
 }
