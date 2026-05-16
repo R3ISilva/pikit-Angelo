@@ -62,7 +62,8 @@ const BRANCH_PREFIX = "└─";
 const SPINNER_CHARS = ["·", "✢", "✳", "✶", "✻", "✽"];
 const SPINNER_FRAMES = [...SPINNER_CHARS, ...[...SPINNER_CHARS].reverse()];
 const SPINNER_INTERVAL = 80;
-const INDENT_WIDTH = getVisibleWidth(BRANCH_PREFIX) + 1; // "└─ "
+const MAX_QUESTION_PREVIEW_LENGTH = 40;
+const INDENT_WIDTH = getVisibleWidth(BRANCH_PREFIX) + 1;
 
 function successPrefix(theme: Theme): string {
   return `${applyColor(theme, "success", SUCCESS_PREFIX)} `;
@@ -508,7 +509,7 @@ export default function (pi: ExtensionAPI) {
     },
 
     renderCall(args, theme, ctx) {
-      const preview = args.question?.length > 40 ? `${args.question.slice(0, 40)}…` : (args.question || "…");
+      const preview = args.question?.length > MAX_QUESTION_PREVIEW_LENGTH ? `${args.question.slice(0, MAX_QUESTION_PREVIEW_LENGTH)}...` : (args.question || "...");
       const summary = applyColor(theme, "dim", preview);
 
       if (!ctx?.isPartial) {
@@ -541,12 +542,12 @@ export default function (pi: ExtensionAPI) {
       lines.push(...renderMemberTree(details, theme, frame, {
         memberSubLine: (m) =>
           m.status === "done"    ? `${applyColor(theme, "success", "Done")} ${applyColor(theme, "dim", formatElapsed(m.startedAt, m.doneAt))}` :
-          m.status === "working" ? applyColor(theme, "muted", "Working…") :
+          m.status === "working" ? applyColor(theme, "muted", "Working...") :
           m.status === "error"   ? `${applyColor(theme, "error", m.error?.slice(0, 60) || "Error")} ${applyColor(theme, "dim", formatElapsed(m.startedAt, m.doneAt))}` :
                                    applyColor(theme, "muted", "Pending"),
         chairmanSubLine:
           details.stage === "chairman" && details.chairman?.status === "working"
-            ? applyColor(theme, "muted", "Synthesizing…")
+            ? applyColor(theme, "muted", "Synthesising...")
             : applyColor(theme, "muted", "Waiting for members"),
       }));
       return makeText(ctx.lastComponent, lines.join("\n"));
@@ -578,7 +579,7 @@ export default function (pi: ExtensionAPI) {
         const lines = renderMemberTree(details, theme, frame, {
           memberSubLine: (m) =>
             m.status === "done"    ? `${applyColor(theme, "success", "Done")} ${applyColor(theme, "dim", formatElapsed(m.startedAt, m.doneAt))}` :
-            m.status === "working" ? applyColor(theme, "muted", "Working…") :
+            m.status === "working" ? applyColor(theme, "muted", "Working...") :
             m.status === "error"   ? `${applyColor(theme, "error", m.error?.slice(0, 60) || "Error")} ${applyColor(theme, "dim", formatElapsed(m.startedAt, m.doneAt))}` :
             applyColor(theme, "muted", "Pending"),
           chairmanSubLine: applyColor(theme, "muted", "Waiting for members"),
@@ -593,7 +594,7 @@ export default function (pi: ExtensionAPI) {
             m.status === "done"  ? `${applyColor(theme, "success", "Done")} ${applyColor(theme, "dim", formatElapsed(m.startedAt, m.doneAt))}` :
             `${applyColor(theme, "error", m.error?.slice(0, 60) || "Error")} ${applyColor(theme, "dim", formatElapsed(m.startedAt, m.doneAt))}`,
           chairmanSubLine:
-            details.chairman?.status === "working" ? applyColor(theme, "muted", "Synthesizing…") :
+            details.chairman?.status === "working" ? applyColor(theme, "muted", "Synthesizing...") :
             details.chairman?.status === "error"   ? applyColor(theme, "error", details.chairman.error?.slice(0, 60) || "Failed") :
             details.chairman?.status === "done"    ? applyColor(theme, "success", "Done") :
             applyColor(theme, "muted", "Waiting for members"),
