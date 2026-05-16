@@ -16,11 +16,11 @@
       "errorLabel": "Error",
       "errorColor": "error",
       "workingLabel": "Working...",
-      "workingColor": "muted",
-      "waitingIcon": "·",
+      "workingColor": "dim",
+      "waitingIcon": "↪",
       "waitingIconColor": "muted",
       "synthesizingLabel": "Synthesising...",
-      "waitingLabel": "Members deliberating...",
+      "waitingLabel": "Waiting for members...",
       "elapsedColor": "dim"
     },
     "toolHeader": { "titleColor": "toolTitle", "summaryColor": "dim" },
@@ -32,8 +32,8 @@
     "_comment": "Council member options: model (required), displayName (optional, human-readable name for UI), label (required), systemPrompt (optional, falls back to defaultSystemPrompt)",
     "council": [
       {
-        "model": "qwen3.5:cloud",
-        "displayName": "Qwen 3.5",
+        "model": "glm-5.1:cloud",
+        "displayName": "GLM 5.1/",
         "label": "Member A"
       },
       {
@@ -71,11 +71,11 @@
   },
 
   "chairman": {
-    "model": "glm-5.1:cloud",
-    "displayName": "GLM 5.1",
+    "model": "deepseek-v4-pro:cloud",
+    "displayName": "DeepSeek V4 Pro",
     "systemPrompt": "You are the Chairman of an LLM Council. Multiple AI models answered the same question anonymously, labeled A, B, C, etc. Synthesize the best answer, drawing on the strongest points from each response. Resolve any disagreements. Present a unified, well-reasoned answer. Do not mention which model gave which answer — treat them as anonymous perspectives.",
     "exposePersonas": true,
-    "display": { "icon": "👑", "modelColor": "dim" },
+    "display": { "icon": "", "labelColor": "accent", "modelColor": "dim" },
     "tools": [],
     "thinking": "medium",
     "extensions": ["env-loader"],
