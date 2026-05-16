@@ -80,6 +80,7 @@ function renderMemberTree(
       applyColor(theme, CONFIG.shared.status.waitingIconColor, CONFIG.shared.status.waitingIcon);
     lines.push(indentLine(`${icon} ${applyColor(theme, CONFIG.member.display.labelColor, m.label)} ${applyColor(theme, CONFIG.member.display.modelColor, m.displayName ?? m.model)}`));
     lines.push(indentLine(branchLine(opts.memberSubLine(m), theme)));
+    lines.push("");
   }
   if (details.chairman) {
     const cIcon =
@@ -132,7 +133,7 @@ function createExpandedView(details: CouncilDetails, theme: Theme, markdownTheme
     render(width: number): string[] {
       if (cachedLines && cachedWidth === width) return cachedLines;
       const cw = Math.max(1, width - INDENT_WIDTH * 2);
-      const lines: string[] = [];
+      const lines: string[] = [""];
 
       for (const { m, md } of memberMds) {
         const icon = m.status === "error" ? applyColor(theme, CONFIG.shared.status.errorColor, CONFIG.shared.errorPrefix.prefix) : applyColor(theme, CONFIG.shared.status.doneColor, CONFIG.shared.successPrefix.prefix);
@@ -144,6 +145,7 @@ function createExpandedView(details: CouncilDetails, theme: Theme, markdownTheme
           lines.push(indentLine(branchLine(`${applyColor(theme, CONFIG.shared.status.doneColor, CONFIG.shared.status.doneLabel)} ${applyColor(theme, CONFIG.shared.status.elapsedColor, formatElapsed(m.startedAt, m.doneAt))}`, theme)));
           if (md) for (const l of md.render(cw)) lines.push(indentLine(indentLine(l)));
         }
+        lines.push("");
       }
 
       if (details.chairman) {
@@ -542,7 +544,7 @@ export default function (pi: ExtensionAPI) {
       }
 
       const frame = ensureSpinner(ctx);
-      const lines = [toolHeader("LLM Council", summary, theme, spinnerDot(theme, frame))];
+      const lines = [toolHeader("LLM Council", summary, theme, spinnerDot(theme, frame)), ""];
 
       // Live progress from onUpdate
       if (!liveDetails) {
@@ -578,10 +580,10 @@ export default function (pi: ExtensionAPI) {
 
       // ── Error state ──────────────────────────────────────────────────
       if (details.stage === "error") {
-        const lines = renderMemberTree(details, theme, 0, {
+        const lines = ["", ...renderMemberTree(details, theme, 0, {
           memberSubLine: (m) => applyColor(theme, CONFIG.shared.status.errorColor, m.error?.slice(0, 60) || CONFIG.shared.status.errorLabel),
           chairmanSubLine: applyColor(theme, CONFIG.shared.status.workingColor, CONFIG.shared.status.waitingLabel),
-        });
+        })];
         return makeText(ctx?.lastComponent, lines.join("\n"));
       }
 
@@ -600,7 +602,7 @@ export default function (pi: ExtensionAPI) {
 
       // ── Progress: chairman synthesizing ────────────────────────────────
       if (details.stage === "chairman") {
-        const lines = renderMemberTree(details, theme, frame, {
+        const lines = ["", ...renderMemberTree(details, theme, frame, {
           memberSubLine: (m) =>
             m.status === "done"  ? `${applyColor(theme, CONFIG.shared.status.doneColor, CONFIG.shared.status.doneLabel)} ${applyColor(theme, CONFIG.shared.status.elapsedColor, formatElapsed(m.startedAt, m.doneAt))}` :
             `${applyColor(theme, CONFIG.shared.status.errorColor, m.error?.slice(0, 60) || CONFIG.shared.status.errorLabel)} ${applyColor(theme, CONFIG.shared.status.elapsedColor, formatElapsed(m.startedAt, m.doneAt))}`,
@@ -609,13 +611,13 @@ export default function (pi: ExtensionAPI) {
             details.chairman?.status === "error"   ? applyColor(theme, CONFIG.shared.status.errorColor, details.chairman.error?.slice(0, 60) || CONFIG.shared.status.errorLabel) :
             details.chairman?.status === "done"    ? applyColor(theme, CONFIG.shared.status.doneColor, CONFIG.shared.status.doneLabel) :
             applyColor(theme, CONFIG.shared.status.workingColor, CONFIG.shared.status.waitingLabel),
-        });
+        })];
         return makeText(ctx?.lastComponent, lines.join("\n"));
       }
 
       // ── Complete: collapsed ────────────────────────────────────────────
       if (!expanded) {
-        const lines = renderMemberTree(details, theme, 0, {
+        const lines = ["", ...renderMemberTree(details, theme, 0, {
           memberSubLine: (m) =>
             m.status === "done"  ? `${applyColor(theme, CONFIG.shared.status.doneColor, CONFIG.shared.status.doneLabel)} ${applyColor(theme, CONFIG.shared.status.elapsedColor, formatElapsed(m.startedAt, m.doneAt))}` :
             `${applyColor(theme, CONFIG.shared.status.errorColor, m.error?.slice(0, 60) || CONFIG.shared.status.errorLabel)} ${applyColor(theme, CONFIG.shared.status.elapsedColor, formatElapsed(m.startedAt, m.doneAt))}`,
@@ -623,7 +625,7 @@ export default function (pi: ExtensionAPI) {
             ? applyColor(theme, CONFIG.shared.status.errorColor, details.chairman.error?.slice(0, 60) || CONFIG.shared.status.errorLabel)
             : applyColor(theme, CONFIG.shared.status.doneColor, CONFIG.shared.status.doneLabel),
           chairmanSubLineSuffix: expandHint(theme),
-        });
+        })];
         return makeText(ctx?.lastComponent, lines.join("\n"));
       }
 
