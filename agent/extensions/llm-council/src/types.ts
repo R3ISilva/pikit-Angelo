@@ -20,9 +20,6 @@ export interface StatusUserConfig {
   workingColor?: string;
   waitingIcon?: string;
   waitingIconColor?: string;
-  pendingLabel?: string;
-  pendingColor?: string;
-  spawningLabel?: string;
   synthesizingLabel?: string;
   waitingLabel?: string;
   elapsedColor?: string;
@@ -61,11 +58,13 @@ export interface MemberDisplayUserConfig {
 
 export interface ChairmanDisplayUserConfig {
   icon?: string;
+  labelColor?: string;
   modelColor?: string;
 }
 
 export interface CouncilMemberUserConfig {
   model: string;
+  displayName?: string;
   label?: string;
   systemPrompt?: string;
 }
@@ -85,6 +84,7 @@ export interface MemberUserConfig {
 
 export interface ChairmanUserConfig {
   model?: string;
+  displayName?: string;
   systemPrompt?: string;
   exposePersonas?: boolean;
   display?: ChairmanDisplayUserConfig;

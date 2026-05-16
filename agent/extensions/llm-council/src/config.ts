@@ -30,14 +30,11 @@ export const DEFAULT_CONFIG = {
       ERROR_LABEL: "Error",
       ERROR_COLOR: "error",
       WORKING_LABEL: "Working...",
-      WORKING_COLOR: "muted",
-      WAITING_ICON: "·",
+      WORKING_COLOR: "dim",
+      WAITING_ICON: "↪",
       WAITING_ICON_COLOR: "muted",
-      PENDING_LABEL: "Pending",
-      PENDING_COLOR: "muted",
-      SPAWNING_LABEL: "Spawning",
-      SYNTHESIZING_LABEL: "Synthesizing...",
-      WAITING_LABEL: "Waiting for members",
+      SYNTHESIZING_LABEL: "Synthesising...",
+      WAITING_LABEL: "Waiting for members...",
       ELAPSED_COLOR: "dim",
     },
     TOOL_HEADER: {
@@ -60,9 +57,9 @@ export const DEFAULT_CONFIG = {
      * systemPrompt - string, optional, falls back to DEFAULT_SYSTEM_PROMPT
      */
     COUNCIL: [
-      { model: "gemma4:31b:cloud", label: "A"},
-      { model: "kimi-k2.6:cloud", label: "B" },
-      { model: "minimax-m2.7:cloud", label: "C" },
+      { model: "gemma4:31b:cloud", displayName: "Gemma 4 (31B)", label: "Member A"},
+      { model: "kimi-k2.6:cloud", displayName: "Kimi K2.6", label: "Member B" },
+      { model: "minimax-m2.7:cloud", displayName: "MiniMax M2.7", label: "Member C" },
     ],
     DEFAULT_SYSTEM_PROMPT:
       "You are a member of an LLM Council. Answer the user's question thoroughly and concisely. Provide your best reasoning.",
@@ -71,7 +68,7 @@ export const DEFAULT_CONFIG = {
       MODEL_COLOR: "dim",
     },
     TOOLS: ["read", "grep", "find", "ls", "bash", "web_search", "fetch_content", "get_search_content"],
-    THINKING: null,
+    THINKING: "medium",
     EXTENSIONS: ["env-loader", "web-access", "permission-gate", "protected-paths"],
     SKILLS: ["gh"],
     CONTEXT_FILES: false,
@@ -79,6 +76,7 @@ export const DEFAULT_CONFIG = {
 
   CHAIRMAN: {
     MODEL: "glm-5.1:cloud",
+    DISPLAY_NAME: "GLM 5.1",
     SYSTEM_PROMPT:
       "You are the Chairman of an LLM Council. Multiple AI models answered the same question anonymously, labeled A, B, C, etc. " +
       "Synthesize the best answer, drawing on the strongest points from each response. " +
@@ -86,11 +84,12 @@ export const DEFAULT_CONFIG = {
       "Do not mention which model gave which answer — treat them as anonymous perspectives.",
     EXPOSE_PERSONAS: true,
     DISPLAY: {
-      ICON: "👑",
+      ICON: "",
+      LABEL_COLOR: "accent",
       MODEL_COLOR: "dim",
     },
     TOOLS: [],
-    THINKING: null,
+    THINKING: "medium",
     EXTENSIONS: ["env-loader"],
     SKILLS: [],
     CONTEXT_FILES: false,
@@ -143,9 +142,6 @@ export const CONFIG = {
       workingLabel: userConfig.shared?.status?.workingLabel ?? DEFAULT_CONFIG.SHARED.STATUS.WORKING_LABEL,
       waitingIcon: userConfig.shared?.status?.waitingIcon ?? DEFAULT_CONFIG.SHARED.STATUS.WAITING_ICON,
       waitingIconColor: userConfig.shared?.status?.waitingIconColor ?? DEFAULT_CONFIG.SHARED.STATUS.WAITING_ICON_COLOR,
-      pendingLabel: userConfig.shared?.status?.pendingLabel ?? DEFAULT_CONFIG.SHARED.STATUS.PENDING_LABEL,
-      pendingColor: userConfig.shared?.status?.pendingColor ?? DEFAULT_CONFIG.SHARED.STATUS.PENDING_COLOR,
-      spawningLabel: userConfig.shared?.status?.spawningLabel ?? DEFAULT_CONFIG.SHARED.STATUS.SPAWNING_LABEL,
       synthesizingLabel: userConfig.shared?.status?.synthesizingLabel ?? DEFAULT_CONFIG.SHARED.STATUS.SYNTHESIZING_LABEL,
       waitingLabel: userConfig.shared?.status?.waitingLabel ?? DEFAULT_CONFIG.SHARED.STATUS.WAITING_LABEL,
       elapsedColor: userConfig.shared?.status?.elapsedColor ?? DEFAULT_CONFIG.SHARED.STATUS.ELAPSED_COLOR,
@@ -163,10 +159,11 @@ export const CONFIG = {
   },
 
   member: {
-    council: memberCouncil.map((m: CouncilMemberUserConfig | { model: string; label: string }, i: number) => ({
+    council: memberCouncil.map((m: CouncilMemberUserConfig, i: number) => ({
       model: m.model,
+      displayName: m.displayName,
       label: m.label ?? String(i + 1),
-      systemPrompt: ('systemPrompt' in m ? m.systemPrompt : undefined) ?? memberDefaultSystemPrompt,
+      systemPrompt: m.systemPrompt ?? memberDefaultSystemPrompt,
     })),
     defaultSystemPrompt: memberDefaultSystemPrompt,
     display: {
@@ -182,10 +179,12 @@ export const CONFIG = {
 
   chairman: {
     model: userConfig.chairman?.model ?? DEFAULT_CONFIG.CHAIRMAN.MODEL,
+    displayName: userConfig.chairman?.displayName ?? DEFAULT_CONFIG.CHAIRMAN.DISPLAY_NAME,
     systemPrompt: userConfig.chairman?.systemPrompt ?? DEFAULT_CONFIG.CHAIRMAN.SYSTEM_PROMPT,
     exposePersonas: userConfig.chairman?.exposePersonas ?? DEFAULT_CONFIG.CHAIRMAN.EXPOSE_PERSONAS,
     display: {
       icon: userConfig.chairman?.display?.icon ?? DEFAULT_CONFIG.CHAIRMAN.DISPLAY.ICON,
+      labelColor: userConfig.chairman?.display?.labelColor ?? DEFAULT_CONFIG.CHAIRMAN.DISPLAY.LABEL_COLOR,
       modelColor: userConfig.chairman?.display?.modelColor ?? DEFAULT_CONFIG.CHAIRMAN.DISPLAY.MODEL_COLOR,
     },
     tools: userConfig.chairman?.tools ?? DEFAULT_CONFIG.CHAIRMAN.TOOLS,
