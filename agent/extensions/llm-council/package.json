@@ -1,8 +1,29 @@
 {
   "name": "llm-council",
   "version": "1.0.0",
-  "private": true,
+  "description": "Convene an LLM Council — multiple models answer a question, then a chairman synthesizes their answers",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/adrianapan/pi-dev.git"
+  },
+  "bugs": {
+    "url": "https://github.com/adrianapan/pi-dev/issues"
+  },
+  "homepage": "https://github.com/adrianapan/pi-dev#readme",
+  "keywords": [
+    "pi",
+    "extension",
+    "llm-council",
+    "pi-package",
+    "pi-coding-agent"
+  ],
   "pi": {
-    "extensions": ["./src/index.ts"]
-  }
+    "extensions": [
+      "./src/index.ts"
+    ]
+  },
+  "dependencies": {},
+  "author": "Adrian Apan",
+  "license": "MIT"
 }
