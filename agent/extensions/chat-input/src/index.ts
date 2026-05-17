@@ -2,7 +2,7 @@ import { CustomEditor, type ExtensionAPI } from "@earendil-works/pi-coding-agent
 import type { TUI, EditorTheme } from "@earendil-works/pi-tui";
 import type { KeybindingsManager } from "@earendil-works/pi-coding-agent";
 import { visibleWidth } from "@earendil-works/pi-tui";
-import { CONFIG, COMPANION_PADDING, MIN_WIDTH_FOR_COMPANION } from "./config.js";
+import { CONFIG, COMPANION_PADDING, MIN_WIDTH_FOR_COMPANION, DEFAULT_CONFIG } from "./config.js";
 import { applyColor, CompanionAnimator } from "./utils.js";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────
@@ -98,8 +98,9 @@ class ChatInput extends CustomEditor {
 		for (const line of state.lines) {
 			lines.push(spaces + this.companionColor(line));
 		}
-		// Always reserve 3 lines so chat bar doesn't jump — art anchored to bottom
-		while (lines.length < 3) {
+		const topPadding = CONFIG.COMPANION_ENABLED ? CONFIG.COMPANION_TOP_PADDING : 0;
+		// Reserve topPadding lines so chat bar doesn't jump — art anchored to bottom
+		while (lines.length < topPadding) {
 			lines.unshift("");
 		}
 		return lines;
