@@ -154,11 +154,12 @@ export default function(pi) {
 }
 ```
 
-**8. Keybindings** — Matching keystrokes or displaying key labels:
+**8. Keybindings** — Matching keystrokes or displaying key labels.
 
-`ctx.ui.custom()` receives `(tui, theme, keybindings, done)` where `keybindings` is a `KeybindingsManager`. Use this — never read `keybindings.json` manually.
+**For input handling** inside `handleInput(data)`, `ctx.ui.custom()`, or `ctx.ui.setEditorComponent()` — the framework passes a `KeybindingsManager` instance via callback:
+- `ctx.ui.custom(tui, theme, keybindings, done)` → use the `keybindings` parameter
+- `ctx.ui.setEditorComponent(tui, theme, keybindings)` → use the `keybindings` parameter
 
-**For input handling** inside `handleInput(data)`:
 ```typescript
 if (this.keybindings.matches(data, "app.tools.expand")) {
   // toggle expansion
@@ -166,14 +167,21 @@ if (this.keybindings.matches(data, "app.tools.expand")) {
 }
 ```
 
-**For displaying key labels** (headers, tips, help text):
+**For displaying key labels** (headers, tips, help text) where no callback provides the instance — use `getKeybindings()` from `@earendil-works/pi-tui`:
+
 ```typescript
-import { KeybindingsManager } from "@earendil-works/pi-coding-agent";
-const keybindings = KeybindingsManager.create(); // reads config, merges defaults
+import { getKeybindings } from "@earendil-works/pi-tui";
+
+// Always call lazily inside a function (event handler, render), NOT at module top-level.
+// pi sets the global instance after module init; calling at top-level gets a fallback
+// instance without app keybindings (e.g. "app.model.cycleForward").
+const kb = getKeybindings();
 
 // Returns lowercase KeyId: "ctrl+p", "shift+tab"
-const key = keybindings.getKeys("app.model.cycleForward")[0];
+const key = kb.getKeys("app.model.cycleForward")[0] ?? "ctrl+p";
 ```
+
+**Why not `KeybindingsManager.create()`?** `KeybindingsManager` is exported as `export type` from `@earendil-works/pi-coding-agent` — it cannot be used as a value. `getKeybindings()` from `@earendil-works/pi-tui` returns the global instance that pi has configured with user overrides and app keybinding definitions.
 
 `KeyId` values are always lowercase — use them as-is, no title-casing needed.
 

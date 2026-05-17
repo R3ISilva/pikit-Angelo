@@ -1,7 +1,5 @@
 import type { Theme, ThemeColor } from "@earendil-works/pi-coding-agent";
-import { existsSync, readFileSync } from "node:fs";
-import { homedir } from "node:os";
-import { join } from "node:path";
+import { getKeybindings } from "@earendil-works/pi-tui";
 
 export function isHexColor(color: string): boolean {
   return typeof color === "string" && color.startsWith("#");
@@ -34,12 +32,5 @@ export function formatElapsed(startedAt: number | undefined, endedAt?: number): 
 }
 
 export function getExpandToggleKey(): string {
-  const kbPath = join(homedir(), ".pi", "agent", "keybindings.json");
-  try {
-    if (!existsSync(kbPath)) return "ctrl+o";
-    const bindings = JSON.parse(readFileSync(kbPath, "utf-8"));
-    return (bindings["app.tools.expand"] as string) ?? "ctrl+o";
-  } catch {
-    return "ctrl+o";
-  }
+  return getKeybindings().getKeys("app.tools.expand")[0] ?? "ctrl+o";
 }

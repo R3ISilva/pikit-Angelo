@@ -12,9 +12,7 @@ import type {
   TurnEndEvent,
   TurnStartEvent,
 } from "@earendil-works/pi-coding-agent";
-import { existsSync, readFileSync } from "node:fs";
-import { homedir } from "node:os";
-import { join } from "node:path";
+import { getKeybindings } from "@earendil-works/pi-tui";
 import { loadConfig } from "./config.js";
 import { pickVerb } from "./verbs.js";
 
@@ -50,21 +48,6 @@ function colorize(theme: any, semantic: string, text: string): string {
     return theme.fg(semantic, text);
   } catch {
     return text;
-  }
-}
-
-/**
- * Reads keybinding for thinking toggle from config.
- * @returns Keybinding string (e.g., "ctrl+t")
- */
-function getThinkingToggleKey(): string {
-  const path = join(homedir(), ".pi", "agent", "keybindings.json");
-  if (!existsSync(path)) return "ctrl+t";
-  try {
-    const bindings = JSON.parse(readFileSync(path, "utf-8"));
-    return (bindings["app.thinking.toggle"] as string) ?? "ctrl+t";
-  } catch {
-    return "ctrl+t";
   }
 }
 
@@ -293,7 +276,8 @@ export default function spinners(pi: ExtensionAPI) {
   // Hidden thinking block hint
   pi.on("session_start", async (_event: SessionStartEvent, ctx: ExtensionContext) => {
     if (!ctx.hasUI) return;
-    ctx.ui.setHiddenThinkingLabel(`→ ${getThinkingToggleKey()} to show thinking block`);
+    const toggleKey = getKeybindings().getKeys("app.thinking.toggle")[0] ?? "ctrl+t";
+    ctx.ui.setHiddenThinkingLabel(`→ ${toggleKey} to show thinking block`);
   });
 
   pi.on("turn_start", async (_event: TurnStartEvent, ctx: ExtensionContext) => {

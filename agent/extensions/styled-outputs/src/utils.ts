@@ -1,6 +1,5 @@
 import type { Theme, ThemeColor } from "@earendil-works/pi-coding-agent";
-import { existsSync, readFileSync } from "node:fs";
-import { homedir } from "node:os";
+import { getKeybindings } from "@earendil-works/pi-tui";
 import { join, relative } from "node:path";
 import { CONFIG } from "./config.js";
 
@@ -108,14 +107,7 @@ export function errorPrefix(theme: Theme): string {
 }
 
 export function getExpandToggleKey(): string {
-  const path = join(homedir(), ".pi", "agent", "keybindings.json");
-  if (!existsSync(path)) return "ctrl+o";
-  try {
-    const bindings = JSON.parse(readFileSync(path, "utf-8"));
-    return (bindings["app.tools.expand"] as string) ?? "ctrl+o";
-  } catch {
-    return "ctrl+o";
-  }
+  return getKeybindings().getKeys("app.tools.expand")[0] ?? "ctrl+o";
 }
 
 export function shortenPath(filePath: string, cwd: string): string {
