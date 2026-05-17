@@ -54,7 +54,7 @@ left and right segments are configured independently:
   },
 
   "segmentOptions": {
-    "path": { "mode": "basename" },
+    "path": { "mode": "full" },
     "git": {
       "showBranch": true,
       "showStaged": true,
@@ -73,7 +73,7 @@ See `footer.example.json` in this directory for a full annotated example.
 |---------|-------------|-------|
 | `pi` | π symbol in accent blue | — |
 | `model` | Model name in pink + `(provider)` in dim | No icon; provider omitted if unavailable |
-| `path` | Current working directory | `segmentOptions.path.mode`: `"basename"` (default) · `"abbreviated"` · `"full"` |
+| `path` | Current working directory | `segmentOptions.path.mode`: `"full"` (default) · `"abbreviated"` · `"basename"` |
 | `git` | Git branch and dirty indicators | `showBranch`, `showStaged`, `showUnstaged`, `showUntracked` (all bool) |
 | `context_pct` | Gradient bar + `X.X%` + max tokens | Bar fully configurable via `segmentOptions.contextBar` (see below). % and max tokens use `contextLabel` colour. Max tokens formatted with K/M suffix (e.g. `128k`, `2M`). Set `DEBUG_PCT` in `context.ts` to a number (0–100) to pin the bar at a fixed value for visual testing. |
 | `cost` | `$<amount>` | `$` dim, amount in `cost` colour (`muted` by default) |
