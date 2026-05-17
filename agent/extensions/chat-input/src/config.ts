@@ -67,8 +67,8 @@ export const COMPANION_PADDING = 3;
 export const MIN_WIDTH_FOR_COMPANION = 40;
 
 // ── animation timing (all in ms) ────────────────────────────────────
-export const DIP_INTERVAL_MS = 10000;
-export const RISE_INTERVAL_MS = 30000;
+export const DIP_INTERVAL_MS = 4000;
+export const RISE_INTERVAL_MS = 8000;
 export const EARS_MIN_DURATION_MS = 2000;
 export const EARS_MAX_DURATION_MS = 4000;
 export const FULL_MIN_DURATION_MS = 3000;
@@ -89,12 +89,12 @@ export const BLINK_MAX_DURATION_MS = 330;
 
 // expression transition: blink vs instant vs double-blink
 export const EXPR_BLINK_CHANCE = 0.50;
-export const EXPR_DOUBLE_BLINK_CHANCE = 0.15;   // remainder = instant
+export const EXPR_DOUBLE_BLINK_CHANCE = 0;     // disabled
 export const DOUBLE_BLINK_GAP_MIN_MS = 80;
 export const DOUBLE_BLINK_GAP_MAX_MS = 160;
 
 // wobble (ears phase)
-export const WOBBLE_RANGE = 8;
+export const WOBBLE_RANGE = 12;
 export const WOBBLE_MIN_INTERVAL_MS = 200;
 export const WOBBLE_MAX_INTERVAL_MS = 600;
 export const DIR_STEPS_MIN = 2;
@@ -105,8 +105,8 @@ export const EDGE_PAUSE_MAX_MS = 800;
 
 // face micro-drift
 export const FACE_DRIFT_RANGE = 3;
-export const FACE_DRIFT_MIN_INTERVAL_MS = 2000;
-export const FACE_DRIFT_MAX_INTERVAL_MS = 5000;
+export const FACE_DRIFT_MIN_INTERVAL_MS = 4000;
+export const FACE_DRIFT_MAX_INTERVAL_MS = 10000;
 
 // phase transitions
 export const EARS_TO_NONE_CHANCE = 0.15;
