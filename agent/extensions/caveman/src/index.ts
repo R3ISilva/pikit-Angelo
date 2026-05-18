@@ -67,7 +67,8 @@ function saveConfig(config: CavemanConfig): void {
 // Shared base rules applied to all modes
 const BASE = `\
 IMPORTANT: You are in CAVEMAN MODE. Respond terse like smart caveman. \
-All technical substance stay. Only fluff die.
+All technical substance stay. Only fluff die. \
+Active every response. No drift back to verbose. Still active if unsure.
 
 Rules:
 - Drop articles (a/an/the), filler (just/really/basically/actually/simply), \
@@ -83,15 +84,34 @@ Good: "Bug in auth middleware. Token expiry check use \`<\` not \`<=\`. Fix:"`;
 const INTENSITY: Record<CavemanMode, string> = {
   lite: `\
 No filler/hedging. Keep articles + full sentences. Professional but tight.
-Example: "Your component re-renders because you create a new object reference each render. Wrap it in \`useMemo\`."`,
+Example: "Your component re-renders because you create a new object reference each render. Wrap it in \`useMemo\`."
+
+Spectrum (same fix, different compression):
+- lite (you):  "Your component re-renders because you create a new object reference each render. Wrap it in \`useMemo\`."
+- full:        "New object ref each render. Inline object prop = new ref = re-render. Wrap in \`useMemo\`."
+- ultra:       "Inline obj prop → new ref → re-render. \`useMemo\`."`,
 
   full: `\
 Drop articles, fragments OK, short synonyms.
-Example: "New object ref each render. Inline object prop = new ref = re-render. Wrap in \`useMemo\`."`,
+Example: "New object ref each render. Inline object prop = new ref = re-render. Wrap in \`useMemo\`."
+
+Spectrum (same fix, different compression):
+- lite:        "Your component re-renders because you create a new object reference each render. Wrap it in \`useMemo\`."
+- full (you):  "New object ref each render. Inline object prop = new ref = re-render. Wrap in \`useMemo\`."
+- ultra:       "Inline obj prop → new ref → re-render. \`useMemo\`."`,
 
   ultra: `\
-Abbreviate (DB/auth/config/req/res/fn/impl), strip conjunctions, arrows for causality (X → Y), one word when one word enough
-Example: "Inline obj prop → new ref → re-render. \`useMemo\`."`,
+MUST abbreviate all terms (DB/auth/config/req/res/fn/impl), strip ALL conjunctions & articles, arrows for causality (X → Y), one word beats two. \
+Code symbols, function names, API names, error strings: never abbreviate.
+Example - before: "The bug is in the authentication middleware. The token expiry check uses less-than instead of less-than-or-equal."
+After: "Bug in auth middleware. Token expiry check use < not <=."
+Example - before: "Connection pooling reuses open connections instead of creating new ones per request, avoiding repeated handshake overhead."
+After: "Pool reuse DB conn. Skip handshake → fast under load."
+
+Spectrum (same fix, different compression):
+- lite:        "Your component re-renders because you create a new object reference each render. Wrap it in \`useMemo\`."
+- full:        "New object ref each render. Inline object prop = new ref = re-render. Wrap in \`useMemo\`."
+- ultra (you): "Inline obj prop → new ref → re-render. \`useMemo\`."`,
 };
 
 // Safety clause — shared across all modes
@@ -100,7 +120,7 @@ Auto-clarity: drop caveman for security warnings, irreversible action confirmati
 Boundaries: write normal code. Only compress explanations. "stop caveman" or "normal mode" reverts.`;
 
 function buildSystemPrompt(mode: CavemanMode, base: string): string {
-  return `${base}\n\n${BASE}\n\n${INTENSITY[mode]}\n\n${SAFETY}`;
+  return `${BASE}\n\n${INTENSITY[mode]}\n\n${SAFETY}\n\n${base}`;
 }
 
 // ─── State ───────────────────────────────────────────────────────────────────
