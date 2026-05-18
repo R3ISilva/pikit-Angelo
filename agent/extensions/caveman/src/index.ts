@@ -152,7 +152,7 @@ export default function caveman(pi: ExtensionAPI) {
       }
     }
 
-    if (sessionLevel !== null) {
+    if (sessionLevel !== null && VALID_LEVELS.has(sessionLevel)) {
       // Resuming a forked/switched session — restore exact state
       setState(sessionLevel !== "off", sessionLevel === "off" ? state.mode : sessionLevel);
     } else {
@@ -170,7 +170,7 @@ export default function caveman(pi: ExtensionAPI) {
     "before_agent_start",
     (event: BeforeAgentStartEvent): BeforeAgentStartEventResult => {
       if (!state.enabled) return {};
-      return { systemPrompt: buildSystemPrompt(state.mode, event.systemPrompt) };
+      return { systemPrompt: buildSystemPrompt(state.mode, event.systemPrompt ?? "") };
     },
   );
 
@@ -186,6 +186,8 @@ export default function caveman(pi: ExtensionAPI) {
 
       if (sub === "") {
         setState(!state.enabled, state.mode);
+      } else if (sub === "off") {
+        setState(false, state.mode);
       } else if (sub === "lite" || sub === "full" || sub === "ultra") {
         setState(true, sub);
       } else {
@@ -194,6 +196,7 @@ export default function caveman(pi: ExtensionAPI) {
             "Usage: /caveman [subcommand]",
             "",
             "  /caveman          Toggle on (full as default) / off",
+            "  /caveman off      Turn off caveman mode",
             "  /caveman lite     Professional, no fluff",
             "  /caveman full     Classic caveman (default)",
             "  /caveman ultra    Maximum compression",
