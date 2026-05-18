@@ -249,6 +249,16 @@ export default function styledOutputs(pi: ExtensionAPI) {
       lastBashExcludeFromContext = event.excludeFromContext;
     });
 
+    // Patch render to call updateDisplay first — ensures styled output from
+    // the very first frame (not the original bordered layout). Needed because
+    // updateDisplay is otherwise only triggered by appendOutput, meaning
+    // commands like `! sleep 5 && echo "test"` show unstyled for 5s.
+    const origRender = bashExecProto.render;
+    bashExecProto.render = function patchedRender(width: number) {
+      this.updateDisplay();
+      return origRender.call(this, width);
+    };
+
     // Replace updateDisplay with styled version matching tool call pattern
     bashExecProto.updateDisplay = function patchedBashUpdateDisplay() {
       const t = currentTheme!;
@@ -265,11 +275,19 @@ export default function styledOutputs(pi: ExtensionAPI) {
         // Stop original loader — we render our own status line
         this.loader.stop();
 
+        // Store TUI ref for requestRender in spinner (Loader had it but we stopped it)
+        this._tui = (this.loader as any).ui;
+
+        // Capture excludeFromContext per-instance — module-level variable
+        // changes on next command and would flip titles of previous components
+        this._excludeFromContext = lastBashExcludeFromContext;
+
         // Start header spinner
         this._spinnerFrame = 0;
         this._spinnerInterval = setInterval(() => {
           this._spinnerFrame = (this._spinnerFrame + 1) % SPINNER_FRAMES.length;
           this.updateDisplay();
+          this._tui?.requestRender();
         }, SPINNER_INTERVAL);
 
         this._styledInitDone = true;
@@ -289,7 +307,7 @@ export default function styledOutputs(pi: ExtensionAPI) {
       cc.clear();
 
       // --- Header: <prefix-icon> <Command|Shell> <dim-command> ---
-      const typeLabel = lastBashExcludeFromContext ? "Shell" : "Command";
+      const typeLabel = this._excludeFromContext ? "Shell" : "Command";
       const labelText = applyColor(t, bc.titleColor, t.bold(typeLabel));
       const cmdText = applyColor(t, tc.general.summaryColor, ` ${this.command}`);
 
@@ -308,7 +326,7 @@ export default function styledOutputs(pi: ExtensionAPI) {
       let statusLine: string;
       if (this.status === "running") {
         statusLine = branchLine(
-          applyColor(t, tc.general.outputColor, `Running... (${keyText("tui.select.cancel")} to cancel)`),
+          applyColor(t, tc.general.outputColor, "Running..."),
           t
         );
       } else if (this.status === "cancelled") {
