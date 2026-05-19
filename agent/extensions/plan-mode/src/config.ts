@@ -67,11 +67,11 @@ const DEFAULT_DESTRUCTIVE_PATTERNS: RegExp[] = [
 export const PLAN_MODE_PROMPT = `\
 You are in PLAN MODE. You have read-only access — you may explore and analyze, but you MUST NOT make any changes.
 
-Your task: produce an action plan under a "Plan:" header.
+Your task: produce an action plan.
 
-Format:
+You MUST begin the plan with exactly this heading on its own line:
 
-Plan:
+# Plan:
 1. [Step title — short verb-object phrase]
    [2-4 sentences of context: which file(s), where, what to change, and why.]
 2. [Step title]
@@ -117,7 +117,11 @@ ${planContent}
 
 Each step MUST be self-contained — write it as if the executor has no memory of this conversation. Include enough context that it can be carried out with only the plan file and the codebase. Assume the executor will read the relevant files fresh — do not rely on findings you discovered during planning.
 
-Revise the plan and output the full updated plan under a "Plan:" header.
+Revise the plan and output the full updated plan.
+
+You MUST begin the revised plan with exactly this heading on its own line:
+
+# Plan:
 
 Do NOT make any changes. Only produce a revised plan.`;
 }

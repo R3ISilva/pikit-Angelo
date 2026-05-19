@@ -19,6 +19,7 @@ import { PLAN_MODE_TOOLS, PLAN_MODE_PROMPT, PLAN_FILE_PREFIX, PLAN_DIR, buildExe
 import {
   isSafeCommand,
   extractPlanText,
+  isPlanLike,
   ensurePlanDir,
   titleFromFilename,
   listPlanFiles,
@@ -277,7 +278,7 @@ export default function planMode(pi: ExtensionAPI) {
 
     setRefining(false);
 
-    // Write plan file if plan text was found
+    // Write plan file if plan text was found (via heading or smart fallback)
     if (planText) {
       const planDir = ensurePlanDir();
       const activeFile = getActivePlanFile();
@@ -294,7 +295,10 @@ export default function planMode(pi: ExtensionAPI) {
       writeFileSync(filePath, content, "utf-8");
       updateStatus(ctx);
 
-      // Only show menu when a plan was actually produced
+      await showPlanMenu(ctx);
+    } else if (isPlanLike(text)) {
+      // Plan-like response without extractable heading — show menu so user isn't stuck
+      updateStatus(ctx);
       await showPlanMenu(ctx);
     }
   });

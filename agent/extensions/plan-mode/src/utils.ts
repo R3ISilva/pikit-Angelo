@@ -13,12 +13,26 @@ export function isSafeCommand(command: string): boolean {
     && !DESTRUCTIVE_PATTERNS.some((p) => p.test(command));
 }
 
-/** Extract the raw text under the "Plan:" header from a message. Returns null if no plan found. */
+/** Heuristic: does text look like a plan? (numbered steps, checkboxes, structured). */
+export function isPlanLike(text: string): boolean {
+  const lines = text.split('\n');
+  const numberedSteps = lines.filter(l => /^\s*\d+\.\s/.test(l));
+  if (numberedSteps.length >= 3 && text.length > 200) return true;
+  const checkboxes = lines.filter(l => /^\s*- \[[ xX]\]/.test(l));
+  if (checkboxes.length >= 3 && text.length > 150) return true;
+  return false;
+}
+
+/** Extract the raw text under the "Plan:" header from a message. Falls back to entire message if plan-like. Returns null if no plan found. */
 export function extractPlanText(message: string): string | null {
   const planMatch = message.match(/^\s*(?:#{1,6}\s*)?(?:\*{1,2})?Plan:(?:\*{1,2})?[^\n]*$/im);
-  if (!planMatch) return null;
-  const afterPlan = message.slice(planMatch.index! + planMatch[0].length);
-  return afterPlan.trim();
+  if (planMatch) {
+    const afterPlan = message.slice(planMatch.index! + planMatch[0].length);
+    return afterPlan.trim();
+  }
+  // Fallback: if message looks like a plan, use entire message
+  if (isPlanLike(message)) return message.trim();
+  return null;
 }
 
 // ─── Plan File I/O ────────────────────────────────────────────────────────────
