@@ -42,6 +42,7 @@ agent/
     ├── protected-paths/ # Blocks read/write access to sensitive files and directories
     ├── spinners/     # Rotating spinner verbs while the agent thinks
     ├── startup/      # Welcome header shown at session start
+    ├── subagents/    # Delegate tasks to specialized child agents (single, parallel, chain)
     └── web-access/   # Web search, page fetching, and PDF extraction
 ```
 
@@ -91,7 +92,11 @@ Toggle plan mode via `/plan` or via the shortcut. PLAN restricts tools to read-o
 
 ### spinners
 
-Replaces the default **Thinking** verb with random alternatives from a curated list, cycling periodically with a typewriter reveal. Shows Shows elapsed time and estimated token count as the turn progresses. Icon and colors are fully customisable via `spinners.json`. → [`README`](agent/extensions/spinners/README.md)
+Replaces the default **Thinking** verb with random alternatives from a curated list, cycling periodically with a typewriter reveal. Shows elapsed time and estimated token count as the turn progresses. Icon and colors are fully customisable via `spinners.json`. → [`README`](agent/extensions/spinners/README.md)
+
+### subagents
+
+Delegate tasks to specialized child pi processes that work independently with their own model, tools, extensions, and skills. Supports single (one agent, one task), parallel (up to 8 tasks, 4 concurrent), and chain (sequential steps with `{previous}` piping) modes. Child agents are defined as `.md` files with YAML frontmatter in `~/.pi/agent/agents/` or `.pi/agents/`. → [`README`](agent/extensions/subagents/README.md)
 
 ---
 

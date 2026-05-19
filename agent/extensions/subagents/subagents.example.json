@@ -17,13 +17,16 @@
       "errorColor": "error",
       "workingLabel": "Running...",
       "workingColor": "dim",
+      "waitingIcon": "↪",
+      "waitingIconColor": "muted",
       "elapsedColor": "muted",
       "countColor": "muted",
       "separatorColor": "dim"
     },
     "header": {
       "titleColor": "toolTitle",
-      "agentColor": "dim"
+      "agentColor": "accent",
+      "summaryColor": "muted"
     },
     "expandHint": { "color": "dim" }
   }

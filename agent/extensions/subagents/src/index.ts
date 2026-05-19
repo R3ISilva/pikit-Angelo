@@ -21,9 +21,9 @@ import { Markdown, Text } from "@earendil-works/pi-tui";
 import { Type } from "typebox";
 
 import { discoverAgents, formatAgentList } from "./agents.js";
-import { CONFIG } from "./config.js";
-import type { AgentConfig, SingleResult, SubagentDetails } from "./types.js";
-import { applyColor, formatElapsed, getExpandToggleKey, getVisibleWidth } from "./utils.js";
+import { CONFIG, MAX_PARALLEL_TASKS, MAX_CONCURRENCY, TASK_PREVIEW_LENGTH } from "./config.js";
+import type { AgentConfig, SingleResult, SubagentDetails, TaskItem } from "./types.js";
+import { applyColor, formatElapsed, getExpandToggleKey, getVisibleWidth, mapWithConcurrencyLimit, truncateParallelOutput, isFailedResult } from "./utils.js";
 
 // ── Derived constants (computed once from CONFIG) ────────────────────────
 
@@ -62,13 +62,71 @@ function lineCount(text: string | undefined, theme: Theme): string | null {
 function toolHeader(label: string, summary: string, theme: Theme, dot?: string, isError?: boolean): string {
   const d = dot ?? (isError ? errorPrefix(theme) : successPrefix(theme));
   const title = applyColor(theme, CONFIG.shared.header.titleColor, theme.bold(label));
-  return `${d}${title}${summary}`;
+  const s = summary ? applyColor(theme, CONFIG.shared.header.summaryColor, summary) : "";
+  return `${d}${title}${s}`;
 }
 
 function makeText(lastComponent: any, text: string): Text {
   const comp = lastComponent instanceof Text ? lastComponent : new Text("", 0, 0);
   comp.setText(text);
   return comp;
+}
+
+// ── Agent tree rendering (shared by renderCall and renderResult) ─────────
+
+function renderAgentTree(
+  details: SubagentDetails,
+  theme: Theme,
+  spinnerFrame: number,
+): string[] {
+  const lines: string[] = [];
+  for (const r of details.results) {
+    // Icon
+    let icon: string;
+    if (r.status === "done") {
+      icon = applyColor(theme, CONFIG.shared.successPrefix.color, CONFIG.shared.successPrefix.prefix);
+    } else if (r.status === "error") {
+      icon = applyColor(theme, CONFIG.shared.errorPrefix.color, CONFIG.shared.errorPrefix.prefix);
+    } else if (r.status === "working") {
+      icon = applyColor(theme, CONFIG.shared.spinner.color, SPINNER_FRAMES[spinnerFrame % SPINNER_FRAMES.length]);
+    } else {
+      icon = applyColor(theme, CONFIG.shared.status.waitingIconColor, CONFIG.shared.status.waitingIcon);
+    }
+
+    // Agent label
+    const agentLabel = r.agent;
+    const agentColored = applyColor(theme, CONFIG.shared.header.agentColor, agentLabel);
+
+    // Task preview (strip {previous} for chain)
+    let taskPreview = details.mode === "chain" ? r.task.replace(/\{previous\}/g, "") : r.task;
+    if (taskPreview.length > TASK_PREVIEW_LENGTH) {
+      taskPreview = taskPreview.slice(0, TASK_PREVIEW_LENGTH) + "...";
+    }
+    const taskPreviewColored = applyColor(theme, "dim", taskPreview);
+
+    lines.push(indentLine(`${icon} ${agentColored} ${taskPreviewColored}`));
+
+    // Status sub-line
+    let statusLine: string;
+    if (r.status === "done") {
+      const lc = lineCount(r.text, theme);
+      let st = applyColor(theme, CONFIG.shared.status.doneColor, CONFIG.shared.status.doneLabel);
+      if (lc) st += statusSep(theme) + lc;
+      st += statusSep(theme) + applyColor(theme, CONFIG.shared.status.elapsedColor, formatElapsed(r.startedAt, r.doneAt));
+      statusLine = st;
+    } else if (r.status === "error") {
+      statusLine = `${applyColor(theme, CONFIG.shared.status.errorColor, CONFIG.shared.status.errorLabel)} · ${applyColor(theme, CONFIG.shared.status.elapsedColor, formatElapsed(r.startedAt, r.doneAt))}`;
+    } else if (r.status === "working") {
+      statusLine = applyColor(theme, CONFIG.shared.status.workingColor, CONFIG.shared.status.workingLabel);
+    } else {
+      statusLine = applyColor(theme, CONFIG.shared.status.workingColor, "Waiting...");
+    }
+    lines.push(indentLine(branchLine(statusLine, theme)));
+
+    // Empty line between agents
+    lines.push("");
+  }
+  return lines;
 }
 
 // ── Spinner helpers ──────────────────────────────────────────────────────
@@ -101,38 +159,11 @@ function statusSep(theme: Theme): string {
   return applyColor(theme, CONFIG.shared.status.separatorColor, " • ");
 }
 
-function buildStatusLine(r: SingleResult, theme: Theme, includeHint: boolean): string {
-  const elapsed = applyColor(theme, CONFIG.shared.status.elapsedColor, formatElapsed(r.startedAt, r.doneAt));
-  const count = lineCount(r.text, theme);
-  const done = applyColor(theme, CONFIG.shared.status.doneColor, CONFIG.shared.status.doneLabel);
-
-  if (r.exitCode !== 0) {
-    const err = applyColor(theme, CONFIG.shared.status.errorColor, CONFIG.shared.status.errorLabel);
-    return branchLine(err + (includeHint ? expandHint(theme) : ""), theme);
-  }
-
-  let text = done;
-  if (count) text += statusSep(theme) + count;
-  text += statusSep(theme) + elapsed;
-  if (includeHint) text += expandHint(theme);
-  return branchLine(text, theme);
-}
-
-function buildCollapsedView(detail: SubagentDetails, theme: Theme): string[] {
-  const lines: string[] = [];
-  for (const r of detail.results) {
-    lines.push(buildStatusLine(r, theme, true));
-    if (r.exitCode !== 0 && r.error) {
-      lines.push(indentLine(applyColor(theme, CONFIG.shared.status.errorColor, r.error)));
-    }
-    lines.push("");
-  }
-  return lines;
-}
-
-function createExpandedView(details: SubagentDetails, theme: Theme, markdownTheme: any) {
-  const text = details.results[0]?.text?.trim();
-  const md = text ? new Markdown(text, 0, 0, markdownTheme) : null;
+function createMultiExpandedView(details: SubagentDetails, theme: Theme, markdownTheme: any) {
+  const memberMds = details.results.map((r) => ({
+    r,
+    md: r.status !== "error" && r.text ? new Markdown(r.text.trim(), 0, 0, markdownTheme) : null,
+  }));
 
   let cachedWidth: number | undefined;
   let cachedLines: string[] | undefined;
@@ -140,19 +171,49 @@ function createExpandedView(details: SubagentDetails, theme: Theme, markdownThem
   return {
     render(width: number): string[] {
       if (cachedLines && cachedWidth === width) return cachedLines;
-      const cw = Math.max(1, width - INDENT_WIDTH);
+      const cw = Math.max(1, width - INDENT_WIDTH * 2);
       const lines: string[] = [""];
 
-      for (const r of details.results) {
-        lines.push(buildStatusLine(r, theme, false));
+      for (const { r, md } of memberMds) {
+        const icon = r.status === "error"
+          ? applyColor(theme, CONFIG.shared.errorPrefix.color, CONFIG.shared.errorPrefix.prefix)
+          : applyColor(theme, CONFIG.shared.successPrefix.color, CONFIG.shared.successPrefix.prefix);
+        const agentLabel = r.agent;
+        let taskPreview = details.mode === "chain" ? r.task.replace(/\{previous\}/g, "") : r.task;
+        if (taskPreview.length > TASK_PREVIEW_LENGTH) {
+          taskPreview = taskPreview.slice(0, TASK_PREVIEW_LENGTH) + "...";
+        }
 
-        if (r.exitCode !== 0 && r.error) {
-          lines.push(indentLine(applyColor(theme, CONFIG.shared.status.errorColor, r.error)));
-        } else if (md) {
-          for (const l of md.render(cw)) lines.push(indentLine(l));
+        lines.push(indentLine(
+          `${icon} ${applyColor(theme, CONFIG.shared.header.agentColor, agentLabel)} ${applyColor(theme, "dim", taskPreview)}`,
+        ));
+
+        if (r.status === "error") {
+          lines.push(indentLine(branchLine(
+            `${applyColor(theme, CONFIG.shared.status.errorColor, CONFIG.shared.status.errorLabel)} · ${applyColor(theme, CONFIG.shared.status.elapsedColor, formatElapsed(r.startedAt, r.doneAt))}`,
+            theme,
+          )));
+          if (r.error) {
+            lines.push(indentLine(indentLine(applyColor(theme, CONFIG.shared.status.errorColor, r.error))));
+          }
+        } else {
+          const lc = lineCount(r.text, theme);
+          let statusText = applyColor(theme, CONFIG.shared.status.doneColor, CONFIG.shared.status.doneLabel);
+          if (lc) statusText += statusSep(theme) + lc;
+          statusText += statusSep(theme) + applyColor(theme, CONFIG.shared.status.elapsedColor, formatElapsed(r.startedAt, r.doneAt));
+          lines.push(indentLine(branchLine(statusText, theme)));
+
+          if (md) {
+            for (const l of md.render(cw)) lines.push(indentLine(indentLine(l)));
+          }
         }
         lines.push("");
       }
+
+      const aggregateElapsed = details.mode === "chain"
+        ? details.results.reduce((sum, r) => sum + ((r.doneAt ?? 0) - (r.startedAt ?? 0)), 0)
+        : Math.max(...details.results.map(r => r.doneAt ?? 0)) - Math.min(...details.results.map(r => r.startedAt || Infinity));
+      lines.push(applyColor(theme, "dim", `Worked for ${(aggregateElapsed / 1000).toFixed(1)}s`));
 
       cachedWidth = width;
       cachedLines = lines;
@@ -161,7 +222,7 @@ function createExpandedView(details: SubagentDetails, theme: Theme, markdownThem
     invalidate() {
       cachedWidth = undefined;
       cachedLines = undefined;
-      md?.invalidate();
+      for (const { md } of memberMds) md?.invalidate();
     },
   };
 }
@@ -243,6 +304,7 @@ async function runSubagent(
   parentModel?: string,
   parentThinking?: string,
   signal?: AbortSignal,
+  onUpdate?: (r: SingleResult) => void,
 ): Promise<SingleResult> {
   const baseArgs: string[] = ["--mode", "json", "-p", "--no-session"];
   const execConfig: ExecConfig = {
@@ -306,6 +368,15 @@ async function runSubagent(
               }
             }
           }
+          // Emit partial update for live progress
+          onUpdate?.({
+            agent: agent.name,
+            task,
+            exitCode: 0,
+            text,
+            startedAt,
+            doneAt: Date.now(),
+          });
         }
       };
 
@@ -361,10 +432,13 @@ async function runSubagent(
 // ── Tool registration ────────────────────────────────────────────────────
 
 export default function (pi: ExtensionAPI) {
+  // ── Live-details bridge (for renderCall live progress) ────────────
+  let liveDetails: SubagentDetails | null = null;
+
   pi.registerTool({
     name: "subagent",
     label: "Subagent",
-    description: `Delegate a task to a specialized subagent. Available agents: ${formatAgentList(discoverAgents(process.cwd()).agents)}`,
+    description: `Delegate tasks to specialized subagents. Available agents: ${formatAgentList(discoverAgents(process.cwd()).agents)}. Three modes: single (one agent), tasks (parallel, max ${MAX_PARALLEL_TASKS}, ${MAX_CONCURRENCY} concurrent), chain (sequential, use {previous} to pipe output).`,
     promptSnippet: "Delegate to a subagent",
     promptGuidelines: [
       "Use subagent for complex, multi-step tasks that match a specialized agent's description.",
@@ -373,25 +447,234 @@ export default function (pi: ExtensionAPI) {
       "Chain multiple subagent calls sequentially if needed — each result is returned to you.",
     ],
     parameters: Type.Object({
-      agent: Type.String({ description: "Name of the agent to delegate to" }),
-      task: Type.String({ description: "The task or question for the subagent" }),
+      agent: Type.Optional(Type.String({ description: "Name of the agent to delegate to (single mode)" })),
+      task: Type.Optional(Type.String({ description: "Task to delegate (single mode)" })),
+      tasks: Type.Optional(Type.Array(Type.Object({
+        agent: Type.String({ description: "Name of the agent to invoke" }),
+        task: Type.String({ description: "Task to delegate to the agent" }),
+        cwd: Type.Optional(Type.String({ description: "Working directory for this agent process" })),
+      }), { description: "Array of {agent, task} for parallel execution. Max 8 tasks, 4 concurrent." })),
+      chain: Type.Optional(Type.Array(Type.Object({
+        agent: Type.String({ description: "Name of the agent to invoke" }),
+        task: Type.String({ description: "Task with optional {previous} placeholder for prior step output" }),
+        cwd: Type.Optional(Type.String({ description: "Working directory for this agent process" })),
+      }), { description: "Array of {agent, task} for sequential execution. Use {previous} to reference prior output." })),
+      cwd: Type.Optional(Type.String({ description: "Working directory for the agent process (single mode)" })),
     }),
 
-    async execute(_toolCallId, params, signal, _onUpdate, ctx) {
+    async execute(_toolCallId, params, signal, onUpdate, ctx) {
       const { agents } = discoverAgents(ctx.cwd);
 
-      const agent = agents.get(params.agent);
+      const parentModel = ctx.model?.id;
+      const thinkingIdx = process.argv.indexOf("--thinking");
+      const parentThinking = thinkingIdx !== -1 ? process.argv[thinkingIdx + 1] : undefined;
+
+      // Validate exactly one mode
+      const hasChain = (params.chain?.length ?? 0) > 0;
+      const hasTasks = (params.tasks?.length ?? 0) > 0;
+      const hasSingle = Boolean(params.agent && params.task);
+      const modeCount = Number(hasChain) + Number(hasTasks) + Number(hasSingle);
+      if (modeCount !== 1) {
+        throw new Error("Provide exactly one mode: agent+task (single), tasks (parallel), or chain (sequential).");
+      }
+
+      // ── Chain mode ──────────────────────────────────────────────────
+      if (params.chain && params.chain.length > 0) {
+        const chain = params.chain as TaskItem[];
+        const results: SingleResult[] = chain.map((step, i) => ({
+          agent: step.agent,
+          task: step.task,
+          exitCode: 0,
+          text: "",
+          startedAt: 0,
+          doneAt: 0,
+          step: i + 1,
+          status: "pending" as const,
+        }));
+
+        const emit = () => {
+          liveDetails = { mode: "chain", results: results.map(r => ({ ...r })) };
+          onUpdate?.({ content: [{ type: "text", text: `Chain step ${results.filter(r => r.status !== "pending").length + 1}/${chain.length}` }], details: liveDetails });
+        };
+        emit();
+
+        let previousOutput = "";
+        const chainCwd = params.cwd ?? ctx.cwd;
+
+        for (let i = 0; i < chain.length; i++) {
+          const step = chain[i];
+          const stepCwd = step.cwd ?? chainCwd;
+          const agent = agents.get(step.agent);
+          if (!agent) {
+            results[i].status = "error";
+            results[i].error = `Unknown agent "${step.agent}"`;
+            results[i].startedAt = Date.now();
+            results[i].doneAt = Date.now();
+            emit();
+            return {
+              content: [{ type: "text", text: `Chain stopped at step ${i + 1}: unknown agent "${step.agent}"` }],
+              details: { mode: "chain" as const, results },
+              isError: true,
+            };
+          }
+
+          results[i].status = "working";
+          results[i].startedAt = Date.now();
+          emit();
+
+          const substitutedTask = step.task.replace(/\{previous\}/g, previousOutput);
+
+          try {
+            const result = await runSubagent(
+              agent,
+              substitutedTask,
+              stepCwd,
+              parentModel,
+              parentThinking,
+              signal,
+              (partial) => {
+                results[i].text = partial.text;
+                results[i].doneAt = Date.now();
+                emit();
+              },
+            );
+
+            if (result.exitCode !== 0) {
+              results[i].status = "error";
+              results[i].error = result.error;
+              results[i].text = result.text;
+              results[i].exitCode = result.exitCode;
+              results[i].doneAt = result.doneAt;
+              emit();
+              return {
+                content: [{ type: "text", text: `Chain stopped at step ${i + 1}` }],
+                details: { mode: "chain" as const, results },
+                isError: true,
+              };
+            }
+
+            results[i].status = "done";
+            results[i].text = result.text;
+            results[i].doneAt = result.doneAt;
+            previousOutput = result.text;
+            emit();
+          } catch (err: any) {
+            results[i].status = "error";
+            results[i].error = err?.message || "Unknown error";
+            results[i].doneAt = Date.now();
+            emit();
+            return {
+              content: [{ type: "text", text: `Chain stopped at step ${i + 1}` }],
+              details: { mode: "chain" as const, results },
+              isError: true,
+            };
+          }
+        }
+
+        const lastResult = results[results.length - 1];
+        return {
+          content: [{ type: "text", text: lastResult.text || "No output" }],
+          details: { mode: "chain" as const, results },
+        };
+      }
+
+      // ── Parallel mode ───────────────────────────────────────────────
+      if (params.tasks && params.tasks.length > 0) {
+        const tasks = params.tasks as TaskItem[];
+        if (tasks.length > MAX_PARALLEL_TASKS) {
+          throw new Error(`Maximum ${MAX_PARALLEL_TASKS} parallel tasks allowed, got ${tasks.length}.`);
+        }
+
+        const results: SingleResult[] = tasks.map((task) => ({
+          agent: task.agent,
+          task: task.task,
+          exitCode: 0,
+          text: "",
+          startedAt: 0,
+          doneAt: 0,
+          status: "pending" as const,
+        }));
+
+        const parallelCwd = params.cwd ?? ctx.cwd;
+
+        const emit = () => {
+          liveDetails = { mode: "parallel", results: results.map(r => ({ ...r })) };
+          onUpdate?.({ content: [{ type: "text", text: `Parallel ${results.filter(r => r.status === "done" || r.status === "error").length}/${tasks.length} done` }], details: liveDetails });
+        };
+        emit();
+
+        await mapWithConcurrencyLimit(tasks, MAX_CONCURRENCY, async (task, index) => {
+          const taskCwd = task.cwd ?? parallelCwd;
+          const agent = agents.get(task.agent);
+          if (!agent) {
+            results[index].status = "error";
+            results[index].error = `Unknown agent "${task.agent}"`;
+            results[index].startedAt = Date.now();
+            results[index].doneAt = Date.now();
+            emit();
+            return;
+          }
+
+          results[index].status = "working";
+          results[index].startedAt = Date.now();
+          emit();
+
+          try {
+            const result = await runSubagent(
+              agent,
+              task.task,
+              taskCwd,
+              parentModel,
+              parentThinking,
+              signal,
+              (partial) => {
+                results[index] = { ...results[index], text: partial.text, doneAt: Date.now() };
+                emit();
+              },
+            );
+
+            if (result.exitCode !== 0) {
+              results[index].status = "error";
+              results[index].error = result.error;
+              results[index].text = result.text;
+              results[index].exitCode = result.exitCode;
+              results[index].doneAt = result.doneAt;
+            } else {
+              results[index].status = "done";
+              results[index].text = result.text;
+              results[index].doneAt = result.doneAt;
+            }
+          } catch (err: any) {
+            results[index].status = "error";
+            results[index].error = err?.message || "Unknown error";
+            results[index].doneAt = Date.now();
+          }
+          emit();
+        });
+
+        // Build markdown summary
+        let summaryText = "";
+        for (const r of results) {
+          const statusLabel = r.status === "error" ? "failed" : "completed";
+          summaryText += `### ${r.agent} ${statusLabel}\n\n`;
+          summaryText += truncateParallelOutput(r.text || r.error || "No output");
+          summaryText += "\n\n";
+        }
+
+        return {
+          content: [{ type: "text", text: summaryText }],
+          details: { mode: "parallel" as const, results },
+        };
+      }
+
+      // ── Single mode ─────────────────────────────────────────────────
+      const agent = agents.get(params.agent!);
       if (!agent) {
         const available = [...agents.keys()].join(", ");
         throw new Error(`Unknown agent "${params.agent}". Available: ${available || "(none)"}`);
       }
 
-      // Extract parent model and thinking for inheritance
-      const parentModel = ctx.model ? `${ctx.model.id}:${ctx.model.provider}` : undefined;
-      const thinkingIdx = process.argv.indexOf("--thinking");
-      const parentThinking = thinkingIdx !== -1 ? process.argv[thinkingIdx + 1] : undefined;
-
-      const result = await runSubagent(agent, params.task, ctx.cwd, parentModel, parentThinking, signal);
+      const result = await runSubagent(agent, params.task!, params.cwd ?? ctx.cwd, parentModel, parentThinking, signal);
 
       return {
         content: [{ type: "text", text: result.text || result.error || "No output" }],
@@ -403,20 +686,62 @@ export default function (pi: ExtensionAPI) {
     },
 
     renderCall(args, theme, ctx) {
-      const agent = applyColor(theme, CONFIG.shared.header.agentColor, args.agent ?? "subagent");
-      const headerText = ` ${agent}`;
+      // ── Multi-agent modes ───────────────────────────────────────
+      if (args.chain || args.tasks) {
+        if (!ctx?.isPartial) {
+          clearSpinner(ctx);
+          liveDetails = null;
+          return makeText(ctx?.lastComponent, toolHeader("Subagent", "", theme));
+        }
+
+        const frame = ensureSpinner(ctx);
+        const lines: string[] = [];
+
+        if (!liveDetails) {
+          lines.push(toolHeader("Subagent", "", theme, spinnerDot(theme, frame)));
+          lines.push("");
+          lines.push(indentLine(branchLine(
+            applyColor(theme, CONFIG.shared.status.workingColor, "Starting..."),
+            theme,
+          )));
+        } else {
+          const done = liveDetails.results.filter(r => r.status === "done" || r.status === "error").length;
+          const total = liveDetails.results.length;
+          const headerSummary = liveDetails.mode === "chain"
+            ? ` step ${Math.min(done + 1, total)}/${total}`
+            : ` ${done}/${total} done`;
+          lines.push(toolHeader("Subagent", headerSummary, theme, spinnerDot(theme, frame)));
+          lines.push("");
+          lines.push(...renderAgentTree(liveDetails, theme, frame));
+        }
+
+        return makeText(ctx?.lastComponent, lines.join("\n"));
+      }
+
+      // ── Single mode ─────────────────────────────────────────────
+      const singleAgent = args.agent ?? "subagent";
+      const singleTask: string = typeof args.task === "string" ? args.task : "";
+      const preview = singleTask.length > TASK_PREVIEW_LENGTH
+        ? singleTask.slice(0, TASK_PREVIEW_LENGTH) + "..."
+        : singleTask;
 
       if (!ctx?.isPartial) {
         clearSpinner(ctx);
-        return makeText(ctx?.lastComponent, toolHeader("Subagent", headerText, theme));
+        return makeText(ctx?.lastComponent, toolHeader("Subagent", "", theme));
       }
 
       const frame = ensureSpinner(ctx);
-      const running = branchLine(
-        applyColor(theme, CONFIG.shared.status.workingColor, CONFIG.shared.status.workingLabel),
-        theme,
-      );
-      return makeText(ctx?.lastComponent, toolHeader("Subagent", headerText, theme, spinnerDot(theme, frame)) + "\n" + running);
+      const icon = applyColor(theme, CONFIG.shared.spinner.color, SPINNER_FRAMES[frame % SPINNER_FRAMES.length]);
+      const lines: string[] = [
+        toolHeader("Subagent", "", theme, spinnerDot(theme, frame)),
+        "",
+        indentLine(`${icon} ${applyColor(theme, CONFIG.shared.header.agentColor, singleAgent)} ${applyColor(theme, "dim", preview)}`),
+        indentLine(branchLine(
+          applyColor(theme, CONFIG.shared.status.workingColor, CONFIG.shared.status.workingLabel),
+          theme,
+        )),
+      ];
+      return makeText(ctx?.lastComponent, lines.join("\n"));
     },
 
     renderResult(result, options, theme, ctx) {
@@ -429,24 +754,57 @@ export default function (pi: ExtensionAPI) {
         return makeText(ctx?.lastComponent, text?.type === "text" ? text.text : "(no output)");
       }
 
-      const r = details.results[0];
+      // ── Chain & Parallel modes ────────────────────────────────────
+      if (details.mode === "chain" || details.mode === "parallel") {
+        const stillRunning = details.results.some(r => r.status === "working" || r.status === "pending");
+        const frame = ctx?.state?.spinnerFrame ?? 0;
+
+        if (stillRunning || !expanded) {
+          const lines: string[] = [""];
+          lines.push(...renderAgentTree(details, theme, stillRunning ? frame : 0));
+
+          if (!stillRunning) {
+            const aggregateElapsed = details.mode === "chain"
+              ? details.results.reduce((sum, r) => sum + ((r.doneAt ?? 0) - (r.startedAt ?? 0)), 0)
+              : Math.max(...details.results.map(r => r.doneAt ?? 0)) - Math.min(...details.results.map(r => r.startedAt || Infinity));
+            lines.push(applyColor(theme, "dim", `Worked for ${(aggregateElapsed / 1000).toFixed(1)}s • ${getExpandToggleKey()} to expand`));
+          }
+
+          return makeText(ctx?.lastComponent, lines.join("\n"));
+        }
+
+        // ── Expanded ──────────────────────────────────────────────
+        return createMultiExpandedView(details, theme, getMarkdownTheme());
+      }
+
+      // ── Single mode ───────────────────────────────────────────────
+      // Augment results with inferred status for tree rendering
+      const augmentedResults = details.results.map(r => ({
+        ...r,
+        status: r.status ?? (r.exitCode !== 0 ? "error" as const : "done" as const),
+      }));
 
       // No text yet (partial render during execution) — show running
-      if (!options?.expanded && !r.text && r.exitCode === 0) {
-        const running = branchLine(
-          applyColor(theme, CONFIG.shared.status.workingColor, CONFIG.shared.status.workingLabel),
-          theme,
-        );
-        return makeText(ctx?.lastComponent, running);
+      if (!options?.expanded && !augmentedResults[0].text && augmentedResults[0].exitCode === 0 && augmentedResults[0].status !== "error") {
+        augmentedResults[0].status = "working";
+        const singleDetails: SubagentDetails = { mode: "single", results: augmentedResults };
+        const lines: string[] = ["", ...renderAgentTree(singleDetails, theme, ctx?.state?.spinnerFrame ?? 0)];
+        return makeText(ctx?.lastComponent, lines.join("\n"));
       }
 
-      // ── Collapsed view ──────────────────────────────────────────────
+      // ── Collapsed view ──────────────────────────────────────────
       if (!expanded) {
-        return makeText(ctx?.lastComponent, buildCollapsedView(details, theme).join("\n"));
+        const singleDetails: SubagentDetails = { mode: "single", results: augmentedResults };
+        const lines: string[] = ["", ...renderAgentTree(singleDetails, theme, 0)];
+        const r = details.results[0];
+        const elapsed = formatElapsed(r.startedAt, r.doneAt);
+        lines.push(applyColor(theme, "dim", `Worked for ${elapsed} • ${getExpandToggleKey()} to expand`));
+        return makeText(ctx?.lastComponent, lines.join("\n"));
       }
 
-      // ── Expanded view ───────────────────────────────────────────────
-      return createExpandedView(details, theme, getMarkdownTheme());
+      // ── Expanded view ───────────────────────────────────────────
+      const singleDetails: SubagentDetails = { mode: "single", results: augmentedResults };
+      return createMultiExpandedView(singleDetails, theme, getMarkdownTheme());
     },
   });
 }

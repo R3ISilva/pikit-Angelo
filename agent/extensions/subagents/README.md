@@ -1,16 +1,24 @@
 # Subagents
 
-Delegate tasks to specialized subagents — child pi processes that work independently with their own model, tools, extensions, and skills.
+Delegate tasks to specialized subagents — child pi processes that work independently with their own model, tools, extensions, and skills. Supports single, parallel, and chain modes.
 
 ## How it works
 
-1. Parent LLM calls the `subagent` tool with an agent name and task
-2. Extension spawns a new pi process with agent-specific config (`--mode json -p --no-session`)
+1. Parent LLM calls the `subagent` tool in one of three modes
+2. Extension spawns child pi processes with agent-specific config (`--mode json -p --no-session`)
 3. System prompt written to temp file, passed via `--append-system-prompt`
 4. JSON line stream parsed — assistant `message_end` text collected
-5. Result returned to parent LLM for further use
+5. Results returned to parent LLM
 
 Child processes are guarded by `PI_SUBAGENT_DEPTH` — subagents cannot spawn further subagents.
+
+### Modes
+
+| Mode | Parameter | Description |
+|------|-----------|-------------|
+| **Single** | `agent` + `task` | One subagent, synchronous. Existing behavior. |
+| **Parallel** | `tasks` (array) | Up to 8 tasks, 4 concurrent. Results aggregated. |
+| **Chain** | `chain` (array) | Sequential steps. Use `{previous}` to pipe prior output forward. |
 
 ## Agent files
 
@@ -41,26 +49,43 @@ See `examples/scout.md` in this extension directory. Copy it to `.pi/agents/` (p
 
 ## Usage patterns
 
-### Natural language delegation
+### Single mode
 
-The parent LLM decides when to delegate. Just describe what you want:
-
-> "Use the scout agent to find all database connection code in this project"
-
-### Chaining
-
-Parent LLM can call `subagent` multiple times sequentially — each result is returned before the next call:
+Delegate one task to one agent:
 
 ```
-subagent(scout, "find auth modules")
-  → returns file list
-subagent(reviewer, "review auth/auth.ts for security issues")
-  → returns review
+subagent(agent="scout", task="Find all database connection code in this project")
 ```
+
+### Parallel mode
+
+Dispatch independent tasks concurrently (max 8, 4 at a time):
+
+```
+subagent(tasks=[
+  {agent="scout", task="Find all auth-related code"},
+  {agent="reviewer", task="Check db/pool.ts for connection leaks"},
+  {agent="tester", task="Run the existing test suite"}
+])
+```
+
+### Chain mode
+
+Sequential steps with output piping via `{previous}`:
+
+```
+subagent(chain=[
+  {agent="scout", task="Find all auth-related code"},
+  {agent="planner", task="Previous findings: {previous}. Design an OAuth migration plan."},
+  {agent="worker", task="Plan: {previous}. Implement the migration."}
+])
+```
+
+Chain stops on first error. `{previous}` is auto-substituted — never shown to the user.
 
 ### Auto-orchestration
 
-The parent LLM reads agent descriptions from the tool prompt and delegates autonomously when it sees a suitable match.
+The parent LLM reads agent descriptions from the tool prompt and chooses modes autonomously when it sees a suitable match.
 
 ## Configuration
 
@@ -85,17 +110,19 @@ All fields optional — defaults match styled-outputs/LLM Council conventions.
 | | `errorColor` | `"error"` | Error text color |
 | | `workingLabel` | `"Running..."` | Working status text |
 | | `workingColor` | `"dim"` | Working text color |
+| | `waitingIcon` | `"↪"` | Waiting/pending icon |
+| | `waitingIconColor` | `"muted"` | Waiting icon color |
 | | `elapsedColor` | `"muted"` | Elapsed time color |
 | | `countColor` | `"muted"` | Line count color |
 | | `separatorColor` | `"dim"` | "•" separator color |
 | `header` | `titleColor` | `"toolTitle"` | "Subagent" label color |
-| | `agentColor` | `"dim"` | Agent name color |
+| | `agentColor` | `"accent"` | Agent name color |
+| | `summaryColor` | `"muted"` | Progress summary color (e.g. "step 2/3") |
 | `expandHint` | `color` | `"dim"` | Expand hint color |
 
 ## Limitations
 
-- **Single-agent only** — one subagent per tool call
-- **Synchronous** — parent LLM waits for subagent to finish
 - **No recursion** — `PI_SUBAGENT_DEPTH` prevents subagents from spawning more subagents
 - **No builtin agents** — you must create agent `.md` files first
 - **`/reload` required** — new agent files are not picked up until you reload pi extensions
+- **Parallel cap** — max 8 tasks, 4 concurrent (internal limits, not user-configurable)

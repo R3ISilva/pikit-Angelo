@@ -29,13 +29,23 @@ export interface SingleResult {
   error?: string;
   startedAt: number;
   doneAt: number;
+  step?: number;
+  status?: "pending" | "working" | "done" | "error";
 }
 
 // ── Subagent details (for renderResult) ─────────────────────────────────
 
 export interface SubagentDetails {
-  mode: "single";
+  mode: "single" | "parallel" | "chain";
   results: SingleResult[];
+}
+
+// ── Task item (shared by chain and parallel params) ─────────────────────
+
+export interface TaskItem {
+  agent: string;
+  task: string;
+  cwd?: string;
 }
 
 // ── Shared UI config (mirrors LLM Council's SharedUserConfig) ───────────
@@ -61,11 +71,14 @@ export interface StatusUserConfig {
   elapsedColor?: string;
   countColor?: string;
   separatorColor?: string;
+  waitingIcon?: string;
+  waitingIconColor?: string;
 }
 
 export interface HeaderUserConfig {
   titleColor?: string;
   agentColor?: string;
+  summaryColor?: string;
 }
 
 export interface ExpandHintUserConfig {

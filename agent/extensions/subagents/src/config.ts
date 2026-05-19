@@ -31,10 +31,13 @@ export const DEFAULT_CONFIG = {
       ELAPSED_COLOR: "muted",
       COUNT_COLOR: "muted",
       SEPARATOR_COLOR: "dim",
+      WAITING_ICON: "↪",
+      WAITING_ICON_COLOR: "muted",
     },
     HEADER: {
       TITLE_COLOR: "toolTitle",
-      AGENT_COLOR: "dim",
+      AGENT_COLOR: "accent",
+      SUMMARY_COLOR: "muted",
     },
     EXPAND_HINT: {
       COLOR: "dim",
@@ -42,6 +45,10 @@ export const DEFAULT_CONFIG = {
     BRANCH: {
       PREFIX: "└─",
       COLOR: "separator",
+    },
+    WAITING_ICON: {
+      ICON: "↪",
+      COLOR: "muted",
     },
   },
 };
@@ -51,6 +58,11 @@ export const DEFAULT_CONFIG = {
 export const DEFAULT_AGENT_TOOLS = ["read", "grep", "find", "ls", "web_search", "fetch_content", "get_search_content"];
 export const DEFAULT_AGENT_EXTENSIONS = ["env-loader", "web-access", "permission-gate", "protected-paths"];
 export const DEFAULT_AGENT_SKILLS: string[] = [];
+
+export const MAX_PARALLEL_TASKS = 8;
+export const MAX_CONCURRENCY = 4;
+export const PER_TASK_OUTPUT_CAP = 50 * 1024; // 50KB
+export const TASK_PREVIEW_LENGTH = 40;
 
 // ── Load & merge ──────────────────────────────────────────────────────
 
@@ -92,10 +104,13 @@ export const CONFIG = {
       elapsedColor: userConfig.shared?.status?.elapsedColor ?? DEFAULT_CONFIG.SHARED.STATUS.ELAPSED_COLOR,
       countColor: userConfig.shared?.status?.countColor ?? DEFAULT_CONFIG.SHARED.STATUS.COUNT_COLOR,
       separatorColor: userConfig.shared?.status?.separatorColor ?? DEFAULT_CONFIG.SHARED.STATUS.SEPARATOR_COLOR,
+      waitingIcon: userConfig.shared?.status?.waitingIcon ?? DEFAULT_CONFIG.SHARED.STATUS.WAITING_ICON,
+      waitingIconColor: userConfig.shared?.status?.waitingIconColor ?? DEFAULT_CONFIG.SHARED.STATUS.WAITING_ICON_COLOR,
     },
     header: {
       titleColor: userConfig.shared?.header?.titleColor ?? DEFAULT_CONFIG.SHARED.HEADER.TITLE_COLOR,
       agentColor: userConfig.shared?.header?.agentColor ?? DEFAULT_CONFIG.SHARED.HEADER.AGENT_COLOR,
+      summaryColor: userConfig.shared?.header?.summaryColor ?? DEFAULT_CONFIG.SHARED.HEADER.SUMMARY_COLOR,
     },
     expandHint: {
       color: userConfig.shared?.expandHint?.color ?? DEFAULT_CONFIG.SHARED.EXPAND_HINT.COLOR,

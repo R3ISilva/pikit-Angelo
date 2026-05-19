@@ -1,5 +1,7 @@
 import type { Theme, ThemeColor } from "@earendil-works/pi-coding-agent";
 import { getKeybindings } from "@earendil-works/pi-tui";
+import type { SingleResult } from "./types.js";
+import { PER_TASK_OUTPUT_CAP } from "./config.js";
 
 function isHexColor(color: string): boolean {
   return typeof color === "string" && color.startsWith("#");
@@ -26,11 +28,50 @@ export function getVisibleWidth(text: string): number {
 }
 
 export function formatElapsed(startedAt: number | undefined, endedAt?: number): string {
-  if (!startedAt) return "";
+  if (startedAt == null) return "";
   const ms = (endedAt ?? Date.now()) - startedAt;
   return `${(ms / 1000).toFixed(1)}s`;
 }
 
 export function getExpandToggleKey(): string {
   return getKeybindings().getKeys("app.tools.expand")[0] ?? "ctrl+o";
+}
+
+// ── Concurrent map ─────────────────────────────────────────────────────
+
+export async function mapWithConcurrencyLimit<TIn, TOut>(
+  items: TIn[],
+  concurrency: number,
+  fn: (item: TIn, index: number) => Promise<TOut>,
+): Promise<TOut[]> {
+  const results: TOut[] = new Array(items.length);
+  let nextIndex = 0;
+
+  async function worker(): Promise<void> {
+    while (true) {
+      const i = nextIndex++;
+      if (i >= items.length) return;
+      results[i] = await fn(items[i], i);
+    }
+  }
+
+  const workers = Array.from({ length: Math.min(concurrency, items.length) }, () => worker());
+  await Promise.all(workers);
+  return results;
+}
+
+// ── Output truncation ──────────────────────────────────────────────────
+
+export function truncateParallelOutput(output: string): string {
+  const byteLen = Buffer.byteLength(output, "utf8");
+  if (byteLen <= PER_TASK_OUTPUT_CAP) return output;
+  const truncated = Buffer.from(output.slice(0, PER_TASK_OUTPUT_CAP), "utf8");
+  const omitted = byteLen - truncated.byteLength;
+  return truncated.toString("utf8") + `\n\n[Output truncated: ${omitted} bytes omitted. Full output preserved in tool details.]`;
+}
+
+// ── Result check ───────────────────────────────────────────────────────
+
+export function isFailedResult(r: SingleResult): boolean {
+  return r.exitCode !== 0 || r.status === "error";
 }
