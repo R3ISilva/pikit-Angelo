@@ -3,17 +3,6 @@ name: gh
 description: Read-only GitHub CLI access via gh. Only commands that do not write, delete, or modify are allowed. Use when working with GitHub repos, issues, PRs, actions, releases, or other GitHub resources.
 ---
 
-## Setup
-
-Before using this skill, verify `gh` is installed and authenticated:
-
-```bash
-gh --version     # should print a version
-gh auth status   # should show you're logged in
-```
-
-If either fails, install `gh` (`brew install gh`) or authenticate (`gh auth login`) before continuing.
-
 ## Usage
 
 **Always use `./scripts/gh-ro` instead of raw `gh`.** The wrapper enforces read-only access — it inspects every command and rejects anything that writes, deletes, or modifies.
