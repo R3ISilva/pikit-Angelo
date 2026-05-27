@@ -378,6 +378,9 @@ export default function planMode(pi: ExtensionAPI) {
     ];
 
     while (true) {
+      // Guard: mode may have changed externally (shortcut, /plan off) while awaiting input
+      if (getMode() !== "plan") return;
+
       const choice = await ctx.ui.custom<string | null>((tui, theme, kb, done) => {
         const border = new DynamicBorder((s: string) => theme.fg("border", s));
         const title = new Text(theme.fg("text", theme.bold("How'd you like to proceed?")), 1, 0);
