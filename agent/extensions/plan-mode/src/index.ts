@@ -420,7 +420,11 @@ export default function planMode(pi: ExtensionAPI) {
 
       if (choice === "execute") {
         enterExecuteMode(ctx);
-        pi.sendUserMessage("Execute the plan steps now.");
+        // Defer to next tick — agent may still be processing inside agent_end handler.
+        // setTimeout lets the handler return and agent transition to idle before sending.
+        setTimeout(() => {
+          pi.sendUserMessage("Execute the plan steps now.");
+        }, 0);
         return;
       } else if (choice === "refine") {
         setRefining(true);
