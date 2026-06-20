@@ -1,0 +1,29 @@
+{
+  "name": "chat-mode",
+  "version": "1.0.0",
+  "description": "Toggle chat mode: read-only conversational access — chat, explore, search the web, without making any changes",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/adrianapan/pi-dev.git"
+  },
+  "bugs": {
+    "url": "https://github.com/adrianapan/pi-dev/issues"
+  },
+  "homepage": "https://github.com/adrianapan/pi-dev#readme",
+  "keywords": [
+    "pi",
+    "extension",
+    "chat-mode",
+    "pi-package",
+    "pi-coding-agent"
+  ],
+  "pi": {
+    "extensions": [
+      "./src/index.ts"
+    ]
+  },
+  "dependencies": {},
+  "author": "Adrian Apan",
+  "license": "MIT"
+}

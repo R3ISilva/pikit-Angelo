@@ -49,6 +49,7 @@ export type StatusLineSegmentId =
   | "thinking"
   | "caveman"
   | "plan_mode"
+  | "chat_mode"
   | "separator"
   | `text:${string}`;
 

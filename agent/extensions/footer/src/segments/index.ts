@@ -10,6 +10,7 @@ import { contextPctSegment, contextTotalSegment } from "./context.js";
 import { separatorSegment } from "./separator.js";
 import { cavemanSegment } from "./caveman.js";
 import { planModeSegment } from "./plan-mode.js";
+import { chatModeSegment } from "./chat-mode.js";
 
 const SEGMENTS = {
   pi: piSegment,
@@ -28,6 +29,7 @@ const SEGMENTS = {
   separator: separatorSegment,
   caveman: cavemanSegment,
   plan_mode: planModeSegment,
+  chat_mode: chatModeSegment,
 };
 
 export function renderSegment(id: StatusLineSegmentId, ctx: SegmentContext): RenderedSegment {

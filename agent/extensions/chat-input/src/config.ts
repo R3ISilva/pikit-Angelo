@@ -8,9 +8,12 @@ export const DEFAULT_CONFIG = {
 	EXTRA_MENU_INDENT: 1,
 	BORDER_COLOR: "border" as const,
 	PREFIX_COLOR: "accent" as const,
+	PLAN_MODE_PREFIX: "\u23F8",
 	PLAN_MODE_BORDER_COLOR: "customMessageLabel" as const,
 	PLAN_MODE_PREFIX_COLOR: "customMessageLabel" as const,
-	PLAN_MODE_PREFIX: "\u23F8",
+	CHAT_MODE_PREFIX: "\u00BB",
+	CHAT_MODE_BORDER_COLOR: "chatModeBorder" as const,
+	CHAT_MODE_PREFIX_COLOR: "chatModeBorder" as const,
 	PREFIX: "\u276F",
 	BOXED_VIEW: true,
 	COMPANION_ENABLED: false,
@@ -28,6 +31,9 @@ interface ChatInputUserConfig {
 	planModeBorderColor?: string;
 	planModePrefixColor?: string;
 	planModePrefix?: string;
+	chatModeBorderColor?: string;
+	chatModePrefixColor?: string;
+	chatModePrefix?: string;
 	prefix?: string;
 	companion?: {
 		enabled?: boolean;
@@ -57,6 +63,9 @@ export const CONFIG = {
 	PLAN_MODE_BORDER_COLOR: (userConfig.planModeBorderColor ?? DEFAULT_CONFIG.PLAN_MODE_BORDER_COLOR) as string,
 	PLAN_MODE_PREFIX_COLOR: (userConfig.planModePrefixColor ?? DEFAULT_CONFIG.PLAN_MODE_PREFIX_COLOR) as string,
 	PLAN_MODE_PREFIX: userConfig.planModePrefix ?? DEFAULT_CONFIG.PLAN_MODE_PREFIX,
+	CHAT_MODE_BORDER_COLOR: (userConfig.chatModeBorderColor ?? DEFAULT_CONFIG.CHAT_MODE_BORDER_COLOR) as string,
+	CHAT_MODE_PREFIX_COLOR: (userConfig.chatModePrefixColor ?? DEFAULT_CONFIG.CHAT_MODE_PREFIX_COLOR) as string,
+	CHAT_MODE_PREFIX: userConfig.chatModePrefix ?? DEFAULT_CONFIG.CHAT_MODE_PREFIX,
 	PREFIX: userConfig.prefix ?? DEFAULT_CONFIG.PREFIX,
 	BOXED_VIEW: userConfig.boxedView ?? DEFAULT_CONFIG.BOXED_VIEW,
 	COMPANION_ENABLED: userConfig.companion?.enabled ?? DEFAULT_CONFIG.COMPANION_ENABLED,

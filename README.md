@@ -38,6 +38,7 @@ agent/
     ├── footer/       # Status bar with git, tokens, cost, context
     ├── mcp/          # MCP server bridge with lazy connections and proxy tool
     ├── plan-mode/     # Plan-then-execute workflow: read-only planning, then execute with plan_complete
+    ├── chat-mode/     # Read-only conversational mode: chat, explore, search — no edits
     ├── permission-gate/ # Confirms dangerous bash commands before running
     ├── protected-paths/ # Blocks read/write access to sensitive files and directories
     ├── llm-council/   # Multi-model council: members answer independently, chairman synthesises
@@ -91,6 +92,10 @@ Compresses pi's responses from polished prose to prehistoric grunt. Three modes 
 ### plan-mode
 
 Toggle plan mode via `/plan` or via the shortcut. PLAN restricts tools to read-only and prompts the LLM to produce a numbered action plan; EXECUTE restores all tools and injects the full plan into the system prompt each turn; the LLM calls `plan_complete()` when done. → [`README`](agent/extensions/plan-mode/README.md)
+
+### chat-mode
+
+Toggle chat mode via `/chat` or `Ctrl+Shift+C`. Restricts tools to read-only and prompts the LLM to converse — answer questions, discuss, explore code, search the web — without making any changes. Bash gate blocks destructive commands. Mutually exclusive with plan-mode. `--chat` flag starts in chat mode. → [`README`](agent/extensions/chat-mode/README.md)
 
 ### spinners
 

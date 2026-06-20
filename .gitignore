@@ -21,3 +21,4 @@ agent/settings.json
 agent/models.json
 agent/cache/
 agent/configs/
+agent/trust.json

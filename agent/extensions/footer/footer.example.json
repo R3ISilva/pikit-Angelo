@@ -7,7 +7,9 @@
     "separator",
     "caveman",
     "separator",
-    "plan_mode"
+    "plan_mode",
+    "separator",
+    "chat_mode"
   ],
   "row2RightSegments": ["token_total", "separator", "cost"],
   "icons": {

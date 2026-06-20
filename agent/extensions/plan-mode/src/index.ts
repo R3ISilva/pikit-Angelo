@@ -101,7 +101,19 @@ export default function planMode(pi: ExtensionAPI) {
 
   // ─── State transitions ─────────────────────────────────────────────────────
 
+  /** Mutual-exclusion guard: chat + plan cannot co-activate (undefined = chat-mode ext not loaded = allowed). Returns true if chat is active (caller must abort). */
+  function chatActive(ctx: ExtensionContext): boolean {
+    const chatMode = (globalThis as Record<string, unknown>).__chatMode as { mode?: string } | undefined;
+    if (chatMode?.mode && chatMode.mode !== "off") {
+      if (ctx.hasUI) ctx.ui.notify("Exit chat mode first", "warning");
+      return true;
+    }
+    return false;
+  }
+
   function enterPlanMode(ctx: ExtensionContext): void {
+    // Mutual-exclusion guard: chat + plan cannot co-activate
+    if (chatActive(ctx)) return;
     transition("plan", pi);
     saveAndSetActiveTools(PLAN_MODE_TOOLS);
     updateStatus(ctx);
@@ -311,6 +323,7 @@ export default function planMode(pi: ExtensionAPI) {
 
   /** Prompt user for optional plan name, then enter plan mode. Uses timestamp if no name given. Returns false if cancelled or invalid. */
   async function promptNameAndEnterPlanMode(ctx: ExtensionContext): Promise<boolean> {
+    if (chatActive(ctx)) return false;
     const nameInput = await ctx.ui.custom<string | undefined>((tui, theme, kb, done) => {
       const input = new Input();
       input.onSubmit = (value) => done(value);
@@ -491,6 +504,7 @@ export default function planMode(pi: ExtensionAPI) {
 
   /** Load an existing plan file and show the action menu. */
   function loadPlanAndShowMenu(ctx: ExtensionContext, filename: string, displayName: string): void {
+    if (chatActive(ctx)) return;
     enterPlanWithFile(filename, pi);
     saveAndSetActiveTools(PLAN_MODE_TOOLS);
     updateStatus(ctx);
@@ -615,6 +629,7 @@ export default function planMode(pi: ExtensionAPI) {
           await showPlanMenu(ctx);
         } else {
           // New plan → plan mode
+          if (chatActive(ctx)) return;
           if (getMode() === "plan") {
             ctx.ui.notify("Already in plan mode", "info");
             return;

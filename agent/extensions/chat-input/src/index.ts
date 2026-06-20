@@ -17,6 +17,11 @@ function isPlanModeActive(): boolean {
 	return mode === "plan" || mode === "execute";
 }
 
+function isChatModeActive(): boolean {
+	const mode = (globalThis as any).__chatMode?.mode;
+	return mode === "chat";
+}
+
 // ─── Component ────────────────────────────────────────────────────────────
 class ChatInput extends CustomEditor {
 	private border: (s: string) => string;
@@ -25,6 +30,8 @@ class ChatInput extends CustomEditor {
 	private bashAccent: (s: string) => string;
 	private planModeBorder: (s: string) => string;
 	private planModeAccent: (s: string) => string;
+	private chatModeBorder: (s: string) => string;
+	private chatModeAccent: (s: string) => string;
 	private companionColor: (s: string) => string;
 	private animator = new CompanionAnimator();
 	private companionTimer: ReturnType<typeof setInterval> | null = null;
@@ -39,6 +46,8 @@ class ChatInput extends CustomEditor {
 		bashAccentFn: (s: string) => string,
 		planModeColorFn: (s: string) => string,
 		planModeAccentFn: (s: string) => string,
+		chatModeColorFn: (s: string) => string,
+		chatModeAccentFn: (s: string) => string,
 		companionColor: (s: string) => string,
 	) {
 		super(tui, theme, keybindings, { paddingX: 0 });
@@ -48,6 +57,8 @@ class ChatInput extends CustomEditor {
 		this.bashAccent = bashAccentFn;
 		this.planModeBorder = planModeColorFn;
 		this.planModeAccent = planModeAccentFn;
+		this.chatModeBorder = chatModeColorFn;
+		this.chatModeAccent = chatModeAccentFn;
 		this.companionColor = companionColor;
 
 		// Animate companion even when idle — tick drives state machine
@@ -74,9 +85,10 @@ class ChatInput extends CustomEditor {
 
 		const isBash = this.isBashMode();
 		const isPlan = isPlanModeActive();
-		const border = isBash ? this.bashBorder : isPlan ? this.planModeBorder : this.border;
-		const accent = isBash ? this.bashAccent : isPlan ? this.planModeAccent : this.accent;
-		const prefix = isBash ? CONFIG.PREFIX : isPlan ? CONFIG.PLAN_MODE_PREFIX : CONFIG.PREFIX;
+		const isChat = isChatModeActive();
+		const border = isBash ? this.bashBorder : isPlan ? this.planModeBorder : isChat ? this.chatModeBorder : this.border;
+		const accent = isBash ? this.bashAccent : isPlan ? this.planModeAccent : isChat ? this.chatModeAccent : this.accent;
+		const prefix = isBash ? CONFIG.PREFIX : isPlan ? CONFIG.PLAN_MODE_PREFIX : isChat ? CONFIG.CHAT_MODE_PREFIX : CONFIG.PREFIX;
 
 		if (CONFIG.BOXED_VIEW) {
 			return this.renderBoxed(stock, contentWidth, width, border, accent, prefix);
@@ -290,8 +302,10 @@ export default function (pi: ExtensionAPI) {
 			const bashAccentFn = (s: string) => applyColor(ctx.ui.theme, "bashMode", s);
 			const planModeColorFn = (s: string) => applyColor(ctx.ui.theme, CONFIG.PLAN_MODE_BORDER_COLOR, s);
 			const planModeAccentFn = (s: string) => applyColor(ctx.ui.theme, CONFIG.PLAN_MODE_PREFIX_COLOR, s);
+			const chatModeColorFn = (s: string) => applyColor(ctx.ui.theme, CONFIG.CHAT_MODE_BORDER_COLOR, s);
+			const chatModeAccentFn = (s: string) => applyColor(ctx.ui.theme, CONFIG.CHAT_MODE_PREFIX_COLOR, s);
 			const companionColorFn = (s: string) => applyColor(ctx.ui.theme, CONFIG.COMPANION_COLOR, s);
-			return new ChatInput(tui, theme, kb, colorFn, accentFn, bashColorFn, bashAccentFn, planModeColorFn, planModeAccentFn, companionColorFn);
+			return new ChatInput(tui, theme, kb, colorFn, accentFn, bashColorFn, bashAccentFn, planModeColorFn, planModeAccentFn, chatModeColorFn, chatModeAccentFn, companionColorFn);
 		});
 	});
 }
