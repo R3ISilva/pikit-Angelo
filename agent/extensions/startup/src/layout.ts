@@ -33,17 +33,19 @@ function buildTipsColumn(theme: Theme, keyMap: KeyMap): string[] {
     "",
     ` ${dim("/")} for commands`,
     ` ${dim("!")} to run bash`,
-    ` ${dim("shift+tab")} toggle plan mode`,
+    ` ${dim("shift+tab")} toggle chat mode`,
     ` ${dim(modelKey)} cycle model`,
+    ` ${dim("ctrl+shift+p")} toggle plan mode`,
     ` ${dim(thinkingKey)} cycle thinking`,
   ];
 }
 
 function buildRightColumn(theme: Theme, counts: LoadedCounts): string[] {
   const dim = (s: string) => theme.fg("dim", s);
-  const { contextFiles, extensions, skills, promptTemplates, mcpServers } = counts;
+  const { models, contextFiles, extensions, skills, promptTemplates, mcpServers } = counts;
   const itemPrefix = dim("• ");
   const countLines: string[] = [
+    ` ${itemPrefix}${theme.fg(models > 0 ? "success" : "dim", `${models}`)} model${models !== 1 ? "s" : ""}`,
     ` ${itemPrefix}${theme.fg(extensions > 0 ? "success" : "dim", `${extensions}`)} extension${extensions !== 1 ? "s" : ""}`,
     ` ${itemPrefix}${theme.fg(skills > 0 ? "success" : "dim", `${skills}`)} skill${skills !== 1 ? "s" : ""}`,
     ` ${itemPrefix}${theme.fg(mcpServers > 0 ? "success" : "dim", `${mcpServers}`)} MCP config${mcpServers !== 1 ? "s" : ""}`,

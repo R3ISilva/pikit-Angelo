@@ -3,6 +3,7 @@ import { join, basename } from "node:path";
 import { homedir as osHomedir } from "node:os";
 
 export interface LoadedCounts {
+  models: number;
   contextFiles: number;
   extensions: number;
   skills: number;
@@ -124,6 +125,25 @@ function countTemplates(homeDir: string, cwd: string): number {
   return allNames.size;
 }
 
+function countModels(homeDir: string, cwd: string): number {
+  const seen = new Set<string>();
+  const paths = [
+    join(homeDir, ".pi", "agent", "settings.json"),
+    join(cwd, ".pi", "settings.json"),
+  ];
+  for (const path of paths) {
+    if (!existsSync(path)) continue;
+    try {
+      const settings = JSON.parse(readFileSync(path, "utf8"));
+      const arr = settings?.enabledModels;
+      if (Array.isArray(arr)) {
+        for (const m of arr) if (typeof m === "string" && m.trim()) seen.add(m.trim());
+      }
+    } catch {}
+  }
+  return seen.size;
+}
+
 function countMcpServers(homeDir: string): number {
   const configPath = join(homeDir, ".pi", "agent", "configs", "mcp.json");
   if (!existsSync(configPath)) return 0;
@@ -140,6 +160,7 @@ export function discoverLoadedCounts(): LoadedCounts {
   const homeDir = osHomedir();
   const cwd = process.cwd();
   return {
+    models: countModels(homeDir, cwd),
     contextFiles: countContextFiles(homeDir, cwd),
     extensions: countExtensions(homeDir, cwd),
     skills: countSkills(homeDir, cwd),

@@ -11,8 +11,8 @@ export default function startup(pi: ExtensionAPI) {
     const counts = discoverLoadedCounts();
     const kb = getKeybindings();
     const keyMap: KeyMap = {
-      "app.model.cycleForward": kb.getKeys("app.model.cycleForward")[0] ?? "ctrl+p",
-      "app.thinking.cycle": kb.getKeys("app.thinking.cycle")[0] ?? "shift+tab",
+      "app.model.cycleForward": kb.getKeys("app.model.cycleForward")[0] ?? "alt+shift+tab",
+      "app.thinking.cycle": kb.getKeys("app.thinking.cycle")[0] ?? "ctrl+shift+t",
     };
 
     ctx.ui.setHeader((_tui, theme) => ({

@@ -5,7 +5,7 @@
     "hideWidget": true
   },
   "shortcuts": {
-    "toggleMode": "ctrl+shift+c"
+    "toggleMode": "shift+tab"
   },
   "bashPatterns": {
     "_comment_safe": "Replace-only: providing safePatterns replaces ALL defaults. Omit to keep built-in safe patterns.",

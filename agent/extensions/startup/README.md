@@ -37,6 +37,7 @@ The extension scans standard pi paths to count what is active:
 
 | Type | Paths scanned |
 |------|---------------|
+| Models | `~/.pi/agent/settings.json`, `<cwd>/.pi/settings.json` (`enabledModels`) |
 | Context files | `~/.pi/agent/AGENTS.md`, `~/.claude/AGENTS.md`, `<cwd>/AGENTS.md`, `<cwd>/CLAUDE.md`, `<cwd>/.pi/AGENTS.md` |
 | Extensions | `~/.pi/agent/settings.json`, `<cwd>/.pi/settings.json` (npm packages), plus `~/.pi/agent/extensions/`, `<cwd>/.pi/extensions/`, `<cwd>/extensions/` (local dirs) |
 | Skills | `~/.pi/agent/skills/`, `<cwd>/.pi/skills/`, `<cwd>/skills/` (dirs with `SKILL.md`) |
