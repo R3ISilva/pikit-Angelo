@@ -136,7 +136,8 @@ export default function styledOutputs(pi: ExtensionAPI) {
         if (name === "fetch_content") return (args: any, theme: any, ctx: any) => renderFetchContentCall(args, theme, ctx);
         if (name === "get_search_content") return (args: any, theme: any, ctx: any) => renderGetSearchContentCall(args, theme, ctx);
       }
-      return (args: any, theme: any, ctx: any) => renderMcpCall(name, args, theme, ctx);
+      const label = this.toolDefinition?.label ?? name;
+      return (args: any, theme: any, ctx: any) => renderMcpCall(label, args, theme, ctx);
     };
 
     const originalGetResultRenderer = toolProto.getResultRenderer;
@@ -149,7 +150,8 @@ export default function styledOutputs(pi: ExtensionAPI) {
         if (name === "fetch_content") return (result: any, options: any, theme: any, ctx: any) => renderFetchContentResult(result, options, theme, ctx);
         if (name === "get_search_content") return (result: any, options: any, theme: any, ctx: any) => renderGetSearchContentResult(result, options, theme, ctx);
       }
-      return (result: any, options: any, theme: any, ctx: any) => renderMcpResult(name, result, options, theme, ctx);
+      const label = this.toolDefinition?.label ?? name;
+      return (result: any, options: any, theme: any, ctx: any) => renderMcpResult(label, result, options, theme, ctx);
     };
 
     toolProto[PATCH_FLAG] = true;
