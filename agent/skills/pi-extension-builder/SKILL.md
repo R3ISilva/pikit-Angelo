@@ -51,6 +51,7 @@ agent/extensions/<name>/
 - Export single default function receiving `ExtensionAPI` — no classes, no extra exports
 - Reference existing extensions: `web-access/src/index.ts` (tool registration), `startup/src/index.ts` (lifecycle), `permission-gate/src/index.ts` (interception)
 - Match TypeScript style of file being edited — no new patterns
+- Opening a URL in the default browser — use the `mcp/src/helpers.ts` `openBrowser` pattern: `spawn(cmd, [url], { detached: true, stdio: "ignore" }).unref()` with `cmd` = `open` (darwin) / `start` (win32) / `xdg-open` (linux). No shell, no `exec` string concatenation. See `agent/extensions/mcp/src/helpers.ts`
 - One concern per extension
 
 ### Import ordering

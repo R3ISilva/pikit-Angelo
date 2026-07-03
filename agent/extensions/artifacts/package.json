@@ -1,0 +1,35 @@
+{
+  "name": "artifacts",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Visual HTML artifacts for pi — markdown and html rendered to a lazy localhost server with live reload",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/adrianapan/pi-dev.git"
+  },
+  "bugs": {
+    "url": "https://github.com/adrianapan/pi-dev/issues"
+  },
+  "homepage": "https://github.com/adrianapan/pi-dev#readme",
+  "keywords": [
+    "pi",
+    "extension",
+    "artifacts",
+    "html",
+    "markdown",
+    "pi-package",
+    "pi-coding-agent"
+  ],
+  "pi": {
+    "extensions": ["./src/index.ts"]
+  },
+  "author": "Adrian Apan",
+  "license": "MIT",
+  "dependencies": {
+    "@sinclair/typebox": "^0.34.0",
+    "diff2html": "^3.4.52",
+    "highlight.js": "^11.11.1",
+    "marked": "^18.0.5"
+  }
+}

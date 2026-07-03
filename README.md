@@ -30,7 +30,8 @@ agent/
 ├── skills/
 │   ├── pi-extension-builder/    # Guidelines for building and modifying extensions in this repo
 │   ├── add-ollama-cloud-model/  # Guidelines for adding an Ollama Cloud model to models.json
-│   └── gh/                        # Read-only GitHub CLI access via enforced wrapper
+│   ├── gh/                        # Read-only GitHub CLI access via enforced wrapper
+│   └── pr-review/               # Review a GitHub PR and emit findings as a markdown artifact
 ├── prompts/
 │   ├── handoff.md    # /handoff — write a session handoff document to .pi/handoffs/
 │   └── pickup.md     # /pickup — resume work from the latest handoff document
@@ -51,7 +52,8 @@ agent/
     ├── startup/      # Welcome header shown at session start
     ├── styled-outputs/ # Custom styled rendering for all message types (tools, diffs, thinking, skills)
     ├── subagents/    # Delegate tasks to specialized child agents (single, parallel, chain)
-    └── web-access/   # Web search, page fetching, and PDF extraction
+    ├── web-access/   # Web search, page fetching, and PDF extraction
+    └── artifacts/    # Visual HTML artifacts (markdown/html) on a lazy localhost server with live reload
 ```
 
 ---
@@ -118,6 +120,10 @@ Custom styled rendering for every message type in pi — assistant messages, use
 
 Delegate tasks to specialized child pi processes that work independently with their own model, tools, extensions, and skills. Supports single (one agent, one task), parallel (up to 8 tasks, 4 concurrent), and chain (sequential steps with `{previous}` piping) modes. Child agents are defined as `.md` files with YAML frontmatter in `~/.pi/agent/agents/` or `.pi/agents/`. → [`README`](agent/extensions/subagents/README.md)
 
+### artifacts
+
+Gives the agent a visual output surface: an `artifact` tool that renders markdown or HTML to a styled page served from a lazy localhost server and opened in the browser. Markdown handles `diff` fences (server-side diff2html), code fences (server-side highlight.js), and `mermaid` fences (client-side) automatically; `update` live-reloads an already-open tab. Storage at `.pi/artifacts/<slug>.html`. Use `/artifacts` to open the index page and browse what's been generated. → [`README`](agent/extensions/artifacts/README.md)
+
 ---
 
 ## Skills
@@ -133,6 +139,10 @@ Loaded when you ask pi to add an Ollama Cloud model. Fetches the model page, ext
 ### gh
 
 Read-only GitHub CLI access via an enforced wrapper. Lists issues, PRs, repos, runs, releases, and more — but blocks all write, delete, and modify commands. Load when working with GitHub resources. Invoke explicitly with `/skill:gh`.
+
+### pr-review
+
+Review a GitHub PR and emit the findings as a markdown artifact (rendered HTML report in the browser). Gathers the diff via the `gh` skill, reviews it, then produces one `artifact` — verdict up top, findings ranked by severity, per-file `diff` fences. Invoke explicitly with `/skill:pr-review`.
 
 ---
 
@@ -478,7 +488,7 @@ Pi supports two special Markdown files for injecting content into the system pro
 
 Both are discovered in the same locations: `~/.pi/agent/` (global) or `.pi/` (project-level). Project files take precedence over global ones.
 
-This repo ships with `~/.pi/agent/APPEND_SYSTEM.md` — a trimmed version of [Andrej Karpathy's coding guidelines](https://github.com/forrestchang/andrej-karpathy-skills/blob/main/CLAUDE.md) covering four rules: think before coding, simplicity first, surgical changes, and goal-driven execution. It's appended on every session without touching pi's built-in prompt.
+This repo ships with `~/.pi/agent/APPEND_SYSTEM.md` — a trimmed version of [Andrej Karpathy's coding guidelines](https://github.com/forrestchang/andrej-karpathy-skills/blob/main/CLAUDE.md) covering four rules (think before coding, simplicity first, surgical changes, goal-driven execution) plus a fifth nudge to emit visual output via the `artifact` tool. It's appended on every session without touching pi's built-in prompt.
 
 ### Themes
 
