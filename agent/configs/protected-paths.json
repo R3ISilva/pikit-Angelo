@@ -1,8 +1,0 @@
-{
-  "paths": [
-    {
-      "path": "/Users/adrian/.nvm/versions/node/*/lib/node_modules/@earendil-works",
-      "deny": ["write", "edit"]
-    }
-  ]
-}
