@@ -17,10 +17,12 @@ coverage
 *.log
 *.tsbuildinfo
 *auth.json
-*keybindings.json
 /.pi/*
 agent/settings.json
 agent/models.json
 agent/cache/
-agent/configs/
+agent/configs/*
+!agent/configs/chat-mode.json
+!agent/configs/plan-mode.json
+!agent/configs/protected-paths.json
 agent/trust.json
