@@ -9,7 +9,7 @@ Toggle chat mode via `/chat` command or configurable keyboard shortcut. Read-onl
 
 ### Tool Restriction Mechanism
 
-Chat mode restricts tools via `pi.setActiveTools()`. On entering chat mode, the full tool list is saved and replaced with a read-only subset (`read`, `bash`, `grep`, `find`, `ls`, `web_search`, `fetch_content`, `get_search_content`). On exiting, the original tool list is restored via `pi.setActiveTools()` with the saved names. Bash commands receive a second layer of defense — the `tool_call` event handler blocks destructive commands even though `bash` itself remains available for inspection.
+Chat mode restricts tools via `pi.setActiveTools()`. On entering chat mode, the full tool list is saved and replaced with a read-only subset (`read`, `bash`, `grep`, `find`, `ls`, `web_search`, `fetch_content`, `get_search_content`, `artifact`). On exiting, the original tool list is restored via `pi.setActiveTools()` with the saved names. Bash commands receive a second layer of defense — the `tool_call` event handler blocks destructive commands even though `bash` itself remains available for inspection.
 
 ## Commands
 
