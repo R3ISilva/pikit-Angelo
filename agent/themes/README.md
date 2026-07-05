@@ -6,4 +6,4 @@ Activate inside pi via `/settings → Theme → slop`, or set `"theme": "slop"` 
 
 ## Packaging note
 
-The theme ships as part of the single [`pikit`](https://www.npmjs.com/package/pikit) package — not published standalone. The root `package.json` `pi.themes` block points at `./agent/themes/slop.json`, so there's no per-theme manifest here. Pi's theme auto-discovery scans this directory for non-hidden `*.json` files; only `slop.json` is present, so nothing else needs ignoring.
+The theme ships as part of the single [`@adrianapan/pikit`](https://www.npmjs.com/package/@adrianapan/pikit) package, not published standalone. The root `package.json` `pi.themes` block points at `./agent/themes/slop.json`, so there's no per-theme manifest here. Pi's theme auto-discovery scans this directory for non-hidden `*.json` files; only `slop.json` is present, so nothing else needs ignoring.

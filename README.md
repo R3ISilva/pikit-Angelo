@@ -90,7 +90,7 @@ pi
 Best if you want to keep your existing `~/.pi` configuration intact and load these tools as an external package.
 
 ```bash
-pi install npm:pikit
+pi install npm:@adrianapan/pikit
 ```
 
 *Note: Core files like keybindings, custom modes, and guidelines can only be read directly from `~/.pi/agent/`. If you want to use them alongside the package layout, run this optional sync snippet:*

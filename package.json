@@ -1,5 +1,5 @@
 {
-  "name": "pikit",
+  "name": "@adrianapan/pikit",
   "version": "1.0.0",
   "description": "An opinionated pi.dev configuration. Batteries included — 16 extensions, 4 skills, prompt templates, and the slop theme in one package.",
   "license": "MIT",
@@ -28,7 +28,7 @@
   ],
   "scripts": {
     "check": "tsc --noEmit",
-    "release": "npm publish"
+    "release": "npm publish --access public"
   },
   "pi": {
     "extensions": [
