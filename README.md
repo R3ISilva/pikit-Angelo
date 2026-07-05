@@ -10,7 +10,6 @@
   <a href="#prompt-templates">Prompt templates</a> &nbsp;·&nbsp;
   <a href="#theme">Theme</a> &nbsp;·&nbsp;
   <a href="#setup">Setup</a> &nbsp;·&nbsp;
-  <a href="#about-pidev">About pi.dev</a>
 </p>
 
 ---
