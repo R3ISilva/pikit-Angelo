@@ -2,7 +2,7 @@
 
 A startup header for the pi coding agent. Displays a three-column welcome box at session start showing the pi logo, loaded configuration counts, and quick keyboard shortcuts.
 
-<img width="2074" height="848" alt="preview" src="https://github.com/user-attachments/assets/18d9730b-7df1-48a5-b91e-404454bcb06f" />
+<img alt="preview" src="https://github.com/user-attachments/assets/18d9730b-7df1-48a5-b91e-404454bcb06f" />
 
 ## Features
 

@@ -2,7 +2,7 @@
 
 Replaces the default chat input with a configurable, boxed input. All native editor features — cursor movement, history, autocomplete, paste — work normally inside the box.
 
-<img width="2074" height="756" alt="preview" src="https://github.com/user-attachments/assets/4b0acb3d-b163-4d00-a719-0162a7ea79bf" />
+<img alt="preview" src="https://github.com/user-attachments/assets/4b0acb3d-b163-4d00-a719-0162a7ea79bf" />
 
 ## Features
 

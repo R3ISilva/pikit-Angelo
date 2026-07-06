@@ -24,10 +24,15 @@
     "pikit"
   ],
   "files": [
+    "setup.sh",
     "agent/extensions",
     "agent/themes/slop.json",
     "agent/skills",
     "agent/prompts",
+    "agent/settings.example.json",
+    "agent/APPEND_SYSTEM.md",
+    "agent/configs/chat-mode.json",
+    "agent/configs/plan-mode.json",
     "README.md"
   ],
   "scripts": {

@@ -1,6 +1,6 @@
-<img width="2392" height="958" alt="banner" src="https://github.com/user-attachments/assets/3c0eb2a6-fce9-4c39-8943-d348ce1bc284" />
+<img alt="banner" src="https://github.com/user-attachments/assets/3c0eb2a6-fce9-4c39-8943-d348ce1bc284" />
 
-<h3 align="center">Pikit — an opinionated <a href="https://pi.dev/">pi.dev</a> configuration. Batteries included.</h3>
+<h3 align="center">Pikit — an opinionated Pi coding agent configuration. Batteries included.</h3>
 
 <p align="center">
   <a href="#whats-in-here">What's in here</a> &nbsp;·&nbsp;
@@ -9,7 +9,8 @@
   <a href="#skills">Skills</a> &nbsp;·&nbsp;
   <a href="#prompt-templates">Prompt templates</a> &nbsp;·&nbsp;
   <a href="#theme">Theme</a> &nbsp;·&nbsp;
-  <a href="#setup">Setup</a>
+  <a href="#configs">Configs</a>
+  
 </p>
 
 ---
@@ -62,47 +63,40 @@ agent/
 
 ## Install
 
-Choose the path that fits your workflow. Both options deliver the entire feature set.
-
-### Option 1: Clean Slate (Recommended)
-
-Best if you are new to `pi`, or want this repository to entirely manage your global agent configuration.
-
 ```bash
+# Install Pi
 npm install -g @earendil-works/pi-coding-agent
-git clone https://github.com/adrianapan/pikit.git ~/.pi
-cd ~/.pi && npm install
-pi
-
-```
-
-> [!TIP]
-> **Migrating an existing setup?** Move your current folder out of the way (`mv ~/.pi ~/.pi.bak`), clone this repo, and pull your active files back over so you don't lose your sessions or logins:
-> ```bash
-> cp ~/.pi.bak/agent/auth.json ~/.pi/agent/
-> cp ~/.pi.bak/agent/models.json ~/.pi/agent/
-> cp -R ~/.pi.bak/agent/sessions ~/.pi/agent/
-> ```
-
-### Option 2: Layer into an Existing Config
-
-Best if you want to keep your existing `~/.pi` configuration intact and load these tools as an external package.
-
-```bash
+# Install Pikit
 pi install npm:@adrianapan/pikit
+# (Optional, but recommended) Scaffold Pikit's opinionated files into ~/.pi/agent
+bash ~/.pi/agent/npm/@adrianapan/pikit/setup.sh
+# Start Pi
+pi
 ```
 
-*Note: Core files like keybindings, custom modes, and guidelines can only be read directly from `~/.pi/agent/`. If you want to use them alongside the package layout, run this optional sync snippet:*
+### `setup.sh`
+
+You can manually sync the opinionated Pikit configs (settings, keybindings, additional system prompt) by pulling them from the repo and manually placing the relevant files in your Pi folder. Alternatively, you can use the automated `setup.sh` script.
 
 ```bash
-mkdir -p ~/.pi/agent/configs
-
-# Sync keybindings, mode presets, and system prompts
-curl -fsSL https://raw.githubusercontent.com/adrianapan/pikit/main/agent/keybindings.json -o ~/.pi/agent/keybindings.json
-curl -fsSL https://raw.githubusercontent.com/adrianapan/pikit/main/agent/APPEND_SYSTEM.md -o ~/.pi/agent/APPEND_SYSTEM.md
-curl -fsSL https://raw.githubusercontent.com/adrianapan/pikit/main/agent/configs/chat-mode.json -o ~/.pi/agent/configs/chat-mode.json
-curl -fsSL https://raw.githubusercontent.com/adrianapan/pikit/main/agent/configs/plan-mode.json -o ~/.pi/agent/configs/plan-mode.json
+# flags are optional
+bash ~/.pi/agent/npm/@adrianapan/pikit/setup.sh [flags]
 ```
+
+Flag | Description |
+|-|-|
+| `--settings` | Sync `settings.json` (theme: "slop")
+| `--system-prompt` | Sync `APPEND_SYSTEM.md`
+| `--modes` | Sync `configs/chat-mode.json` and `configs/plan-mode.json`
+| `--keybindings` | Sync `keybindings.json` (two Pikit keybinds)
+| `--help`, `-h` | Show this help
+
+
+* Running it with no flags runs every job, in order: settings, system-prompt, modes, keybindings
+
+* Existing files are backed up to `~/.pi/agent/_bak/` before being replaced
+
+* Idempotent so existing mode configs and already-correct fields are skipped
 ---
 
 ## Extensions
@@ -179,53 +173,22 @@ A warm, earthy palette with terracotta primary (`#d67858`) and warm-white text (
 
 ## System prompt
 
-Pi appends [`agent/APPEND_SYSTEM.md`](agent/APPEND_SYSTEM.md) to its default system prompt every session (no extension code involved). It's a trimmed version of [Andrej Karpathy's coding guidelines](https://github.com/forrestchang/andrej-karpathy-skills/blob/main/CLAUDE.md): think before coding, simplicity first, surgical changes, goal-driven execution, plus a fifth nudge to emit visual output via the `artifact` tool.
+Pi appends [`agent/APPEND_SYSTEM.md`](agent/APPEND_SYSTEM.md) to its default system prompt every session (no extension code involved). It's a trimmed and adapted version of [Andrej Karpathy's coding guidelines](https://github.com/forrestchang/andrej-karpathy-skills/blob/main/CLAUDE.md): think before coding, simplicity first, surgical changes, goal-driven execution, and a fifth nudge to emit visual output via the `artifact` tool.
 
 ---
 
-## Setup
+## Configs
 
-All configurations ship with stable defaults. Use these customization guides to tweak your working environment.
+> Best experienced with [Ghostty](https://ghostty.org/) - a fast, GPU-accelerated, cross-platform terminal emulator.
 
-> [!TIP]
-> Best experienced with [Ghostty](https://ghostty.org/): fast, GPU-accelerated, and Nerd Font icons work out of the box.
-
-### Authentication
+### Models
 
 Launch `pi` in your terminal, then pick your authentication mechanism:
 
 * **Subscription Providers:** Trigger `/login` and authenticate with your existing account context (Claude Pro, ChatGPT Plus, Copilot, or Gemini).
 * **Direct API Keys:** Export your keys to your active shell session prior to startup (e.g., `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`).
 
-### Profile configuration
-
-Activate our base default profile mapping out model rules and interface layouts:
-
-* **If using Option 1 (Cloned):** Run `cp ~/.pi/agent/settings.example.json ~/.pi/agent/settings.json`
-* **If using Option 2 (Package):** Run `curl -fsSL https://raw.githubusercontent.com/adrianapan/pikit/main/agent/settings.example.json -o ~/.pi/agent/settings.json`
-
-All tools operate without manual initialization steps. If you want to customize rule behaviors (such as specific forbidden path strings or custom MCP links), create matching config overrides inside `agent/configs/`.
-
-**If using the Git Clone setup:**
-
-```bash
-cd ~/.pi/agent
-cp extensions/permission-gate/permission-gate.example.json configs/permission-gate.json
-cp extensions/protected-paths/protected-paths.example.json configs/protected-paths.json
-cp extensions/mcp/mcp.example.json configs/mcp.json
-cp extensions/footer/footer.example.json configs/footer.json
-cp extensions/env-loader/.env.example configs/.env
-
-```
-
-**If using the NPM Package setup:**
-
-```bash
-mkdir -p ~/.pi/agent/configs
-curl -fsSL https://raw.githubusercontent.com/adrianapan/pikit/main/agent/extensions/permission-gate/permission-gate.example.json -o ~/.pi/agent/configs/permission-gate.json
-# Follow the same schema for other configurations as needed.
-
-```
+### Fonts
 
 If interface icons or status graphics look broken, install a modern developer font setup:
 
@@ -295,5 +258,4 @@ Ollama Cloud needs an API key and a `compat` block, because cloud models don't s
 
 Browse models at [ollama.com/search](https://ollama.com/search); cloud variants use the `:cloud` suffix. Or skip the JSON and just ask pi: *"Add https://ollama.com/library/qwen3.5 to my Ollama cloud config"*, and the [`add-ollama-cloud-model`](agent/skills/add-ollama-cloud-model/SKILL.md) skill handles it.
 
-> [!WARNING]
 > pi extensions run with full system access; that applies to this kit and anything else you install. Review the source before trusting a package; everything here is small enough to read in one sitting.
