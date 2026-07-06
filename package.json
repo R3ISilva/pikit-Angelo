@@ -1,7 +1,7 @@
 {
   "name": "@adrianapan/pikit",
   "version": "1.1.0",
-  "description": "An opinionated pi.dev configuration. Batteries included — 16 extensions, 4 skills, prompt templates, and the slop theme in one package.",
+  "description": "An opinionated Pi agent configuration. Includes: custom theme, plan mode, artifacts, subagents, LLM council, configurable restrictions, MCP support and a styled UI.",
   "license": "MIT",
   "author": "Adrian Apan",
   "repository": {
