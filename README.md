@@ -1,4 +1,4 @@
-<img src="banner.png" alt="pikit — opinionated pi.dev configuration">
+<img width="2392" height="958" alt="banner" src="https://github.com/user-attachments/assets/3c0eb2a6-fce9-4c39-8943-d348ce1bc284" />
 
 <h3 align="center">Pikit — an opinionated <a href="https://pi.dev/">pi.dev</a> configuration. Batteries included.</h3>
 
