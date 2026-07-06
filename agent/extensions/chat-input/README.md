@@ -2,8 +2,7 @@
 
 Replaces the default chat input with a configurable, boxed input. All native editor features — cursor movement, history, autocomplete, paste — work normally inside the box.
 
-<img src="https://raw.githubusercontent.com/adrianapan/pikit/main/agent/extensions/chat-input/preview.png" alt="chat-input preview">
-
+<img width="2074" height="756" alt="preview" src="https://github.com/user-attachments/assets/4b0acb3d-b163-4d00-a719-0162a7ea79bf" />
 
 ## Features
 
