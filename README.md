@@ -71,7 +71,7 @@ npm install -g --ignore-scripts @earendil-works/pi-coding-agent
 pi install npm:@adrianapan/pikit
 
 # (Optional, but recommended) Scaffold Pikit's opinionated files into ~/.pi/agent
-bash ~/.pi/agent/npm/@node_modules/@adrianapan/pikit/setup.sh
+bash ~/.pi/agent/npm/node_modules/@adrianapan/pikit/setup.sh
 
 # Start Pi
 pi
@@ -83,7 +83,7 @@ You can manually sync the opinionated Pikit configs (settings, keybindings, addi
 
 ```bash
 # flags are optional
-bash ~/.pi/agent/npm/@node_modules/@adrianapan/pikit/setup.sh [flags]
+bash ~/.pi/agent/npm/node_modules/@adrianapan/pikit/setup.sh [flags]
 ```
 
 Flag | Description |
